@@ -34,6 +34,17 @@ def safe_int(value):
     except:
         return 0
 
+def find_column(headers, keywords):
+    """Find a column name by matching keywords (case-insensitive)"""
+    for header in headers:
+        header_lower = header.lower()
+        if all(kw.lower() in header_lower for kw in keywords):
+            return header
+    for header in headers:
+        if keywords[0].lower() in header.lower():
+            return header
+    return ""
+
 def parse_hospital_from_json(record):
     """Parse a single hospital record from CKAN JSON"""
     return {
@@ -66,6 +77,7 @@ def get_live_data():
             if response.status_code == 200:
                 data = response.json()
                 records = data.get("result", {}).get("records", [])
+                print(f"   Debug: Raw records from API: {len(records)}")
                 
                 if records:
                     hospitals = []
@@ -119,7 +131,7 @@ def get_csv_url():
     return MSSS_DIRECT_URL
 
 def download_csv_as_json(url):
-    """Layer 2b: Download CSV and parse it"""
+    """Layer 2b: Download CSV and parse it — uses auto-detection for column names"""
     print(f"   [Layer 2b] Downloading CSV...")
     
     try:
@@ -143,29 +155,47 @@ def download_csv_as_json(url):
             return None, None
         
         reader = csv.DictReader(io.StringIO(text))
+        headers = reader.fieldnames or []
+        
+        # Auto-detect column names
+        col_nom = find_column(headers, ["installation", "etablissement"])
+        col_region = find_column(headers, ["RSS", "region"])
+        col_civieres_fonc = find_column(headers, ["civiere", "fonctionnelle", "civieres", "fonctionnelles"])
+        col_civieres_occ = find_column(headers, ["civiere", "occupee", "occupees", "civieres"])
+        col_24h = find_column(headers, ["24", "heures", "civiere"])
+        col_48h = find_column(headers, ["48", "heures", "civiere"])
+        col_total = find_column(headers, ["total", "patients", "presents", "urgence"])
+        col_attente = find_column(headers, ["attente", "PEC"])
+        col_miseajour = find_column(headers, ["Mise", "jour"])
+        
+        print(f"   Detected columns: nom={col_nom}, civieres_fonc={col_civieres_fonc}, civieres_occ={col_civieres_occ}")
+        
         hospitals = []
         gov_time = ""
         
         for row in reader:
-            nom = row.get("Nom_installation", "").strip()
+            nom = row.get(col_nom, "").strip()
             if "Total" in nom or "Ensemble" in nom or not nom:
                 continue
             
+            total_civieres = safe_int(row.get(col_civieres_fonc, "0"))
+            civieres_occupees = safe_int(row.get(col_civieres_occ, "0"))
+            
             h = {
                 "name": nom,
-                "region": row.get("RSS", "").strip(),
-                "total_stretchers": safe_int(row.get("Nombre_de_civieres_fonctionnelles", "0")),
-                "patients_on_stretcher": safe_int(row.get("Nombre_de_civieres_occupees", "0")),
-                "patients_over_24h": safe_int(row.get("Nombre_de_patients_sur_civiere_plus_de_24_heures", "0")),
-                "patients_over_48h": safe_int(row.get("Nombre_de_patients_sur_civiere_plus_de_48_heures", "0")),
-                "total_patients": safe_int(row.get("Nombre_total_de_patients_presents_a_lurgence", "0")),
-                "patients_waiting": safe_int(row.get("Nombre_total_de_patients_en_attente_de_PEC", "0")),
+                "region": row.get(col_region, "").strip(),
+                "total_stretchers": total_civieres,
+                "patients_on_stretcher": civieres_occupees,
+                "patients_over_24h": safe_int(row.get(col_24h, "0")),
+                "patients_over_48h": safe_int(row.get(col_48h, "0")),
+                "total_patients": safe_int(row.get(col_total, "0")),
+                "patients_waiting": safe_int(row.get(col_attente, "0")),
             }
             h["occupancy_rate"] = calculate_occupancy(h)
             hospitals.append(h)
             
-            if not gov_time:
-                gov_time = row.get("Mise_a_jour", "").strip()
+            if not gov_time and col_miseajour:
+                gov_time = row.get(col_miseajour, "").strip()
         
         if hospitals:
             print(f"   ✅ Layer 2b SUCCESS: {len(hospitals)} hospitals from CSV")
@@ -251,7 +281,7 @@ def main():
     # Layer 1: CKAN Datastore API
     hospitals, gov_time = get_live_data()
     
-    # Layer 2: CSV fallback
+    # Layer 2: CSV fallback with auto-detecting columns
     if not hospitals:
         csv_url = get_csv_url()
         hospitals, gov_time = download_csv_as_json(csv_url)
