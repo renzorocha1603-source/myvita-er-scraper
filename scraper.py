@@ -2,39 +2,41 @@ import csv
 import json
 import requests
 from datetime import datetime
+import os
 
 # Use CKAN API to get the actual download URL
 CKAN_API_URL = "https://www.donneesquebec.ca/api/3/action/resource_show?id=b256f87f-40ec-4c79-bdba-a23e9c50e741"
+DIRECT_CSV_URL = "https://www.msss.gouv.qc.ca/professionnels/statistiques/documents/urgences/Releve_horaire_urgences_7jours_nbpers.csv"
 OUTPUT_FILE = "er_data.json"
+BACKUP_FILE = "er_data_backup.json"
 
 def download_csv():
-    """Download the latest CSV via CKAN API"""
+    """Download the latest CSV via CKAN API with fallback to direct URL"""
     print(f"[{datetime.now()}] Getting download URL from CKAN API...")
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'application/json',
     }
     
-    # Step 1: Get the real download URL from CKAN
+    csv_url = None
+    
+    # Step 1: Try CKAN API
     try:
         ckan_response = requests.get(CKAN_API_URL, headers=headers, timeout=30)
         if ckan_response.status_code == 200:
             ckan_data = ckan_response.json()
             csv_url = ckan_data.get("result", {}).get("url", "")
-            
-            if not csv_url:
-                # Fallback to direct URL
-                csv_url = "https://www.msss.gouv.qc.ca/professionnels/statistiques/documents/urgences/Releve_horaire_urgences_7jours_nbpers.csv"
-            
-            print(f"Got download URL: {csv_url}")
-        else:
-            print(f"CKAN API failed: {ckan_response.status_code}")
-            return False
+            if csv_url:
+                print(f"✅ CKAN API success: {csv_url}")
     except Exception as e:
-        print(f"CKAN API error: {e}")
-        return False
+        print(f"⚠️ CKAN API error: {e}")
     
-    # Step 2: Download the CSV
+    # Step 2: Fallback to direct URL
+    if not csv_url:
+        print("⚠️ CKAN failed, trying direct URL...")
+        csv_url = DIRECT_CSV_URL
+    
+    # Step 3: Download the CSV with multiple encoding attempts
     print(f"[{datetime.now()}] Downloading CSV...")
     csv_headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -43,17 +45,55 @@ def download_csv():
         'Referer': 'https://www.donneesquebec.ca/',
     }
     
-    response = requests.get(csv_url, headers=csv_headers, timeout=30)
-    response.encoding = 'utf-8'
-    
-    if response.status_code == 200:
-        with open("temp_er_data.csv", "w", encoding="utf-8") as f:
-            f.write(response.text)
-        print(f"Downloaded successfully ({len(response.text)} bytes)")
-        return True
-    else:
-        print(f"Failed to download CSV: {response.status_code}")
+    try:
+        response = requests.get(csv_url, headers=csv_headers, timeout=30)
+        
+        if response.status_code == 200:
+            # Try different encodings to fix French characters
+            content = response.content
+            text = None
+            for encoding in ['utf-8-sig', 'utf-8', 'latin-1', 'cp1252', 'iso-8859-1']:
+                try:
+                    text = content.decode(encoding)
+                    # Check if French characters decoded properly
+                    if 'Ô' in text or 'É' in text or 'ê' in text or 'è' in text:
+                        print(f"✅ Detected encoding: {encoding}")
+                        break
+                except:
+                    continue
+            
+            if text is None:
+                text = content.decode('utf-8', errors='replace')
+                print("⚠️ Using fallback encoding (utf-8 with replace)")
+            
+            with open("temp_er_data.csv", "w", encoding="utf-8") as f:
+                f.write(text)
+            print(f"✅ Downloaded successfully ({len(response.text)} bytes)")
+            return True
+        else:
+            print(f"❌ Failed to download CSV: HTTP {response.status_code}")
+            return False
+    except Exception as e:
+        print(f"❌ Download error: {e}")
         return False
+
+def fix_french(text):
+    """Fix common French character encoding issues"""
+    if not text:
+        return text
+    
+    replacements = {
+        'Ã‰': 'É', 'Ãˆ': 'È', 'ÃŠ': 'Ê', 'Ã‹': 'Ë',
+        'Ã©': 'é', 'Ã¨': 'è', 'Ãª': 'ê', 'Ã«': 'ë',
+        'Ã´': 'ô', 'Ã»': 'û', 'Ã¹': 'ù', 'Ã®': 'î',
+        'Ã¯': 'ï', 'Ã§': 'ç', 'Ã ': 'à', 'Ã¢': 'â',
+        'Å"': 'œ', 'â€"': '–', 'â€™': '\'',
+    }
+    
+    for bad, good in replacements.items():
+        text = text.replace(bad, good)
+    
+    return text
 
 def safe_int(value):
     try:
@@ -73,7 +113,7 @@ def parse_csv():
         rows = list(reader)
         
         for row in rows:
-            nom = row.get("Nom_installation", "").strip()
+            nom = fix_french(row.get("Nom_installation", "").strip())
             if "Total" in nom or not nom:
                 continue
             
@@ -131,18 +171,26 @@ def calculate_global_stats(hospitals):
         "total_over_48h": total_over_48h
     }
 
-def save_json(hospitals, global_stats, gov_update_time):
+def save_json(hospitals, global_stats, gov_update_time, is_fresh=True):
     data = {
         "last_update": datetime.now().isoformat(),
         "source": "MSSS / Gouvernement du Québec",
-        "source_url": CKAN_API_URL,
+        "source_url": DIRECT_CSV_URL,
         "gov_data_timestamp": gov_update_time,
+        "data_freshness": "live" if is_fresh else "cached",
         "global_stats": global_stats,
         "hospitals": hospitals
     }
+    
+    # Save main file
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
-    print(f"Saved to {OUTPUT_FILE}")
+    
+    # Create backup
+    with open(BACKUP_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    
+    print(f"Saved to {OUTPUT_FILE} (backup: {BACKUP_FILE})")
     print(f"Total hospitals: {len(hospitals)}")
     print(f"Global occupancy: {global_stats['avg_occupancy']}%")
     print(f"Government data from: {gov_update_time}")
@@ -151,13 +199,26 @@ def main():
     print("=" * 50)
     print("MyVita ER Scraper")
     print("=" * 50)
+    
     if download_csv():
         hospitals, gov_update_time = parse_csv()
         global_stats = calculate_global_stats(hospitals)
-        save_json(hospitals, global_stats, gov_update_time)
+        save_json(hospitals, global_stats, gov_update_time, is_fresh=True)
         print("✅ Scrape complete!")
     else:
-        print("❌ Scrape failed!")
+        # Try loading backup
+        print("⚠️ Download failed, checking backup...")
+        if os.path.exists(BACKUP_FILE):
+            print("✅ Using cached backup data")
+            with open(BACKUP_FILE, "r", encoding="utf-8") as f:
+                backup_data = json.load(f)
+            backup_data["data_freshness"] = "cached"
+            backup_data["last_update"] = datetime.now().isoformat()
+            with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+                json.dump(backup_data, f, ensure_ascii=False, indent=2)
+            print("✅ Backup restored!")
+        else:
+            print("❌ Scrape failed — no backup available!")
 
 if __name__ == "__main__":
     main()
