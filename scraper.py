@@ -3,8 +3,18 @@ import json
 import requests
 from datetime import datetime
 
-# Direct CSV URL from MSSS
-CSV_URL = "https://www.msss.gouv.qc.ca/professionnels/statistiques/documents/urgences/Releve_horaire_urgences_7jours_nbpers.csv"
+# Use CKAN API to get the latest CSV download URL from MSSS
+CKAN_API_URL = "https://www.donneesquebec.ca/api/3/action/resource_show?id=b256f87f-40ec-4c79-bdba-a23e9c50e741"
+
+def get_csv_url():
+    """Get the latest CSV download URL from CKAN API"""
+    try:
+        response = requests.get(CKAN_API_URL)
+        data = response.json()
+        return data['result']['url']
+    except Exception as e:
+        print(f"CKAN API failed: {e}, using direct URL")
+        return "https://www.msss.gouv.qc.ca/professionnels/statistiques/documents/urgences/Releve_horaire_urgences_7jours_nbpers.csv"
 
 # Output file
 OUTPUT_FILE = "er_data.json"
@@ -26,6 +36,10 @@ def download_csv():
     """Download the latest CSV from MSSS"""
     print(f"[{datetime.now()}] Downloading CSV...")
     
+    # Get the latest URL
+    csv_url = get_csv_url()
+    print(f"Using URL: {csv_url}")
+    
     # Headers to mimic a real browser
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -33,19 +47,7 @@ def download_csv():
         'Accept-Language': 'fr-CA,fr;q=0.9,en;q=0.8',
     }
     
-    response = requests.get(CSV_URL, headers=headers)
-    response.encoding = 'utf-8'
-    
-    if response.status_code == 200:
-        with open("temp_er_data.csv", "w", encoding="utf-8") as f:
-            f.write(response.text)
-        print(f"Downloaded successfully ({len(response.text)} bytes)")
-        return True
-    else:
-        print(f"Failed to download: {response.status_code}")
-        return False
-    
-    response = requests.get(CSV_URL, headers=headers)
+    response = requests.get(csv_url, headers=headers)
     response.encoding = 'utf-8'
     
     if response.status_code == 200:
@@ -161,7 +163,7 @@ def save_json(hospitals, global_stats):
     data = {
         "last_update": datetime.now().isoformat(),
         "source": "MSSS / Gouvernement du Québec",
-        "source_url": CSV_URL,
+        "source_url": get_csv_url(),
         "global_stats": global_stats,
         "hospitals": hospitals
     }
