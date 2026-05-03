@@ -54,6 +54,13 @@ def safe_float(value):
     except (ValueError, AttributeError):
         return 0.0
 
+def fix_encoding(text):
+    """Fix corrupted French characters"""
+    try:
+        return text.encode('latin1').decode('utf-8')
+    except:
+        return text
+
 def parse_csv():
     """Parse the CSV and extract hospital data"""
     print("Parsing CSV...")
@@ -66,15 +73,17 @@ def parse_csv():
         
         col_nom = find_column(headers, ["installation", "établissement", "etablissement"])
         col_region = find_column(headers, ["RSS", "région", "region"])
-        col_civieres_fonc = find_column(headers, ["civière", "fonctionnelle", "civiere"])
-        col_civieres_occ = find_column(headers, ["civière", "occupée", "civiere", "occupee"])
-        col_24h = find_column(headers, ["24", "heures", "civiere", "civière"])
-        col_48h = find_column(headers, ["48", "heures", "civiere", "civière"])
-        col_total = find_column(headers, ["total", "patients", "presents", "urgence"])
+        col_civieres_fonc = find_column(headers, ["civière", "fonctionnelle", "civiere", "civieres", "fonctionnelles"])
+        col_civieres_occ = find_column(headers, ["civière", "occupée", "civiere", "occupee", "civieres"])
+        col_24h = find_column(headers, ["24", "heures", "civiere", "civière", "civieres"])
+        col_48h = find_column(headers, ["48", "heures", "civiere", "civière", "civieres"])
+        col_total = find_column(headers, ["total", "patients", "presents", "urgence", "présents"])
         col_attente = find_column(headers, ["attente", "PEC"])
         
         for row in reader:
             nom_installation = row.get(col_nom, "").strip()
+            nom_installation = fix_encoding(nom_installation)
+            
             if "Total" in nom_installation or not nom_installation:
                 continue
             
@@ -117,7 +126,13 @@ def calculate_global_stats(hospitals):
     total_waiting = sum(h["patients_waiting"] for h in hospitals)
     total_over_24h = sum(h["patients_over_24h"] for h in hospitals)
     total_over_48h = sum(h["patients_over_48h"] for h in hospitals)
-    avg_occupancy = round(sum(h["occupancy_rate"] for h in hospitals) / len(hospitals), 1)
+    
+    # Only average hospitals that have stretchers
+    hospitals_with_stretchers = [h for h in hospitals if h["total_stretchers"] > 0]
+    if hospitals_with_stretchers:
+        avg_occupancy = round(sum(h["occupancy_rate"] for h in hospitals_with_stretchers) / len(hospitals_with_stretchers), 1)
+    else:
+        avg_occupancy = 0
     
     return {
         "total_patients": total_patients,
