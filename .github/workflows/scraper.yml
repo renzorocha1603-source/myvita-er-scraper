@@ -21,6 +21,15 @@ jobs:
       - name: Install dependencies
         run: pip install requests
       
+      - name: Test CKAN API
+        run: |
+          python -c "
+          import requests
+          r = requests.get('https://www.donneesquebec.ca/api/3/action/datastore_search?resource_id=b256f87f-40ec-4c79-bdba-a23e9c50e741&limit=5', headers={'User-Agent': 'Mozilla/5.0'})
+          print('Status:', r.status_code)
+          print('Success:', 'success' in r.text)
+          "
+      
       - name: Run scraper
         run: python scraper.py
       
