@@ -37,6 +37,8 @@ def parse_csv():
     
     with open("temp_er_data.csv", "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
+        # ★ FIX: Strip extra spaces/tabs from ALL column names
+        reader.fieldnames = [name.strip() for name in reader.fieldnames]
         rows = list(reader)
         
         for row in rows:
@@ -104,7 +106,7 @@ def save_json(hospitals, global_stats, gov_update_time):
         "last_update": datetime.now().isoformat(),
         "source": "MSSS / Gouvernement du Québec",
         "source_url": CSV_URL,
-        "gov_data_timestamp": gov_update_time,  # ★ NEW: Government's official update time
+        "gov_data_timestamp": gov_update_time,
         "global_stats": global_stats,
         "hospitals": hospitals
     }
