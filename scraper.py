@@ -3,25 +3,56 @@ import json
 import requests
 from datetime import datetime
 
-CSV_URL = "https://www.msss.gouv.qc.ca/professionnels/statistiques/documents/urgences/Releve_horaire_urgences_7jours_nbpers.csv"
+# Use CKAN API to get the actual download URL
+CKAN_API_URL = "https://www.donneesquebec.ca/api/3/action/resource_show?id=b256f87f-40ec-4c79-bdba-a23e9c50e741"
 OUTPUT_FILE = "er_data.json"
 
 def download_csv():
-    print(f"[{datetime.now()}] Downloading CSV...")
+    """Download the latest CSV via CKAN API"""
+    print(f"[{datetime.now()}] Getting download URL from CKAN API...")
     headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+    }
+    
+    # Step 1: Get the real download URL from CKAN
+    try:
+        ckan_response = requests.get(CKAN_API_URL, headers=headers, timeout=30)
+        if ckan_response.status_code == 200:
+            ckan_data = ckan_response.json()
+            csv_url = ckan_data.get("result", {}).get("url", "")
+            
+            if not csv_url:
+                # Fallback to direct URL
+                csv_url = "https://www.msss.gouv.qc.ca/professionnels/statistiques/documents/urgences/Releve_horaire_urgences_7jours_nbpers.csv"
+            
+            print(f"Got download URL: {csv_url}")
+        else:
+            print(f"CKAN API failed: {ckan_response.status_code}")
+            return False
+    except Exception as e:
+        print(f"CKAN API error: {e}")
+        return False
+    
+    # Step 2: Download the CSV
+    print(f"[{datetime.now()}] Downloading CSV...")
+    csv_headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'text/csv,application/csv,text/plain',
         'Accept-Language': 'fr-CA,fr;q=0.9,en;q=0.8',
+        'Referer': 'https://www.donneesquebec.ca/',
     }
-    response = requests.get(CSV_URL, headers=headers)
+    
+    response = requests.get(csv_url, headers=csv_headers, timeout=30)
     response.encoding = 'utf-8'
+    
     if response.status_code == 200:
         with open("temp_er_data.csv", "w", encoding="utf-8") as f:
             f.write(response.text)
         print(f"Downloaded successfully ({len(response.text)} bytes)")
         return True
     else:
-        print(f"Failed to download: {response.status_code}")
+        print(f"Failed to download CSV: {response.status_code}")
         return False
 
 def safe_int(value):
@@ -37,7 +68,7 @@ def parse_csv():
     
     with open("temp_er_data.csv", "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
-        # ★ FIX: Strip extra spaces/tabs from ALL column names
+        # Strip extra spaces/tabs from ALL column names
         reader.fieldnames = [name.strip() for name in reader.fieldnames]
         rows = list(reader)
         
@@ -70,7 +101,6 @@ def parse_csv():
                 "occupancy_rate": occupancy_rate,
             })
         
-        # Get government's official timestamp from the last row
         if rows:
             gov_update_time = rows[-1].get("Mise_a_jour", "").strip()
     
@@ -105,7 +135,7 @@ def save_json(hospitals, global_stats, gov_update_time):
     data = {
         "last_update": datetime.now().isoformat(),
         "source": "MSSS / Gouvernement du Québec",
-        "source_url": CSV_URL,
+        "source_url": CKAN_API_URL,
         "gov_data_timestamp": gov_update_time,
         "global_stats": global_stats,
         "hospitals": hospitals
