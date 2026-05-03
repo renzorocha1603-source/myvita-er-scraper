@@ -28,6 +28,9 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add er_data.json
+          ls -la
+          git add er_data.json temp_er_data.csv 2>/dev/null || true
+          git add -A
+          git status
           git diff --staged --quiet || git commit -m "Update ER data [skip ci]"
           git push
