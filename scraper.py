@@ -2,7 +2,6 @@ import csv
 import io
 import json
 import os
-import random
 import time
 import requests
 from datetime import datetime
@@ -18,20 +17,10 @@ OUTPUT_FILE = "er_data.json"
 BACKUP_FILE = "er_data_backup.json"
 HEALTH_FILE = "health_check.json"
 
-def get_headers(content_type='json'):
-    """Browser-like headers to avoid 403/502 blocks"""
-    return {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/json' if content_type == 'json' else 'text/csv,application/csv,text/plain',
-        'Accept-Language': 'fr-CA,fr;q=0.9,en;q=0.8',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-    }
-
 def safe_int(value):
     try:
         return int(str(value).strip())
-    except:
+    except (ValueError, AttributeError):
         return 0
 
 def find_column(headers, keywords):
@@ -69,45 +58,51 @@ def get_live_data():
     """Layer 1: CKAN Datastore API — returns JSON directly"""
     print("   [Layer 1] CKAN Datastore API...")
     
-    for attempt in range(3):
-        try:
-            url = f"{CKAN_DATASTORE_API}&limit=200&_cb={random.randint(10000,99999)}"
-            response = requests.get(url, headers=get_headers('json'), timeout=30)
+    url = f"{CKAN_DATASTORE_API}&limit=200"
+    
+    try:
+        response = requests.get(
+            url, 
+            headers={'User-Agent': 'Mozilla/5.0'},
+            timeout=30
+        )
+        
+        print(f"   Debug: HTTP Status = {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            records = data.get("result", {}).get("records", [])
+            total = data.get("result", {}).get("total", 0)
+            print(f"   Debug: API reports {total} total records, received {len(records)}")
             
-            if response.status_code == 200:
-                data = response.json()
-                records = data.get("result", {}).get("records", [])
-                print(f"   Debug: Raw records from API: {len(records)}")
+            if records:
+                hospitals = []
+                gov_time = ""
                 
-                if records:
-                    hospitals = []
-                    gov_time = ""
+                for record in records:
+                    nom = record.get("Nom_installation", "").strip()
+                    if "Total" in nom or "Ensemble" in nom or not nom:
+                        continue
                     
-                    for record in records:
-                        nom = record.get("Nom_installation", "").strip()
-                        if "Total" in nom or "Ensemble" in nom or not nom:
-                            continue
-                        
-                        h = parse_hospital_from_json(record)
-                        h["occupancy_rate"] = calculate_occupancy(h)
-                        hospitals.append(h)
-                        
-                        if not gov_time:
-                            gov_time = record.get("Mise_a_jour", "")
+                    h = parse_hospital_from_json(record)
+                    h["occupancy_rate"] = calculate_occupancy(h)
+                    hospitals.append(h)
                     
-                    if hospitals:
-                        print(f"   ✅ Layer 1 SUCCESS: {len(hospitals)} hospitals")
-                        return hospitals, gov_time
+                    if not gov_time:
+                        gov_time = record.get("Mise_a_jour", "")
+                
+                if hospitals:
+                    print(f"   ✅ Layer 1 SUCCESS: {len(hospitals)} hospitals")
+                    return hospitals, gov_time
+                else:
+                    print(f"   ⚠️ No hospitals parsed (filtered out)")
+            else:
+                print(f"   ⚠️ No records in API response")
+        else:
+            print(f"   ❌ HTTP {response.status_code}: {response.text[:200]}")
             
-            elif response.status_code == 429:
-                print(f"   ⏳ Rate limited, waiting {attempt + 1}s...")
-                time.sleep(attempt + 1)
-                continue
-                
-        except Exception as e:
-            print(f"   ⚠️ Attempt {attempt + 1}: {e}")
-            if attempt < 2:
-                time.sleep(1)
+    except Exception as e:
+        print(f"   ❌ Layer 1 error: {e}")
     
     print("   ❌ Layer 1 failed")
     return None, None
@@ -117,7 +112,11 @@ def get_csv_url():
     print("   [Layer 2a] CKAN Resource API...")
     
     try:
-        response = requests.get(CKAN_RESOURCE_API, headers=get_headers('json'), timeout=15)
+        response = requests.get(
+            CKAN_RESOURCE_API, 
+            headers={'User-Agent': 'Mozilla/5.0'}, 
+            timeout=15
+        )
         if response.status_code == 200:
             data = response.json()
             csv_url = data.get("result", {}).get("url", "")
@@ -131,11 +130,19 @@ def get_csv_url():
     return MSSS_DIRECT_URL
 
 def download_csv_as_json(url):
-    """Layer 2b: Download CSV and parse it — uses auto-detection for column names"""
+    """Layer 2b: Download CSV and parse it"""
     print(f"   [Layer 2b] Downloading CSV...")
     
     try:
-        response = requests.get(url, headers=get_headers('csv'), timeout=30)
+        response = requests.get(
+            url, 
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'text/csv,application/csv,text/plain',
+                'Accept-Language': 'fr-CA,fr;q=0.9,en;q=0.8',
+            }, 
+            timeout=30
+        )
         if response.status_code != 200:
             print(f"   ❌ HTTP {response.status_code}")
             return None, None
@@ -157,7 +164,6 @@ def download_csv_as_json(url):
         reader = csv.DictReader(io.StringIO(text))
         headers = reader.fieldnames or []
         
-        # Auto-detect column names
         col_nom = find_column(headers, ["installation", "etablissement"])
         col_region = find_column(headers, ["RSS", "region"])
         col_civieres_fonc = find_column(headers, ["civiere", "fonctionnelle", "civieres", "fonctionnelles"])
