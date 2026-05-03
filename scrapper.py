@@ -26,11 +26,24 @@ def download_csv():
     """Download the latest CSV from MSSS"""
     print(f"[{datetime.now()}] Downloading CSV...")
     
+    # Headers to mimic a real browser
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/csv,application/csv,text/plain',
         'Accept-Language': 'fr-CA,fr;q=0.9,en;q=0.8',
     }
+    
+    response = requests.get(CSV_URL, headers=headers)
+    response.encoding = 'utf-8'
+    
+    if response.status_code == 200:
+        with open("temp_er_data.csv", "w", encoding="utf-8") as f:
+            f.write(response.text)
+        print(f"Downloaded successfully ({len(response.text)} bytes)")
+        return True
+    else:
+        print(f"Failed to download: {response.status_code}")
+        return False
     
     response = requests.get(CSV_URL, headers=headers)
     response.encoding = 'utf-8'
