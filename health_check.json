@@ -1,7 +1,8 @@
 {
   "status": "degraded",
-  "last_successful_run": "2026-05-03T20:50:13.569119",
+  "last_successful_run": "2026-05-03T21:37:11.185683",
   "data_freshness": "cached",
   "total_hospitals": 120,
-  "avg_occupancy": 82.2
+  "avg_occupancy": 82.2,
+  "source_layers": "CKAN Datastore API (primary), CSV fallback, JSON backup"
 }
