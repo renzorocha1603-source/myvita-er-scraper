@@ -19,9 +19,20 @@ HEALTH_FILE = "health_check.json"
 
 def safe_int(value):
     try:
+        if isinstance(value, int):
+            return value
+        if isinstance(value, float):
+            return int(value)
         return int(str(value).strip())
-    except (ValueError, AttributeError):
+    except (ValueError, AttributeError, TypeError):
         return 0
+
+def safe_str(value):
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value.strip()
+    return str(value).strip()
 
 def find_column(headers, keywords):
     """Find a column name by matching keywords (case-insensitive)"""
@@ -37,14 +48,14 @@ def find_column(headers, keywords):
 def parse_hospital_from_json(record):
     """Parse a single hospital record from CKAN JSON"""
     return {
-        "name": record.get("Nom_installation", "").strip(),
-        "region": record.get("RSS", "").strip(),
-        "total_stretchers": safe_int(record.get("Nombre_de_civieres_fonctionnelles", "0")),
-        "patients_on_stretcher": safe_int(record.get("Nombre_de_civieres_occupees", "0")),
-        "patients_over_24h": safe_int(record.get("Nombre_de_patients_sur_civiere_plus_de_24_heures", "0")),
-        "patients_over_48h": safe_int(record.get("Nombre_de_patients_sur_civiere_plus_de_48_heures", "0")),
-        "total_patients": safe_int(record.get("Nombre_total_de_patients_presents_a_lurgence", "0")),
-        "patients_waiting": safe_int(record.get("Nombre_total_de_patients_en_attente_de_PEC", "0")),
+        "name": safe_str(record.get("Nom_installation", "")),
+        "region": safe_str(record.get("RSS", "")),
+        "total_stretchers": safe_int(record.get("Nombre_de_civieres_fonctionnelles", 0)),
+        "patients_on_stretcher": safe_int(record.get("Nombre_de_civieres_occupees", 0)),
+        "patients_over_24h": safe_int(record.get("Nombre_de_patients_sur_civiere_plus_de_24_heures", 0)),
+        "patients_over_48h": safe_int(record.get("Nombre_de_patients_sur_civiere_plus_de_48_heures", 0)),
+        "total_patients": safe_int(record.get("Nombre_total_de_patients_presents_a_lurgence", 0)),
+        "patients_waiting": safe_int(record.get("Nombre_total_de_patients_en_attente_de_PEC", 0)),
         "occupancy_rate": 0,
     }
 
@@ -80,8 +91,8 @@ def get_live_data():
                 gov_time = ""
                 
                 for record in records:
-                    nom = record.get("Nom_installation", "").strip()
-                    if "Total" in nom or "Ensemble" in nom or not nom:
+                    nom = safe_str(record.get("Nom_installation", ""))
+                    if not nom or "Total" in nom or "Ensemble" in nom:
                         continue
                     
                     h = parse_hospital_from_json(record)
@@ -89,7 +100,7 @@ def get_live_data():
                     hospitals.append(h)
                     
                     if not gov_time:
-                        gov_time = record.get("Mise_a_jour", "")
+                        gov_time = safe_str(record.get("Mise_a_jour", ""))
                 
                 if hospitals:
                     print(f"   ✅ Layer 1 SUCCESS: {len(hospitals)} hospitals")
@@ -180,8 +191,8 @@ def download_csv_as_json(url):
         gov_time = ""
         
         for row in reader:
-            nom = row.get(col_nom, "").strip()
-            if "Total" in nom or "Ensemble" in nom or not nom:
+            nom = safe_str(row.get(col_nom, ""))
+            if not nom or "Total" in nom or "Ensemble" in nom:
                 continue
             
             total_civieres = safe_int(row.get(col_civieres_fonc, "0"))
@@ -189,7 +200,7 @@ def download_csv_as_json(url):
             
             h = {
                 "name": nom,
-                "region": row.get(col_region, "").strip(),
+                "region": safe_str(row.get(col_region, "")),
                 "total_stretchers": total_civieres,
                 "patients_on_stretcher": civieres_occupees,
                 "patients_over_24h": safe_int(row.get(col_24h, "0")),
@@ -201,7 +212,7 @@ def download_csv_as_json(url):
             hospitals.append(h)
             
             if not gov_time and col_miseajour:
-                gov_time = row.get(col_miseajour, "").strip()
+                gov_time = safe_str(row.get(col_miseajour, ""))
         
         if hospitals:
             print(f"   ✅ Layer 2b SUCCESS: {len(hospitals)} hospitals from CSV")
