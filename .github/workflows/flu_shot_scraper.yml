@@ -1,0 +1,33 @@
+name: Run Flu Shot Scraper Daily
+
+on:
+  schedule:
+    - cron: '0 8 * * *'  # Runs every day at 8 AM
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: pip install requests
+      
+      - name: Run flu shot scraper
+        run: python flu_shot_scraper.py
+      
+      - name: Commit and push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add flu_shots.json
+          git diff --staged --quiet || git commit -m "Update flu shot data [skip ci]"
+          git push
