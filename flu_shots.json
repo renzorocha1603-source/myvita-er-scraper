@@ -1,0 +1,51 @@
+{
+  "last_update": "2026-05-04T09:36:07.831488",
+  "source": "Gouvernement du Québec / MSSS",
+  "info": {
+    "en": "Flu shots are available at pharmacies, CLSCs, and medical clinics across Quebec. The vaccine is free for at-risk groups.",
+    "fr": "Les vaccins contre la grippe sont disponibles dans les pharmacies, CLSC et cliniques médicales partout au Québec. Le vaccin est gratuit pour les groupes à risque."
+  },
+  "where_to_get": [
+    {
+      "type": "pharmacy",
+      "name_en": "Most pharmacies (Jean Coutu, Pharmaprix, Uniprix, etc.)",
+      "name_fr": "La plupart des pharmacies (Jean Coutu, Pharmaprix, Uniprix, etc.)",
+      "note_en": "Walk-in or appointment. Usually $15-20 if not covered.",
+      "note_fr": "Sans rendez-vous ou sur rendez-vous. Généralement 15-20$ si non couvert."
+    },
+    {
+      "type": "clsc",
+      "name_en": "Local CLSC",
+      "name_fr": "CLSC local",
+      "note_en": "Free for at-risk groups. Call or check online for hours.",
+      "note_fr": "Gratuit pour les groupes à risque. Appelez ou vérifiez en ligne pour les horaires."
+    },
+    {
+      "type": "clinic",
+      "name_en": "Medical clinics and GMF",
+      "name_fr": "Cliniques médicales et GMF",
+      "note_en": "Ask your family doctor or check with your GMF.",
+      "note_fr": "Demandez à votre médecin de famille ou vérifiez auprès de votre GMF."
+    }
+  ],
+  "government_links": {
+    "en": "https://www.quebec.ca/en/health/health-issues/flu-cold-and-gastroenteritis/flu-influenza/vaccination",
+    "fr": "https://www.quebec.ca/sante/problemes-de-sante/grippe-rhume-et-gastroenterite/grippe-influenza/vaccination"
+  },
+  "at_risk_groups": {
+    "en": [
+      "People aged 60 and over",
+      "Children aged 6 months to 17 years with chronic diseases",
+      "Pregnant women",
+      "Healthcare workers",
+      "People living in CHSLDs or intermediate resources"
+    ],
+    "fr": [
+      "Personnes âgées de 60 ans et plus",
+      "Enfants de 6 mois à 17 ans avec maladies chroniques",
+      "Femmes enceintes",
+      "Travailleurs de la santé",
+      "Personnes vivant en CHSLD ou ressources intermédiaires"
+    ]
+  }
+}
