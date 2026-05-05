@@ -5,7 +5,7 @@
     "lat": 45.50069269999999,
     "lng": -73.56048729999999,
     "rating": 3.9,
-    "city": "Montreal"
+    "area": "Downtown"
   },
   {
     "name": "Jean Coutu",
@@ -13,7 +13,7 @@
     "lat": 45.51536979999999,
     "lng": -73.5751127,
     "rating": 3.2,
-    "city": "Montreal"
+    "area": "Downtown"
   },
   {
     "name": "Pharmaprix",
@@ -21,7 +21,7 @@
     "lat": 45.50178100000001,
     "lng": -73.56775499999999,
     "rating": 3.5,
-    "city": "Montreal"
+    "area": "Downtown"
   },
   {
     "name": "Pharmacie Jean Coutu",
@@ -29,7 +29,7 @@
     "lat": 45.5035246,
     "lng": -73.5713153,
     "rating": 2.6,
-    "city": "Montreal"
+    "area": "Downtown"
   },
   {
     "name": "PJC Jean Coutu Santé-Beauté",
@@ -37,23 +37,7 @@
     "lat": 45.50776239999999,
     "lng": -73.56370609999999,
     "rating": 3.3,
-    "city": "Montreal"
-  },
-  {
-    "name": "Animomédic Plateau Mont-Royal Clinique Vétérinaire",
-    "address": "4000 Avenue De Lorimier, Montréal",
-    "lat": 45.5317161,
-    "lng": -73.5655053,
-    "rating": 4.2,
-    "city": "Montreal"
-  },
-  {
-    "name": "PJC Jean Coutu Santé",
-    "address": "3175 Chemin de la Côte-Sainte-Catherine, Montréal",
-    "lat": 45.50348349999999,
-    "lng": -73.62438620000002,
-    "rating": 3.7,
-    "city": "Montreal"
+    "area": "Downtown"
   },
   {
     "name": "Uniprix Santé Amir Helkany - Pharmacie affiliée",
@@ -61,7 +45,7 @@
     "lat": 45.5001105,
     "lng": -73.5665217,
     "rating": 4.3,
-    "city": "Montreal"
+    "area": "Downtown"
   },
   {
     "name": "Jean Coutu Pharmacy",
@@ -69,7 +53,7 @@
     "lat": 45.49411019999999,
     "lng": -73.5793181,
     "rating": 2.9,
-    "city": "Montreal"
+    "area": "Downtown"
   },
   {
     "name": "Uniprix Santé Nadine Fadel - Pharmacie affiliée",
@@ -77,743 +61,15 @@
     "lat": 45.518717,
     "lng": -73.594332,
     "rating": 3.9,
-    "city": "Montreal"
-  },
-  {
-    "name": "Uniprix Pharmacie Mariane Gagnon Pharmacienne inc.",
-    "address": "5101 Rue Saint-Denis, Montréal",
-    "lat": 45.52712999999999,
-    "lng": -73.589528,
-    "rating": 3,
-    "city": "Montreal"
-  },
-  {
-    "name": "Veterinary Hospital Passionimo Journet",
-    "address": "2320 Avenue du Mont-Royal Est, Montréal",
-    "lat": 45.53768859999999,
-    "lng": -73.569649,
-    "rating": 4.1,
-    "city": "Montreal"
-  },
-  {
-    "name": "Proxim affiliated pharmacy - Emmanuel Abikhzer",
-    "address": "3755 Chemin de la Côte-Sainte-Catherine, Montréal",
-    "lat": 45.49794300000001,
-    "lng": -73.6287309,
-    "rating": 4.1,
-    "city": "Montreal"
-  },
-  {
-    "name": "Maxi",
-    "address": "2655 Chemin de Chambly, Longueuil",
-    "lat": 45.5247714,
-    "lng": -73.4666359,
-    "rating": 4.1,
-    "city": "Montreal"
-  },
-  {
-    "name": "Jean Coutu Pharmacy Dave Larouche & Vy Ky Linh Le",
-    "address": "5815 Rue Sherbrooke Ouest, Montréal",
-    "lat": 45.4697955,
-    "lng": -73.6179302,
-    "rating": 3.4,
-    "city": "Montreal"
-  },
-  {
-    "name": "Pharmacy Jean Coutu",
-    "address": "5345 Chemin Queen Mary, Montréal",
-    "lat": 45.4830003,
-    "lng": -73.6300923,
-    "rating": 4,
-    "city": "Montreal"
-  },
-  {
-    "name": "PJC",
-    "address": "1221 Rue Fleury Est, Montréal",
-    "lat": 45.5596508,
-    "lng": -73.6587062,
-    "rating": 3.3,
-    "city": "Montreal"
-  },
-  {
-    "name": "Familiprix",
-    "address": "75 Boulevard Charest Est, Québec",
-    "lat": 46.811588,
-    "lng": -71.22966199999999,
-    "rating": 4.4,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Familiprix Santé",
-    "address": "2398 Avenue Maufils, Québec",
-    "lat": 46.842416,
-    "lng": -71.228539,
-    "rating": 4.5,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Uniprix Martin Graham pharmacien inc.",
-    "address": "905 Boulevard René-Lévesque Ouest, Québec",
-    "lat": 46.79678999999999,
-    "lng": -71.23947799999999,
-    "rating": 3.4,
-    "city": "Quebec City"
+    "area": "Downtown"
   },
   {
     "name": "Familiprix Clinique",
-    "address": "1761 Rue Sheppard, Québec",
-    "lat": 46.7836506,
-    "lng": -71.2497585,
-    "rating": 3.9,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Globalvet - Clinique vétérinaire du Faubourg",
-    "address": "36 Boulevard René-Lévesque Est, Québec",
-    "lat": 46.8056165,
-    "lng": -71.224841,
-    "rating": 3.9,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Familiprix - André Villeneuve",
-    "address": "241 Chemin Sainte-Foy, Québec",
-    "lat": 46.8045659,
-    "lng": -71.2305834,
-    "rating": 4.7,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Proximed pharmacie affiliée - Blais, Côté et Tremblay",
-    "address": "1750 Avenue de Vitré, Québec",
-    "lat": 46.83703999999999,
-    "lng": -71.22359999999999,
-    "rating": 4.3,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Proxim Frédéric Lahoud",
-    "address": "1149 Avenue Cartier, Québec",
-    "lat": 46.80313699999999,
-    "lng": -71.22494499999999,
-    "rating": 4.5,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Brunet A-A. Gobeil, pharm. prop. Affiliée",
-    "address": "1019 Avenue Cartier, Québec",
-    "lat": 46.8041917,
-    "lng": -71.2262877,
-    "rating": 4.3,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Familiprix Extra",
-    "address": "707 Boulevard Charest Ouest, Québec",
-    "lat": 46.8046002,
-    "lng": -71.242511,
-    "rating": 3.6,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Brunet R. Lafleur, S. Bouliane-Kronmüller et I. Claveau pharm. prop. Affiliés",
-    "address": "210 Rue Marie-de-l'Incarnation, Québec",
-    "lat": 46.8086784,
-    "lng": -71.2462604,
-    "rating": 3.9,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Uniprix Clinique Anne Larochelle Cadoret et Jérôme Bergeron - Pharmacie affiliée",
-    "address": "1200 des, Rue des Soeurs-du-Bon-Pasteur local 200, Québec",
-    "lat": 46.797132,
-    "lng": -71.250973,
-    "rating": 4.6,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Walmart Pharmacy",
-    "address": "1200 Boulevard Alphonse-Desjardins, Lévis",
-    "lat": 46.7963892,
-    "lng": -71.1725215,
-    "rating": 4.1,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Brunet R. Hamani Abdou, pharm. prop. Affiliée",
-    "address": "303 Boulevard Pierre-Bertrand, Québec",
-    "lat": 46.81417279999999,
-    "lng": -71.2641589,
-    "rating": 4,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Accès pharma - Pharmacie Marie-Christine B. Mailloux(affiliée à)",
-    "address": "550 Boulevard Wilfrid-Hamel, Québec",
-    "lat": 46.82448429999999,
-    "lng": -71.2528925,
+    "address": "933 Boulevard René-Lévesque Est, Montréal",
+    "lat": 45.515424,
+    "lng": -73.55584999999999,
     "rating": 3.8,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Uniprix Pierre-Luc Boivin, Emilie Caron et Joanie Gaudreault",
-    "address": "5700 Boulevard Étienne-Dallaire Suite 120, Lévis",
-    "lat": 46.7914279,
-    "lng": -71.1656473,
-    "rating": 4.2,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Brunet C. Faucher, J-P. Paradis, pharm. prop. Affiliés",
-    "address": "6700 Rue Saint-Georges, Lévis",
-    "lat": 46.81536089999999,
-    "lng": -71.17244649999999,
-    "rating": 4.2,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Brunet G. Fleury, V. Blanchet, M. Aparecida Sobrinho, E. Corbin, pharm. prop.",
-    "address": "605 Rue Saint-Joseph Est, Québec",
-    "lat": 46.8150335,
-    "lng": -71.22162639999999,
-    "rating": 4.1,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Brunet M. Guilbert, K. Larouche, pharm. prop. Affiliés",
-    "address": "725 Boulevard Lebourgneuf, Québec",
-    "lat": 46.8428399,
-    "lng": -71.2796948,
-    "rating": 3.7,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Fierbourg",
-    "address": "800 Rue de la Sorbonne, Charlesbourg",
-    "lat": 46.86326,
-    "lng": -71.255845,
-    "rating": 3.8,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Pharmaprix Farah Ettis",
-    "address": "682 Avenue Royale, Québec City",
-    "lat": 46.860535,
-    "lng": -71.189647,
-    "rating": 3.9,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Brunet",
-    "address": "5000 3e Avenue Ouest, Québec",
-    "lat": 46.845825,
-    "lng": -71.25729989999999,
-    "rating": 3.9,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Brunet M. Aubert, J-F. Boulanger, F. Frédérick-Dubois, pharm. prop. Affiliés",
-    "address": "3730 Rue du Campanile, Québec",
-    "lat": 46.7614355,
-    "lng": -71.3340951,
-    "rating": 3.8,
-    "city": "Quebec City"
-  },
-  {
-    "name": "Pharmacie Frayne & associés",
-    "address": "2012 Boulevard René-Laennec Bureau 275, Laval",
-    "lat": 45.6088517,
-    "lng": -73.7204256,
-    "rating": 4.4,
-    "city": "Laval"
-  },
-  {
-    "name": "Accès pharma - Pharmacie T. Sastre & A. Malkhassian (affiliée à)",
-    "address": "5205 Boulevard Robert-Bourassa, Laval",
-    "lat": 45.61086479999999,
-    "lng": -73.6976518,
-    "rating": 4.3,
-    "city": "Laval"
-  },
-  {
-    "name": "Pharmacie Multi-Soins",
-    "address": "76 Boulevard Bellerose Est, Laval",
-    "lat": 45.6136044,
-    "lng": -73.7308491,
-    "rating": 4.5,
-    "city": "Laval"
-  },
-  {
-    "name": "Uniprix Clinique Suzanne Mehanna - Pharmacie affiliée",
-    "address": "1435 Boulevard Saint-Martin Ouest Suite 202, Laval",
-    "lat": 45.570377,
-    "lng": -73.723927,
-    "rating": 4.1,
-    "city": "Laval"
-  },
-  {
-    "name": "Clini Plus",
-    "address": "1110 Boulevard Vanier, Laval",
-    "lat": 45.6109243,
-    "lng": -73.65822039999999,
-    "rating": 5,
-    "city": "Laval"
-  },
-  {
-    "name": "Veterinary Clinic 440 Inc.",
-    "address": "1676 Boulevard des Laurentides, Vimont",
-    "lat": 45.5958418,
-    "lng": -73.72123239999999,
-    "rating": 4.7,
-    "city": "Laval"
-  },
-  {
-    "name": "Brunet F Baho, M Najm, M Rabbat, pharm. prop. Affiliés",
-    "address": "1160 Boulevard de l'Avenir, Laval",
-    "lat": 45.563507,
-    "lng": -73.72433680000002,
-    "rating": 3.6,
-    "city": "Laval"
-  },
-  {
-    "name": "Uniprix Louis Allard et Amy Girard-Blanchette pharmaciens inc",
-    "address": "1759 Boulevard des Laurentides, Laval",
-    "lat": 45.59887699999999,
-    "lng": -73.723626,
-    "rating": 4.5,
-    "city": "Laval"
-  },
-  {
-    "name": "Proxim Fady Thomas et John Thomas",
-    "address": "1500 Montée Monette, Laval",
-    "lat": 45.601897,
-    "lng": -73.707241,
-    "rating": 5,
-    "city": "Laval"
-  },
-  {
-    "name": "shoppers drug mart",
-    "address": "2220 Boulevard des Laurentides, Vimont",
-    "lat": 45.6123074,
-    "lng": -73.7380819,
-    "rating": 3.6,
-    "city": "Laval"
-  },
-  {
-    "name": "Pharmacie Dominic Fournier",
-    "address": "5020 Boulevard des Laurentides, Laval",
-    "lat": 45.620009,
-    "lng": -73.746168,
-    "rating": 4.7,
-    "city": "Laval"
-  },
-  {
-    "name": "Uniprix Sante Chantal Zeidan",
-    "address": "3323 Boulevard de la Concorde Est, Laval",
-    "lat": 45.593823,
-    "lng": -73.664221,
-    "rating": 4.1,
-    "city": "Laval"
-  },
-  {
-    "name": "Pharmacie affiliée",
-    "address": "3323 Boulevard de la Concorde Est, Laval",
-    "lat": 45.593823,
-    "lng": -73.664221,
-    "rating": 1.5,
-    "city": "Laval"
-  },
-  {
-    "name": "Vincent Landry et Mélina Tsoumis, pharmaciens",
-    "address": "270 Boulevard de la Concorde Est, Laval",
-    "lat": 45.5776692,
-    "lng": -73.68159399999999,
-    "rating": 0,
-    "city": "Laval"
-  },
-  {
-    "name": "Pharmacie Familiprix Clinique - Suzanne Mehanna pharmacienne",
-    "address": "1435 Boulevard Saint-Martin Ouest, Laval",
-    "lat": 45.57047,
-    "lng": -73.7239422,
-    "rating": 0,
-    "city": "Laval"
-  },
-  {
-    "name": "Beautyretailer",
-    "address": "1446 Boulevard Saint-Martin Ouest Local 10, Laval",
-    "lat": 45.5696575,
-    "lng": -73.7237889,
-    "rating": 0,
-    "city": "Laval"
-  },
-  {
-    "name": "Pharmacie Suzanne Guirguis",
-    "address": "1110 Boulevard Vanier, Laval",
-    "lat": 45.6106239,
-    "lng": -73.6580807,
-    "rating": 4.5,
-    "city": "Laval"
-  },
-  {
-    "name": "Uniprix Suzanne Guirguis",
-    "address": "1110 Boulevard Vanier, Laval",
-    "lat": 45.611126,
-    "lng": -73.65798,
-    "rating": 5,
-    "city": "Laval"
-  },
-  {
-    "name": "Uniprix Gaétan Couillard & Simon Moretti",
-    "address": "6261 Boulevard des Laurentides, Laval",
-    "lat": 45.637241,
-    "lng": -73.75354200000001,
-    "rating": 4.2,
-    "city": "Laval"
-  },
-  {
-    "name": "Pharmacie Van Nguyen - Laval",
-    "address": "3025 Boulevard Tessier, Laval",
-    "lat": 45.56952849999999,
-    "lng": -73.74025759999999,
-    "rating": 5,
-    "city": "Laval"
-  },
-  {
-    "name": "Proxim Pharmacie Levon Benohanian et Hagop Kachichian Inc",
-    "address": "3915 Boulevard Samson, Laval",
-    "lat": 45.537125,
-    "lng": -73.74462299999999,
-    "rating": 4.9,
-    "city": "Laval"
-  },
-  {
-    "name": "Jean Coutu Drug Store Pharmacy",
-    "address": "4691 Boulevard Samson, Laval",
-    "lat": 45.5290876,
-    "lng": -73.7593551,
-    "rating": 3.1,
-    "city": "Laval"
-  },
-  {
-    "name": "Proxim Leen Alghazal Pharmacienne Inc.",
-    "address": "400 Place Juge Desnoyers #6, Laval",
-    "lat": 45.564324,
-    "lng": -73.67256139999999,
-    "rating": 0,
-    "city": "Laval"
-  },
-  {
-    "name": "Michel Quesnel Pharmacy",
-    "address": "195 Boulevard Gréber, Gatineau",
-    "lat": 45.4728173,
-    "lng": -75.7008867,
-    "rating": 4.4,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Pharmacie Walmart Gatineau",
-    "address": "640 Boulevard Maloney Ouest, Gatineau",
-    "lat": 45.4808266,
-    "lng": -75.6753463,
-    "rating": 2.8,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Redha Chadda pharmacien",
-    "address": "920 Boulevard Maloney Ouest, Gatineau",
-    "lat": 45.4780491,
-    "lng": -75.6893394,
-    "rating": 0,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Brunet F. Chatain, B. Gagnon, L. Awadalla, pharm. prop. Affiliés",
-    "address": "1150 Boulevard Saint-René Ouest, Gatineau",
-    "lat": 45.48819340000001,
-    "lng": -75.70230099999999,
-    "rating": 4,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Uniprix Martin Beaucage et Marie Kaldas",
-    "address": "22 Rue des Flandres, Gatineau",
-    "lat": 45.471179,
-    "lng": -75.718155,
-    "rating": 4.6,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Accès pharma - Pharmacie Shady Stefanos (affiliée à)",
-    "address": "51 Boulevard de la Gappe, Gatineau",
-    "lat": 45.464738,
-    "lng": -75.7200177,
-    "rating": 4.3,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Accès pharma - Pharmacie Jean-François Rochette (affiliée à)",
-    "address": "640 Boulevard Maloney Ouest, Gatineau",
-    "lat": 45.4812556,
-    "lng": -75.6756431,
-    "rating": 3.8,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Proximed pharmacie affiliée - Proxim Martin Touchette et Massimiliano Tantalo",
-    "address": "656 Boulevard Saint-Joseph, Gatineau",
-    "lat": 45.45270949999999,
-    "lng": -75.7385294,
-    "rating": 4.6,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Accès pharma - Pharmacie Martin Payer (affiliée à)",
-    "address": "425 Boulevard Saint-Joseph, Gatineau",
-    "lat": 45.44556600000001,
-    "lng": -75.733837,
-    "rating": 3.9,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Guardian New Edinburgh Pharmacy",
-    "address": "5 Beechwood Avenue, Ottawa",
-    "lat": 45.438767,
-    "lng": -75.677874,
-    "rating": 3.4,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Uniprix Daniel Coulombe",
-    "address": "325 Boulevard Gréber, Gatineau",
-    "lat": 45.477943,
-    "lng": -75.699908,
-    "rating": 4.4,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Pharmaprix Pharmacy Michael Iskedjian",
-    "address": "1160 Boulevard Saint-Joseph, Gatineau",
-    "lat": 45.47377,
-    "lng": -75.738533,
-    "rating": 3.4,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Proxim Banville Jonathan, Haddad Steven et Lamarche Patrick",
-    "address": "25 Rue De La Savane, Gatineau",
-    "lat": 45.4749062,
-    "lng": -75.70490989999999,
-    "rating": 4.4,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Pharmacie Grégoire Arakelian (Costco)",
-    "address": "1100 Boulevard Maloney Ouest, Gatineau",
-    "lat": 45.4745393,
-    "lng": -75.7001921,
-    "rating": 3.2,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Pharmacies",
-    "address": "200 Boulevard Gréber Suite M2, Gatineau",
-    "lat": 45.47323189999999,
-    "lng": -75.7024392,
-    "rating": 2.8,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Pharmacie Francis Chatain et Benoit Gagnon",
-    "address": "860 Boulevard Saint-René Ouest, Gatineau",
-    "lat": 45.489127,
-    "lng": -75.6880919,
-    "rating": 4.7,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Pharmacie Joëlle Jammal",
-    "address": "accès par la rue, 700 Boulevard du Carrefour, Gatineau",
-    "lat": 45.4856748,
-    "lng": -75.680808,
-    "rating": 5,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Pharmacie Jean-François Graillon, Inc.",
-    "address": "444 Boulevard de l'Hôpital #100, Gatineau",
-    "lat": 45.4908868,
-    "lng": -75.6873942,
-    "rating": 4.5,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Centre d'hébergement Vigi de l'Outaouais",
-    "address": "565 Boulevard de l'Hôpital, Gatineau",
-    "lat": 45.4945909,
-    "lng": -75.6921588,
-    "rating": 3.3,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Uniprix Pharmacie A HASSAN & M CHEAYB INC",
-    "address": "520 Boulevard de l'Hôpital A, Gatineau",
-    "lat": 45.4938839,
-    "lng": -75.6887788,
-    "rating": 5,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Shoppers Drug Mart",
-    "address": "174 Bank Street, Ottawa",
-    "lat": 45.418188,
-    "lng": -75.699243,
-    "rating": 3.6,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Uniprix Martin Beaucage et Omar Alamin",
-    "address": "214 Boulevard de la Cité-des-Jeunes, Gatineau",
-    "lat": 45.450164,
-    "lng": -75.754744,
-    "rating": 4.5,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Watson's Pharmacy and Compounding Centre",
-    "address": "192 Main Street, Ottawa",
-    "lat": 45.4086675,
-    "lng": -75.6779487,
-    "rating": 4.6,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Vanier Pharmacy",
-    "address": "355 Montréal Road, Vanier",
-    "lat": 45.4384368,
-    "lng": -75.6554931,
-    "rating": 4.8,
-    "city": "Gatineau"
-  },
-  {
-    "name": "VCA Canada Ottawa Veterinary Hospital",
-    "address": "2148 Avenue Carling Unit 7, Ottawa",
-    "lat": 45.3693232,
-    "lng": -75.7696946,
-    "rating": 4.3,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Rexall Drugstore",
-    "address": "1910 Saint Laurent Boulevard, Ottawa",
-    "lat": 45.3995647,
-    "lng": -75.6247207,
-    "rating": 2,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Metro",
-    "address": "2525 Carling Avenue, Ottawa",
-    "lat": 45.3651391,
-    "lng": -75.7857148,
-    "rating": 4.1,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Loblaw pharmacy",
-    "address": "2681 Alta Vista Drive, Ottawa",
-    "lat": 45.372213,
-    "lng": -75.663048,
-    "rating": 4.5,
-    "city": "Gatineau"
-  },
-  {
-    "name": "VCA Canada Alta Vista Animal Hospital",
-    "address": "2616 Bank Street, Ottawa",
-    "lat": 45.352996,
-    "lng": -75.6385236,
-    "rating": 4.3,
-    "city": "Gatineau"
-  },
-  {
-    "name": "Accès pharma - Pharmacie Rita Milky (affiliée à)",
-    "address": "1999 Boulevard Roland-Therrien, Longueuil",
-    "lat": 45.5381339,
-    "lng": -73.47461249999999,
-    "rating": 3.7,
-    "city": "Longueuil"
-  },
-  {
-    "name": "Jean Coutu M Bessissow et M Desjardins, prop affiliés",
-    "address": "150 Place Charles-Le Moyne #1000, Longueuil",
-    "lat": 45.52513760000001,
-    "lng": -73.520932,
-    "rating": 3.6,
-    "city": "Longueuil"
-  },
-  {
-    "name": "Uniprix Pharmacie K Joseph, S. Boutros et B. Hejazi",
-    "address": "825 Rue Saint-Laurent Ouest #16, Longueuil",
-    "lat": 45.528629,
-    "lng": -73.5154914,
-    "rating": 4.2,
-    "city": "Longueuil"
-  },
-  {
-    "name": "Uniprix I. Hassan, Z. Kassem Hassan et P. Abran",
-    "address": "2828 Rue de Lyon, Longueuil",
-    "lat": 45.514581,
-    "lng": -73.46471199999999,
-    "rating": 4,
-    "city": "Longueuil"
-  },
-  {
-    "name": "Proxim Judith Choquette",
-    "address": "2200 Chemin de Chambly, Longueuil",
-    "lat": 45.526619,
-    "lng": -73.475616,
-    "rating": 4.3,
-    "city": "Longueuil"
-  },
-  {
-    "name": "Clinique Santé Thong Duong - Pharmacie affiliée",
-    "address": "1430 Chemin de Chambly, Longueuil",
-    "lat": 45.53120879999999,
-    "lng": -73.48648039999999,
-    "rating": 5,
-    "city": "Longueuil"
-  },
-  {
-    "name": "Pharmacie Dinh Hieu Luu, pharmacien inc.",
-    "address": "1150 Rue King-George, Longueuil",
-    "lat": 45.5393402,
-    "lng": -73.4678387,
-    "rating": 4.5,
-    "city": "Longueuil"
-  },
-  {
-    "name": "Uniprix Uniprix M Baki, E Bergeron et S Saadi",
-    "address": "1615 Boulevard Jacques-Cartier Est #120, Longueuil",
-    "lat": 45.5407765,
-    "lng": -73.4566333,
-    "rating": 4.7,
-    "city": "Longueuil"
-  },
-  {
-    "name": "Proxim Dikran Karlozian",
-    "address": "2297 Rue Ontario Est, Montréal",
-    "lat": 45.530428,
-    "lng": -73.555357,
-    "rating": 3.9,
-    "city": "Longueuil"
-  },
-  {
-    "name": "Brunet Clinique A. Ménard, V. DeSousa, pharm. prop. Affiliés",
-    "address": "1390 Rue Ontario Est, Montréal",
-    "lat": 45.523377,
-    "lng": -73.5608163,
-    "rating": 4.6,
-    "city": "Longueuil"
+    "area": "Downtown"
   },
   {
     "name": "Pharmacies Martin Duquette",
@@ -821,15 +77,215 @@
     "lat": 45.5180335,
     "lng": -73.55909489999999,
     "rating": 4,
-    "city": "Longueuil"
+    "area": "Downtown"
   },
   {
-    "name": "Accès pharma - Pharmacie Jacinthe Vincent (affiliée à)",
-    "address": "2877 Chemin de Chambly, Longueuil",
-    "lat": 45.52210900000001,
-    "lng": -73.4609442,
+    "name": "Sopropharm",
+    "address": "1200 Avenue McGill College Suite 1500, Montréal",
+    "lat": 45.5014855,
+    "lng": -73.5705789,
+    "rating": 0,
+    "area": "Downtown"
+  },
+  {
+    "name": "Pharmacie Familiprix Clinique - Ming Yang",
+    "address": "750-A Côte de la Place-d'Armes, Montréal",
+    "lat": 45.505385,
+    "lng": -73.558228,
     "rating": 4.8,
-    "city": "Longueuil"
+    "area": "Downtown"
+  },
+  {
+    "name": "Familiprix Santé",
+    "address": "1588 Boulevard Saint-Laurent, Montréal",
+    "lat": 45.510698,
+    "lng": -73.56620699999999,
+    "rating": 4.4,
+    "area": "Downtown"
+  },
+  {
+    "name": "Pharmacie",
+    "address": "4084 Boulevard Saint-Laurent, Montréal",
+    "lat": 45.5171095,
+    "lng": -73.58042569999999,
+    "rating": 3.8,
+    "area": "Downtown"
+  },
+  {
+    "name": "Uniprix Vinh The Jimmy Pham et Kar Man Lam",
+    "address": "1875 Rue Centre, Montréal",
+    "lat": 45.4828908,
+    "lng": -73.56235260000001,
+    "rating": 4.4,
+    "area": "Downtown"
+  },
+  {
+    "name": "Brunet pharmacie affiliée",
+    "address": "2374 Rue Centre, Montréal",
+    "lat": 45.4797746,
+    "lng": -73.5668195,
+    "rating": 4.1,
+    "area": "Downtown"
+  },
+  {
+    "name": "Brunet Clinique A. Ménard, V. DeSousa, pharm. prop. Affiliés",
+    "address": "1390 Rue Ontario Est, Montréal",
+    "lat": 45.523377,
+    "lng": -73.5608163,
+    "rating": 4.6,
+    "area": "Downtown"
+  },
+  {
+    "name": "Brunet Affiliated Pharmacy",
+    "address": "151 Avenue Atwater, Montréal",
+    "lat": 45.4801239,
+    "lng": -73.5763662,
+    "rating": 4,
+    "area": "Downtown"
+  },
+  {
+    "name": "Clinique médecin vétérinaire de St-Louis",
+    "address": "3928 Rue Saint-Hubert, Montréal",
+    "lat": 45.52173589999999,
+    "lng": -73.57307469999999,
+    "rating": 4.4,
+    "area": "Downtown"
+  },
+  {
+    "name": "Proxim affiliate pharmacy - Babinski and Kotb",
+    "address": "1245 Rue Notre-Dame Ouest, Montréal",
+    "lat": 45.4935421,
+    "lng": -73.5645877,
+    "rating": 4.9,
+    "area": "Downtown"
+  },
+  {
+    "name": "Guy-Favreau Complex",
+    "address": "200 Boulevard René-Lévesque Ouest, Montréal",
+    "lat": 45.506527,
+    "lng": -73.5629484,
+    "rating": 3.6,
+    "area": "Downtown"
+  },
+  {
+    "name": "Animomédic Plateau Mont-Royal Clinique Vétérinaire",
+    "address": "4000 Avenue De Lorimier, Montréal",
+    "lat": 45.5317161,
+    "lng": -73.5655053,
+    "rating": 4.2,
+    "area": "Plateau"
+  },
+  {
+    "name": "Uniprix Pharmacie Mariane Gagnon Pharmacienne inc.",
+    "address": "5101 Rue Saint-Denis, Montréal",
+    "lat": 45.52712999999999,
+    "lng": -73.589528,
+    "rating": 3,
+    "area": "Plateau"
+  },
+  {
+    "name": "Veterinary Hospital Passionimo Journet",
+    "address": "2320 Avenue du Mont-Royal Est, Montréal",
+    "lat": 45.53768859999999,
+    "lng": -73.569649,
+    "rating": 4.1,
+    "area": "Plateau"
+  },
+  {
+    "name": "Proxim Dikran Karlozian",
+    "address": "2297 Rue Ontario Est, Montréal",
+    "lat": 45.530428,
+    "lng": -73.555357,
+    "rating": 3.9,
+    "area": "Plateau"
+  },
+  {
+    "name": "Clinique Vétérinaire Sur 4 Pattes",
+    "address": "5178 Rue Beaubien Est, Montréal",
+    "lat": 45.573204,
+    "lng": -73.57023099999999,
+    "rating": 4.2,
+    "area": "Rosemont"
+  },
+  {
+    "name": "Clinique Santé Gérard Lamy - Pharmacie affiliée",
+    "address": "7281 Boulevard Shaughnessy, Montréal",
+    "lat": 45.5596359,
+    "lng": -73.5993601,
+    "rating": 5,
+    "area": "Rosemont"
+  },
+  {
+    "name": "Proxim Pharmacie Rana Khattar et Lama Zakhour Inc.",
+    "address": "5200 Rue Molson #139C, Montréal",
+    "lat": 45.5434034,
+    "lng": -73.5753452,
+    "rating": 4.5,
+    "area": "Rosemont"
+  },
+  {
+    "name": "Variétés San Gabriel",
+    "address": "1300 Rue Bélanger, Montréal",
+    "lat": 45.5430882,
+    "lng": -73.6062689,
+    "rating": 4.1,
+    "area": "Rosemont"
+  },
+  {
+    "name": "Pharmacy Labib Fraih and Manal Karzon S.E.N.C.",
+    "address": "937 Rue Saint-Zotique Est, Montréal",
+    "lat": 45.538584,
+    "lng": -73.605938,
+    "rating": 5,
+    "area": "Rosemont"
+  },
+  {
+    "name": "Familiprix Extra",
+    "address": "3495 Rue Hochelaga, Montréal",
+    "lat": 45.546218,
+    "lng": -73.552041,
+    "rating": 4.3,
+    "area": "Rosemont"
+  },
+  {
+    "name": "Proxim Pharmacie Injy Khalil et Sadad Shalaby S.E.N.C.",
+    "address": "1384 Rue Jean-Talon Est, Montréal",
+    "lat": 45.545745,
+    "lng": -73.608584,
+    "rating": 3.7,
+    "area": "Rosemont"
+  },
+  {
+    "name": "Proxim Babak Hejazi, Simon Boutros, Faiza Chekroun et Ketsia Joseph",
+    "address": "5100 Rue de Bellechasse, Montréal",
+    "lat": 45.571274,
+    "lng": -73.567076,
+    "rating": 4.9,
+    "area": "Rosemont"
+  },
+  {
+    "name": "Pharmacie Michelle Costello",
+    "address": "4689 Avenue Papineau #102, Montréal",
+    "lat": 45.53426009999999,
+    "lng": -73.5766914,
+    "rating": 4.6,
+    "area": "Rosemont"
+  },
+  {
+    "name": "Jean Coutu M Bessissow et M Desjardins, prop affiliés",
+    "address": "150 Place Charles-Le Moyne #1000, Longueuil",
+    "lat": 45.52513760000001,
+    "lng": -73.520932,
+    "rating": 3.6,
+    "area": "Hochelaga"
+  },
+  {
+    "name": "Uniprix Pharmacie K Joseph, S. Boutros et B. Hejazi",
+    "address": "825 Rue Saint-Laurent Ouest #16, Longueuil",
+    "lat": 45.528629,
+    "lng": -73.5154914,
+    "rating": 4.2,
+    "area": "Hochelaga"
   },
   {
     "name": "Brunet R. Hinh-Thai, pharm. prop. Affilié",
@@ -837,975 +293,1423 @@
     "lat": 45.52445349999999,
     "lng": -73.5510422,
     "rating": 4.1,
-    "city": "Longueuil"
+    "area": "Hochelaga"
   },
   {
-    "name": "Uniprix Pharmacie Isabelle Fauteux",
-    "address": "1850 Rue King Est, Sherbrooke",
-    "lat": 45.409652,
-    "lng": -71.84738399999999,
-    "rating": 4.4,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Uniprix Geneviève Breton et Philippe Tourigny, Pharmaciens inc.",
-    "address": "2235 Rue Galt Ouest, Sherbrooke",
-    "lat": 45.38733,
-    "lng": -71.92775999999999,
-    "rating": 4.2,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Uniprix Marie-Josée Blais-Roy",
-    "address": "610 Rue King Est, Sherbrooke",
-    "lat": 45.40778,
-    "lng": -71.875388,
-    "rating": 4,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Proxim Louis-Simon Babin, Marc Juneau et Nathalie Marchessault",
-    "address": "624 Rue Bowen Sud, Sherbrooke",
-    "lat": 45.396935,
-    "lng": -71.878316,
-    "rating": 4,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "PJC Jean Coutu Health-Beauty",
-    "address": "147 Rue Queen, Sherbrooke",
-    "lat": 45.3673307,
-    "lng": -71.85705759999999,
-    "rating": 3.8,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "M C Lapointe",
-    "address": "147 Rue Queen, Sherbrooke",
-    "lat": 45.3673778,
-    "lng": -71.85676409999999,
-    "rating": 2,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Maltais Francois",
-    "address": "1363 Rue Belvédère Sud, Sherbrooke",
-    "lat": 45.3854336,
-    "lng": -71.8961649,
-    "rating": 2.6,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Brunet A. Plourde, pharm. prop. Affiliée",
-    "address": "1055 12e Avenue Nord, Sherbrooke",
-    "lat": 45.4224068,
-    "lng": -71.874627,
-    "rating": 4,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Pharmacie Pharmaprix Michel Bourque",
-    "address": "420 Rue Belvédère Sud, Sherbrooke",
-    "lat": 45.39566869999999,
-    "lng": -71.8951676,
-    "rating": 3.2,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Colis",
-    "address": "610 Rue King Est, Sherbrooke",
-    "lat": 45.4077059,
-    "lng": -71.8754691,
-    "rating": 0,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Pharmacie",
-    "address": "Canada",
-    "lat": 45.39851689999999,
-    "lng": -71.9125505,
-    "rating": 5,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Uniprix Iyad Abou Jamous",
-    "address": "1900 Rue Belvédère Sud, Sherbrooke",
-    "lat": 45.37687040000001,
-    "lng": -71.8926269,
-    "rating": 4.4,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Uniprix Danny Gobeil et David Thibault",
-    "address": "330 Rue des Érables, Sherbrooke",
-    "lat": 45.40303199999999,
-    "lng": -71.94651499999999,
-    "rating": 3.7,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Danny Gobeil et David Thibault Pharmaciens",
-    "address": "330 Des, Rue des Érables, Sherbrooke",
-    "lat": 45.40303249999999,
-    "lng": -71.9465152,
-    "rating": 5,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Bach Heng Ta Pharmacie",
-    "address": "2800 Rue Alice-Girard Suite 100, Sherbrooke",
-    "lat": 45.4430785,
-    "lng": -71.8661889,
-    "rating": 5,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "R Lajeunesse",
-    "address": "147 Rue Queen, Sherbrooke",
-    "lat": 45.3673778,
-    "lng": -71.85676409999999,
-    "rating": 5,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Accès pharma - Audrey D. Pellerin et Katherin Morin-L.(affiliées à)",
-    "address": "4050 Boulevard Josaphat-Rancourt, Sherbrooke",
-    "lat": 45.4183586,
-    "lng": -71.9637499,
-    "rating": 4.3,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Brunet M. Lafleur, pharm. prop. Affilié",
-    "address": "4857 Boulevard Bourque, Sherbrooke",
-    "lat": 45.3730823,
-    "lng": -71.9897567,
-    "rating": 4.2,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Costco Pharmacy",
-    "address": "3800 Boulevard de Monseigneur-Fortier, Sherbrooke",
-    "lat": 45.4227144,
-    "lng": -71.9615937,
-    "rating": 5,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Pharmacie Gr√©goire Arakelian (Costco)",
-    "address": "3800 Boulevard de Monseigneur-Fortier, Sherbrooke",
-    "lat": 45.42272940000001,
-    "lng": -71.9615937,
-    "rating": 4.7,
-    "city": "Sherbrooke"
-  },
-  {
-    "name": "Clinique Santé Fabienne Gravel - Pharmacie affiliée",
-    "address": "164 Rue Price Ouest, Chicoutimi",
-    "lat": 48.42499110000001,
-    "lng": -71.07395029999999,
-    "rating": 5,
-    "city": "Saguenay"
-  },
-  {
-    "name": "J Sirois",
-    "address": "2173 Boulevard de Tadoussac, Chicoutimi",
-    "lat": 48.43746030000001,
-    "lng": -71.0610609,
-    "rating": 1,
-    "city": "Saguenay"
-  },
-  {
-    "name": "Proxim Hélène Montpetit",
-    "address": "394 Rue Saint Vallier #100, Chicoutimi",
-    "lat": 48.42552299999999,
-    "lng": -71.050719,
-    "rating": 4.6,
-    "city": "Saguenay"
-  },
-  {
-    "name": "Acces Pharma",
-    "address": "1451 Boulevard Talbot, Chicoutimi",
-    "lat": 48.4032164,
-    "lng": -71.05715,
-    "rating": 3.6,
-    "city": "Saguenay"
-  },
-  {
-    "name": "Nathalie Belley",
-    "address": "Place Du Royaume, Chicoutimi",
-    "lat": 48.40302919999999,
-    "lng": -71.0569971,
-    "rating": 0,
-    "city": "Saguenay"
-  },
-  {
-    "name": "Brunet C. Boily, C. Tremblay, pharm. prop. Affiliés",
-    "address": "2173 Boulevard de Tadoussac, Chicoutimi",
-    "lat": 48.4378211,
-    "lng": -71.0610324,
+    "name": "Proxim pharmacie affiliée - Leung et Thanh Tran",
+    "address": "3981 Rue Hochelaga, Montréal",
+    "lat": 45.55148499999999,
+    "lng": -73.549056,
     "rating": 4.5,
-    "city": "Saguenay"
+    "area": "Hochelaga"
   },
   {
-    "name": "Uniprix Kevin Girard pharmacien inc.",
-    "address": "711 Boulevard Sainte-Geneviève, Chicoutimi",
-    "lat": 48.444109,
-    "lng": -71.080906,
+    "name": "Uniprix Uniprix Morin, Nahas et associés",
+    "address": "4251 Rue Sainte-Catherine Est, Montréal",
+    "lat": 45.550266,
+    "lng": -73.534624,
+    "rating": 4,
+    "area": "Hochelaga"
+  },
+  {
+    "name": "Brunet F. Tremblay, pharm. prop. Affilié",
+    "address": "2937 Rue Sherbrooke Est, Montréal",
+    "lat": 45.5412203,
+    "lng": -73.5598478,
     "rating": 3.9,
-    "city": "Saguenay"
+    "area": "Hochelaga"
   },
   {
-    "name": "Uniprix Pharmacie Kevin Girard inc. - Pharmacie affiliée",
-    "address": "80 Rue Racine Est suite 100, Chicoutimi",
-    "lat": 48.427583,
-    "lng": -71.066127,
-    "rating": 4.3,
-    "city": "Saguenay"
+    "name": "Uniprix Pharmacie Sylvie Jutras",
+    "address": "157 Rue Saint-Charles Ouest, Longueuil",
+    "lat": 45.538973,
+    "lng": -73.509777,
+    "rating": 4.4,
+    "area": "Hochelaga"
   },
   {
-    "name": "Proxim Blackburn et Riverin",
-    "address": "567 Chemin de la Réserve, Chicoutimi",
-    "lat": 48.42344600000001,
-    "lng": -71.088645,
-    "rating": 4.5,
-    "city": "Saguenay"
+    "name": "Uniprix Clinique Daniel Vermette et Frédérick Dugas - Pharmacie affiliée",
+    "address": "2601 Rue William-Tremblay #100, Montréal",
+    "lat": 45.5424242,
+    "lng": -73.5650801,
+    "rating": 4,
+    "area": "Hochelaga"
   },
   {
-    "name": "Clinique De Prelevement",
-    "address": "164 Rue Price Ouest, Chicoutimi",
-    "lat": 48.4249298,
-    "lng": -71.07396469999999,
-    "rating": 0,
-    "city": "Saguenay"
+    "name": "Shoppers Drug Mart",
+    "address": "2759 Rue Sherbrooke Est, Montréal",
+    "lat": 45.5390177,
+    "lng": -73.5607438,
+    "rating": 2.8,
+    "area": "Hochelaga"
   },
   {
-    "name": "Valerie Tremblay",
-    "address": "394 Rue Saint Vallier, Chicoutimi",
-    "lat": 48.4256074,
-    "lng": -71.0508503,
+    "name": "Proxim Labib Ghali",
+    "address": "1900 Rue Sainte-Catherine Est, Montréal",
+    "lat": 45.52348399999999,
+    "lng": -73.551378,
+    "rating": 2.8,
+    "area": "Hochelaga"
+  },
+  {
+    "name": "Pharmacie Mathieu Janelle",
+    "address": "112 Rue Saint-Sylvestre, Longueuil",
+    "lat": 45.5362036,
+    "lng": -73.512345,
     "rating": 5,
-    "city": "Saguenay"
+    "area": "Hochelaga"
   },
   {
-    "name": "Proxim pharmacie affiliée - Brigitte Laliberté",
-    "address": "875 Chemin Sydenham #20, Chicoutimi",
-    "lat": 48.419235,
-    "lng": -71.042244,
-    "rating": 5,
-    "city": "Saguenay"
-  },
-  {
-    "name": "D Bolduc",
-    "address": "871 Boulevard Sainte-Geneviève, Saguenay",
-    "lat": 48.4477043,
-    "lng": -71.0851533,
+    "name": "McMahon Distributeur Pharmaceutique",
+    "address": "825 Rue Saint-Laurent Ouest, Longueuil",
+    "lat": 45.5286357,
+    "lng": -73.5154534,
     "rating": 0,
-    "city": "Saguenay"
+    "area": "Hochelaga"
   },
   {
-    "name": "Steve Simard",
-    "address": "1324 Boulevard Talbot, Chicoutimi",
-    "lat": 48.406308,
-    "lng": -71.05870999999999,
-    "rating": 2.5,
-    "city": "Saguenay"
+    "name": "Familiprix",
+    "address": "361 Rue Saint-Jean, Longueuil",
+    "lat": 45.535389,
+    "lng": -73.506699,
+    "rating": 4.4,
+    "area": "Hochelaga"
   },
   {
-    "name": "Johanne Gagnon Pharmacienne",
-    "address": "1 Boulevard du Royaume Est, Chicoutimi",
-    "lat": 48.40463760000001,
-    "lng": -71.0562867,
-    "rating": 0,
-    "city": "Saguenay"
+    "name": "Pharmacie Souad Khouri",
+    "address": "5199 Rue Sherbrooke Est #3230, Montréal",
+    "lat": 45.5686726,
+    "lng": -73.55324569999999,
+    "rating": 4.4,
+    "area": "Hochelaga"
   },
   {
-    "name": "J Asselin",
-    "address": "1480 Boulevard Talbot, Chicoutimi",
-    "lat": 48.40288979999999,
-    "lng": -71.06187070000001,
-    "rating": 1,
-    "city": "Saguenay"
-  },
-  {
-    "name": "Stephane Martel",
-    "address": "1451 Boulevard Talbot, Chicoutimi",
-    "lat": 48.402912,
-    "lng": -71.0570369,
-    "rating": 0,
-    "city": "Saguenay"
-  },
-  {
-    "name": "Pharmacie G . Letourneau",
-    "address": "855 Boulevard Barrette, Chicoutimi",
-    "lat": 48.40466869999999,
-    "lng": -71.09779259999999,
-    "rating": 4.6,
-    "city": "Saguenay"
-  },
-  {
-    "name": "Pharmacie Couture & Champagne",
-    "address": "1955 Rue des Roitelets #103, Chicoutimi",
-    "lat": 48.392734,
-    "lng": -71.0521464,
-    "rating": 4.8,
-    "city": "Saguenay"
-  },
-  {
-    "name": "Proxim Josée Maltais et Mahée Roy",
-    "address": "2367 Rue Mathias, Jonquière",
-    "lat": 48.407053,
-    "lng": -71.168703,
-    "rating": 4.7,
-    "city": "Saguenay"
-  },
-  {
-    "name": "Pharmaprix Simplement Santé",
-    "address": "2231 De L'Hopital Arr, Saguenay",
-    "lat": 48.412451,
-    "lng": -71.23373,
-    "rating": 2,
-    "city": "Saguenay"
-  },
-  {
-    "name": "Uniprix Caroline Boudreau et Emel Meddeb",
-    "address": "3751 Boulevard du Royaume, Saguenay",
-    "lat": 48.422166,
-    "lng": -71.24215199999999,
-    "rating": 4.5,
-    "city": "Saguenay"
-  },
-  {
-    "name": "Proxim pharmacie affiliée - Virginie Gagné",
-    "address": "2334 Rue Saint-Hubert, Jonquière",
-    "lat": 48.414108,
-    "lng": -71.246686,
-    "rating": 4.6,
-    "city": "Saguenay"
-  },
-  {
-    "name": "Proxim",
-    "address": "945 Rue du Boulevard, Laterrière",
-    "lat": 48.3075418,
-    "lng": -71.1135635,
-    "rating": 5,
-    "city": "Saguenay"
-  },
-  {
-    "name": "Bruno Harvey",
-    "address": "2616 Rue Saint-Hubert, Jonquière",
-    "lat": 48.4025914,
-    "lng": -71.25081010000001,
-    "rating": 0,
-    "city": "Saguenay"
-  },
-  {
-    "name": "Proxim Martine Gravel, Sara Michaud et Julie Gauthier",
-    "address": "4022 Rue de la Fabrique, Jonquière",
-    "lat": 48.409223,
-    "lng": -71.25699399999999,
+    "name": "Proxim pharmacie affiliée - El-Mostafa El-Modafar",
+    "address": "3998 Rue Masson, Montréal",
+    "lat": 45.558086,
+    "lng": -73.568861,
     "rating": 4.9,
-    "city": "Saguenay"
+    "area": "Hochelaga"
   },
   {
-    "name": "Brunet Ghislain Labbé, pharmacien propriétaire affilié",
-    "address": "2235 Rue Saint-Jean-Baptiste, Jonquière",
-    "lat": 48.4140621,
-    "lng": -71.25999759999999,
-    "rating": 4.6,
-    "city": "Saguenay"
+    "name": "PJC Jean Coutu Santé",
+    "address": "3175 Chemin de la Côte-Sainte-Catherine, Montréal",
+    "lat": 45.50348349999999,
+    "lng": -73.62438620000002,
+    "rating": 3.7,
+    "area": "Cote-des-Neiges"
   },
   {
-    "name": "Uniprix",
-    "address": "7777 Boulevard Guillaume-Couture #31, Lévis",
-    "lat": 46.8164424,
-    "lng": -71.1463639,
-    "rating": 4.4,
-    "city": "Levis"
-  },
-  {
-    "name": "Uniprix Philippe Drouin - Pharmacie affiliée",
-    "address": "369 De La Couronne, Québec",
-    "lat": 46.8147823,
-    "lng": -71.2248156,
-    "rating": 4.3,
-    "city": "Levis"
-  },
-  {
-    "name": "Proxim pharmacie affiliée - Naceur Naïmi",
-    "address": "400 Boulevard Jean-Lesage #043, Québec",
-    "lat": 46.81688270000001,
-    "lng": -71.2160943,
-    "rating": 4.7,
-    "city": "Levis"
-  },
-  {
-    "name": "Proxim Pierre-Luc Boivin et Michel Godin",
-    "address": "213 Rue Saint-Joseph, Lévis",
-    "lat": 46.82385,
-    "lng": -71.168903,
-    "rating": 4.8,
-    "city": "Levis"
-  },
-  {
-    "name": "Services Cliniques Matte & Petit (Les)",
-    "address": "1191 Avenue Cartier, Québec",
-    "lat": 46.8028539,
-    "lng": -71.2243001,
-    "rating": 0,
-    "city": "Levis"
-  },
-  {
-    "name": "Uniprix Clinique Philippe Drouin - Pharmacie affiliée",
-    "address": "650 Avenue Murray, Québec",
-    "lat": 46.80314,
-    "lng": -71.23975899999999,
+    "name": "Pharmacy Jean Coutu",
+    "address": "5345 Chemin Queen Mary, Montréal",
+    "lat": 45.4830003,
+    "lng": -73.6300923,
     "rating": 4,
-    "city": "Levis"
+    "area": "Cote-des-Neiges"
   },
   {
-    "name": "Uniprix Nancy Champagne - Pharmacie affiliée",
-    "address": "1000 3e Avenue, Québec City",
-    "lat": 46.82682740000001,
-    "lng": -71.22973139999999,
-    "rating": 4.2,
-    "city": "Levis"
+    "name": "Pharmaprix Van Horne",
+    "address": "4815 Avenue Van Horne, Montréal",
+    "lat": 45.49438800000001,
+    "lng": -73.63851799999999,
+    "rating": 2.8,
+    "area": "Cote-des-Neiges"
   },
   {
-    "name": "Uniprix Marc Dontigny",
-    "address": "15 Rue Fusey, Trois-Rivières",
-    "lat": 46.363859,
-    "lng": -72.530078,
-    "rating": 4.5,
-    "city": "Trois-Rivieres"
-  },
-  {
-    "name": "Uniprix Phcie M-P Girouard, C-E Lafreniere, A Giroux et P Drouin Inc",
-    "address": "4520 Boulevard des Récollets #12, Trois-Rivières",
-    "lat": 46.325686,
-    "lng": -72.563661,
-    "rating": 3.9,
-    "city": "Trois-Rivieres"
-  },
-  {
-    "name": "Accès pharma - Pharmacie M. Fontaine (affiliée à)",
-    "address": "4520 Boulevard des Récollets, Trois-Rivières",
-    "lat": 46.32481319999999,
-    "lng": -72.5657823,
-    "rating": 3.5,
-    "city": "Trois-Rivieres"
-  },
-  {
-    "name": "Accès pharma - Pharmacie M Racette (affiliée à)",
-    "address": "300 Rue Barkoff, Trois-Rivières",
-    "lat": 46.3720951,
-    "lng": -72.5596065,
-    "rating": 4.7,
-    "city": "Trois-Rivieres"
-  },
-  {
-    "name": "Proxim Cynthia Vallee-Dupont et Malorie Lambert",
-    "address": "700 Boulevard Thibeau #120, Trois-Rivières",
-    "lat": 46.383529,
-    "lng": -72.548363,
-    "rating": 4.8,
-    "city": "Trois-Rivieres"
-  },
-  {
-    "name": "Brunet I. Baril, I. Levasseur, J-S. Ricard, pharm. prop. Affiliés",
-    "address": "1123 Rue Sainte Marguerite, Trois-Rivières",
-    "lat": 46.342661,
-    "lng": -72.5545392,
-    "rating": 4.3,
-    "city": "Trois-Rivieres"
-  },
-  {
-    "name": "Uniprix Carrefour Trois-Rivières-Ouest",
-    "address": "4520 Boulevard Gene-H.-Kruger, Trois-Rivières",
-    "lat": 46.32645520000001,
-    "lng": -72.5663787,
-    "rating": 0,
-    "city": "Trois-Rivieres"
-  },
-  {
-    "name": "Pharmacie Girouard, Lafrenière",
-    "address": "4520 Boulevard des Récollets, Trois-Rivières",
-    "lat": 46.3252869,
-    "lng": -72.5668594,
-    "rating": 5,
-    "city": "Trois-Rivieres"
-  },
-  {
-    "name": "Accès Pharma chez Walmart",
-    "address": "Walmart, 4520 Boulevard des Récollets, Trois-Rivières",
-    "lat": 46.3248572,
-    "lng": -72.566677,
-    "rating": 2.7,
-    "city": "Trois-Rivieres"
-  },
-  {
-    "name": "Therrien & Brassard Pharmaciens",
-    "address": "5050 Boulevard des Forges, Trois-Rivières",
-    "lat": 46.36184859999999,
-    "lng": -72.5927103,
-    "rating": 4.8,
-    "city": "Trois-Rivieres"
-  },
-  {
-    "name": "Hôpital vétérinaire de Houssart",
-    "address": "806 Boulevard Thibeau, Trois-Rivières",
-    "lat": 46.3862885,
-    "lng": -72.551615,
-    "rating": 4.2,
-    "city": "Trois-Rivieres"
-  },
-  {
-    "name": "Hôpital vétérinaire Les Rivières",
-    "address": "5845 Boulevard des Chenaux, Trois-Rivières",
-    "lat": 46.3639028,
-    "lng": -72.5989467,
+    "name": "PJC Jean Coutu Health",
+    "address": "5351 Chemin de la Côte Saint Luc, Montréal",
+    "lat": 45.47976999999999,
+    "lng": -73.6239378,
     "rating": 3.8,
-    "city": "Trois-Rivieres"
+    "area": "Cote-des-Neiges"
   },
   {
-    "name": "Proxim Annie-Louise Turcotte",
-    "address": "6625 Boulevard Parent, Trois-Rivières",
-    "lat": 46.35841899999999,
-    "lng": -72.61898,
-    "rating": 4.6,
-    "city": "Trois-Rivieres"
-  },
-  {
-    "name": "Cantrak Inc",
-    "address": "1000 Rue Notre Dame, Saint-Maurice",
-    "lat": 46.452715,
-    "lng": -72.50936949999999,
-    "rating": 5,
-    "city": "Trois-Rivieres"
-  },
-  {
-    "name": "Uniprix M. Dontigny J. St-Arnaud V. Leblanc - Pharmacie affiliée",
-    "address": "2000 Boulevard Louis Fréchette #400, Nicolet",
-    "lat": 46.24007899999999,
-    "lng": -72.597669,
-    "rating": 4.3,
-    "city": "Trois-Rivieres"
-  },
-  {
-    "name": "Clinique Sante",
-    "address": "901 Boulevard des Seigneurs, Terrebonne",
-    "lat": 45.7022734,
-    "lng": -73.640401,
-    "rating": 5,
-    "city": "Terrebonne"
-  },
-  {
-    "name": "Familiprix - Terrebonne rue d'Angora",
-    "address": "4790 Rue d'Angora, Terrebonne",
-    "lat": 45.7141745,
-    "lng": -73.6535349,
-    "rating": 4.8,
-    "city": "Terrebonne"
-  },
-  {
-    "name": "Accès pharma - Pharmacie R Coudé, K Bouchard et N Pinto (affiliée à)",
-    "address": "155 Montée Masson, Mascouche",
-    "lat": 45.7237838,
-    "lng": -73.6122324,
-    "rating": 4.2,
-    "city": "Terrebonne"
-  },
-  {
-    "name": "M D'Amours",
-    "address": "3131 Boulevard de Mascouche, Mascouche",
-    "lat": 45.7432921,
-    "lng": -73.60014389999999,
-    "rating": 3.2,
-    "city": "Terrebonne"
-  },
-  {
-    "name": "Uniprix Mike Karim, Issa Karim, Pierre Bergeron & François Dupuis",
-    "address": "1090 Boulevard des Seigneurs, Terrebonne",
-    "lat": 45.7001888,
-    "lng": -73.6444849,
-    "rating": 4.4,
-    "city": "Terrebonne"
-  },
-  {
-    "name": "Uniprix Habiba Haidaoui",
-    "address": "2745 Boulevard de la Pinière, Terrebonne",
-    "lat": 45.717807,
-    "lng": -73.694993,
-    "rating": 4.6,
-    "city": "Terrebonne"
-  },
-  {
-    "name": "Maison Et Pharmacie",
-    "address": "155 Montée Masson, Mascouche",
-    "lat": 45.7239094,
-    "lng": -73.61217860000001,
+    "name": "Polyclinique Minchau",
+    "address": "6655 Chemin de la Côte-des-Neiges, Montréal",
+    "lat": 45.50301529999999,
+    "lng": -73.6363137,
     "rating": 0,
-    "city": "Terrebonne"
+    "area": "Cote-des-Neiges"
   },
   {
-    "name": "Proxim Proxim pharmacie affiliée – Alexandre Favreau",
-    "address": "2135 Boulevard des Seigneurs, Terrebonne",
-    "lat": 45.718515,
-    "lng": -73.682313,
-    "rating": 4.8,
-    "city": "Terrebonne"
+    "name": "Proxim affiliated pharmacy - Emmanuel Abikhzer",
+    "address": "3755 Chemin de la Côte-Sainte-Catherine, Montréal",
+    "lat": 45.49794300000001,
+    "lng": -73.6287309,
+    "rating": 4.1,
+    "area": "Cote-des-Neiges"
   },
   {
-    "name": "Uniprix Jean-Pierre Bois et François Dupuis",
-    "address": "880 Montée Masson, Mascouche",
-    "lat": 45.74360790000001,
-    "lng": -73.6094257,
-    "rating": 3.8,
-    "city": "Terrebonne"
-  },
-  {
-    "name": "Veterinary Clinic De Mascouche",
-    "address": "2594 Chemin Sainte-Marie, Mascouche",
-    "lat": 45.7516829,
-    "lng": -73.6130068,
+    "name": "Proxim Pharmacie S. Melki",
+    "address": "5881 Avenue Victoria, Montréal",
+    "lat": 45.4934303,
+    "lng": -73.63509119999999,
     "rating": 4.4,
-    "city": "Terrebonne"
+    "area": "Cote-des-Neiges"
   },
   {
-    "name": "Proxim Massimiliano Tantalo et Annik Thériault",
-    "address": "2705 Chemin Sainte-Marie #100, Mascouche",
-    "lat": 45.75139300000001,
-    "lng": -73.611453,
-    "rating": 4.3,
-    "city": "Terrebonne"
-  },
-  {
-    "name": "Proxim pharmacy - Osman, Abdel Monem",
-    "address": "8119 Boulevard Lévesque Est, Laval",
-    "lat": 45.6635239,
-    "lng": -73.58190499999999,
-    "rating": 4.4,
-    "city": "Terrebonne"
-  },
-  {
-    "name": "Uniprix Sulafa Butros",
-    "address": "7095 Boulevard Gouin Est #106, Montréal",
-    "lat": 45.6307347,
-    "lng": -73.61811019999999,
-    "rating": 5,
-    "city": "Terrebonne"
+    "name": "Proxim Steeve Benarroch Pharmacy",
+    "address": "6900 Boulevard Décarie #126, Côte Saint-Luc",
+    "lat": 45.4914573,
+    "lng": -73.6490795,
+    "rating": 4.6,
+    "area": "Cote-des-Neiges"
   },
   {
     "name": "Sonia Boutin Pharmacy",
-    "address": "7015 Boulevard Gouin Est, Montréal",
-    "lat": 45.6300099,
-    "lng": -73.619095,
-    "rating": 4.8,
-    "city": "Terrebonne"
+    "address": "1010 Avenue Rockland, Outremont",
+    "lat": 45.5182113,
+    "lng": -73.6214577,
+    "rating": 4,
+    "area": "Cote-des-Neiges"
   },
   {
-    "name": "Uniprix Thi Ngoc Tuyet Nguyen",
-    "address": "7701 Boulevard Maurice-Duplessis, Montréal",
-    "lat": 45.628847,
-    "lng": -73.59470999999999,
-    "rating": 3.5,
-    "city": "Terrebonne"
+    "name": "Accès pharma - Pharmacie Pierre El Tawil (affiliée à)",
+    "address": "5400 Rue Jean-Talon Ouest, Montréal",
+    "lat": 45.492135,
+    "lng": -73.65330039999999,
+    "rating": 4.1,
+    "area": "Cote-des-Neiges"
   },
   {
     "name": "Proxim pharmacie affiliée",
-    "address": "12325 Boulevard Rolland, Montréal",
-    "lat": 45.618534,
-    "lng": -73.62267899999999,
-    "rating": 4.4,
-    "city": "Terrebonne"
+    "address": "8000 Boulevard Décarie #110, Montreal",
+    "lat": 45.497555,
+    "lng": -73.6593055,
+    "rating": 4.2,
+    "area": "Cote-des-Neiges"
   },
   {
-    "name": "Bergeron Dupuis",
-    "address": "950 Montée des Pionniers, Terrebonne",
-    "lat": 45.724722,
-    "lng": -73.5072855,
+    "name": "Pharmacie Westmount - Pharmacie G.Lachance & M.A. Couturier Inc",
+    "address": "370 Avenue Victoria, Westmount",
+    "lat": 45.4784075,
+    "lng": -73.6024979,
+    "rating": 4.6,
+    "area": "Cote-des-Neiges"
+  },
+  {
+    "name": "Bui Pharmacy",
+    "address": "5843 Chemin de la Côte-des-Neiges, Montréal",
+    "lat": 45.5001109,
+    "lng": -73.629885,
+    "rating": 2.6,
+    "area": "Cote-des-Neiges"
+  },
+  {
+    "name": "Familiprix Rebecca Rouimi",
+    "address": "5700 Chemin de la Côte-des-Neiges, Montréal",
+    "lat": 45.498268,
+    "lng": -73.62738879999999,
+    "rating": 4.6,
+    "area": "Cote-des-Neiges"
+  },
+  {
+    "name": "Linda Frayne & John Genova Pharmacy (Montreal)",
+    "address": "5858 Chemin de la Côte-des-Neiges #400, Montréal",
+    "lat": 45.49967600000001,
+    "lng": -73.6299171,
+    "rating": 3.6,
+    "area": "Cote-des-Neiges"
+  },
+  {
+    "name": "Retatrutide Pharmacy",
+    "address": "5123 Chemin de la Côte-des-Neiges, Montréal",
+    "lat": 45.4951539,
+    "lng": -73.61907819999999,
     "rating": 0,
-    "city": "Terrebonne"
+    "area": "Cote-des-Neiges"
   },
   {
-    "name": "Pharmacie Cellini et Gauvin (Proxim)",
-    "address": "9686 4e Rue, Montréal",
-    "lat": 45.65522499999999,
-    "lng": -73.566651,
-    "rating": 4.9,
-    "city": "Terrebonne"
+    "name": "Proxim Luong, Leclerc et Alaoui",
+    "address": "6603 Chemin de la Côte-des-Neiges, Montréal",
+    "lat": 45.50279570000001,
+    "lng": -73.63586800000002,
+    "rating": 4.7,
+    "area": "Cote-des-Neiges"
   },
   {
-    "name": "Uniprix Pharmacie Marc - André Pilon & Joanie Landry - Pharmacie affiliée",
-    "address": "400 Boulevard du Séminaire Nord A1, Saint-Jean-sur-Richelieu",
-    "lat": 45.311547,
-    "lng": -73.267044,
+    "name": "Pharmacie Tran",
+    "address": "6655 Chemin de la Côte-des-Neiges, Montréal",
+    "lat": 45.50301529999999,
+    "lng": -73.6363137,
+    "rating": 0,
+    "area": "Cote-des-Neiges"
+  },
+  {
+    "name": "Groupe Santé Plus",
+    "address": "3290 Avenue Van Horne, Montréal",
+    "lat": 45.50607539999999,
+    "lng": -73.6323128,
+    "rating": 0,
+    "area": "Cote-des-Neiges"
+  },
+  {
+    "name": "Walmart Pharmacy",
+    "address": "6700 Chemin de la Côte-des-Neiges, Montréal",
+    "lat": 45.5026701,
+    "lng": -73.63767709999999,
+    "rating": 0,
+    "area": "Cote-des-Neiges"
+  },
+  {
+    "name": "Accès pharma - Pharmacie Fady Hanna (affiliée à)",
+    "address": "inside Walmart Plaza, 6700 Chemin de la Côte-des-Neiges, Montréal",
+    "lat": 45.5026814,
+    "lng": -73.6376751,
+    "rating": 4.3,
+    "area": "Cote-des-Neiges"
+  },
+  {
+    "name": "Pharmacie Brian Wong",
+    "address": "6520 Avenue Victoria, Montréal",
+    "lat": 45.4957267,
+    "lng": -73.6410114,
+    "rating": 5,
+    "area": "Cote-des-Neiges"
+  },
+  {
+    "name": "Proxim pharmacie affiliée - Herbert Farkas",
+    "address": "6640 Avenue de Darlington, Montréal",
+    "lat": 45.509327,
+    "lng": -73.630124,
     "rating": 3.8,
-    "city": "Saint-Jean-sur-Richelieu"
+    "area": "Cote-des-Neiges"
   },
   {
-    "name": "Proxim Martine Clouâtre, pharmacienne",
-    "address": "145 Boulevard Saint-Joseph #101, Saint-Jean-sur-Richelieu",
-    "lat": 45.314462,
-    "lng": -73.25760300000002,
-    "rating": 4.4,
-    "city": "Saint-Jean-sur-Richelieu"
+    "name": "Jean Coutu Pharmacy Dave Larouche & Vy Ky Linh Le",
+    "address": "5815 Rue Sherbrooke Ouest, Montréal",
+    "lat": 45.4697955,
+    "lng": -73.6179302,
+    "rating": 3.4,
+    "area": "NDG"
   },
   {
-    "name": "Proxim Maude Lenoir, Guillaume Latulippe et Jean-Sébastien Blais",
-    "address": "900 Boulevard du Séminaire Nord #110, Saint-Jean-sur-Richelieu",
-    "lat": 45.331374,
-    "lng": -73.268177,
+    "name": "Proxim Ly Thanh Tran",
+    "address": "5836 Boulevard Monk, Montréal",
+    "lat": 45.459926,
+    "lng": -73.596373,
     "rating": 4.3,
-    "city": "Saint-Jean-sur-Richelieu"
+    "area": "NDG"
   },
   {
-    "name": "Uniprix A Sabatier, A Perazzelli, G Latulippe et J-S Blais",
-    "address": "795 Boulevard d'Iberville, Saint-Jean-sur-Richelieu",
-    "lat": 45.304598,
-    "lng": -73.230459,
-    "rating": 3.7,
-    "city": "Saint-Jean-sur-Richelieu"
+    "name": "Accès pharma",
+    "address": "6797 Boulevard Newman, LaSalle",
+    "lat": 45.4517781,
+    "lng": -73.6101513,
+    "rating": 3.2,
+    "area": "NDG"
   },
   {
-    "name": "Brunet C. Forgues, pharm. prop. Affiliée",
-    "address": "725 Boulevard d'Iberville, Saint-Jean-sur-Richelieu",
-    "lat": 45.3061314,
-    "lng": -73.2315133,
-    "rating": 4.1,
-    "city": "Saint-Jean-sur-Richelieu"
-  },
-  {
-    "name": "Pharmacie Stéphane Turner",
-    "address": "1000 Boulevard du Séminaire Nord, Saint-Jean-sur-Richelieu",
-    "lat": 45.3373001,
-    "lng": -73.2694776,
-    "rating": 3.9,
-    "city": "Saint-Jean-sur-Richelieu"
-  },
-  {
-    "name": "Pharmacie Sylvain Boucher",
-    "address": "100 Boulevard Omer-Marcil, Saint-Jean-sur-Richelieu",
-    "lat": 45.33112750000001,
-    "lng": -73.2959904,
-    "rating": 0,
-    "city": "Saint-Jean-sur-Richelieu"
-  },
-  {
-    "name": "Accès pharma - Pharmacie Pascal Joly (affiliée à)",
-    "address": "100 Boulevard Omer-Marcil, Saint-Jean-sur-Richelieu",
-    "lat": 45.3311945,
-    "lng": -73.2959249,
-    "rating": 4.7,
-    "city": "Saint-Jean-sur-Richelieu"
-  },
-  {
-    "name": "Brunet Alexandre Van Acker-Dugas et Nicolas Provost pharm. prop. Affiliés",
-    "address": "383 Boulevard du Séminaire Nord, Saint-Jean-sur-Richelieu",
-    "lat": 45.31163249999999,
-    "lng": -73.2638058,
-    "rating": 3.6,
-    "city": "Saint-Jean-sur-Richelieu"
-  },
-  {
-    "name": "Uniprix Francis Gince",
-    "address": "395 Rue Jacques-Cartier Sud, Saint-Jean-sur-Richelieu",
-    "lat": 45.277999,
-    "lng": -73.256317,
-    "rating": 4.5,
-    "city": "Saint-Jean-sur-Richelieu"
-  },
-  {
-    "name": "Proxim pharmacie affiliée Boyi Lu, Jean-Sébastien Blais et Guillaume Latulippe",
-    "address": "122 Rue Saint-Jacques, Saint-Jean-sur-Richelieu",
-    "lat": 45.306039,
-    "lng": -73.25476499999999,
-    "rating": 4.5,
-    "city": "Saint-Jean-sur-Richelieu"
-  },
-  {
-    "name": "Uniprix Ralph Mokbel et Viviane Calabrese",
-    "address": "235 2e Avenue #102, Saint-Jean-sur-Richelieu",
-    "lat": 45.30397960000001,
-    "lng": -73.2374936,
-    "rating": 4.9,
-    "city": "Saint-Jean-sur-Richelieu"
-  },
-  {
-    "name": "Pharmacie Papillon",
-    "address": "900 Boulevard du Séminaire Nord, Saint-Jean-sur-Richelieu",
-    "lat": 45.331374,
-    "lng": -73.26817740000001,
-    "rating": 5,
-    "city": "Saint-Jean-sur-Richelieu"
-  },
-  {
-    "name": "Mathieu Mario",
-    "address": "600 Rue Pierre-Caisse, Saint-Jean-sur-Richelieu",
-    "lat": 45.3292467,
-    "lng": -73.2799995,
-    "rating": 3.6,
-    "city": "Saint-Jean-sur-Richelieu"
-  },
-  {
-    "name": "Uniprix Isabelle et Marie-Claude Legrand",
-    "address": "264 Boulevard Saint-Luc, Saint-Jean-sur-Richelieu",
-    "lat": 45.353589,
-    "lng": -73.295654,
-    "rating": 4.4,
-    "city": "Saint-Jean-sur-Richelieu"
-  },
-  {
-    "name": "Fernand Lachance et Philip Morgan, pharmaciens",
-    "address": "340 Boulevard Saint-Luc, Saint-Jean-sur-Richelieu",
-    "lat": 45.358164,
-    "lng": -73.30110100000002,
+    "name": "Uniprix Hung Nguyen",
+    "address": "6160 Rue Laurendeau, Montréal",
+    "lat": 45.457065,
+    "lng": -73.588235,
     "rating": 4.2,
-    "city": "Saint-Jean-sur-Richelieu"
+    "area": "NDG"
   },
   {
-    "name": "Proxim Yassine Amnay",
-    "address": "10 Rue Saint Joseph, Mont-Saint-Grégoire",
-    "lat": 45.338202,
-    "lng": -73.161901,
-    "rating": 4.8,
-    "city": "Saint-Jean-sur-Richelieu"
-  },
-  {
-    "name": "Pharmacie Jean Coutu Jean-Philippe Roy",
-    "address": "3300 Boulevard Fréchette, Chambly",
-    "lat": 45.431473,
-    "lng": -73.30493299999999,
-    "rating": 4.2,
-    "city": "Saint-Jean-sur-Richelieu"
-  },
-  {
-    "name": "Pharmacie Jean Coutu Santé",
-    "address": "557 Rue Notre-Dame Bureau 101, Repentigny",
-    "lat": 45.7447881,
-    "lng": -73.4389496,
-    "rating": 4.5,
-    "city": "Repentigny"
-  },
-  {
-    "name": "Uniprix Pharmacie G. Fleury, P. Bergeron & F. Dupuis",
-    "address": "200 Boulevard Brien, Repentigny",
-    "lat": 45.747265,
-    "lng": -73.463171,
-    "rating": 4.5,
-    "city": "Repentigny"
-  },
-  {
-    "name": "Accès pharma - Pharmacie R Coudé, K Bouchard & N Pinto (affiliée à)",
-    "address": "100 Boulevard Brien, Repentigny",
-    "lat": 45.742263,
-    "lng": -73.4586568,
+    "name": "Proxim Audrey Tran",
+    "address": "2529 Rue Allard, Montréal",
+    "lat": 45.451008,
+    "lng": -73.595063,
     "rating": 4,
-    "city": "Repentigny"
+    "area": "NDG"
   },
   {
-    "name": "Pharmacie Gosseling & Girard",
-    "address": "100 Boulevard Brien, Repentigny",
-    "lat": 45.7439507,
-    "lng": -73.4566885,
-    "rating": 1,
-    "city": "Repentigny"
+    "name": "Clinique Vétérinaire Ville-Émard",
+    "address": "6393 Boulevard Monk, Montréal",
+    "lat": 45.45463529999999,
+    "lng": -73.5948519,
+    "rating": 3.3,
+    "area": "NDG"
   },
   {
-    "name": "Groupe Bergeron Dupuis",
-    "address": "227 Rue Notre Dame, Repentigny",
-    "lat": 45.722167,
-    "lng": -73.4623017,
-    "rating": 4.8,
-    "city": "Repentigny"
+    "name": "Uniprix Bertrand Cohen-Tenoudji",
+    "address": "5025 Rue Sherbrooke Ouest, Westmount",
+    "lat": 45.47705,
+    "lng": -73.6061421,
+    "rating": 4,
+    "area": "NDG"
   },
   {
-    "name": "Uniprix Pharmacie Mélanie Pelletier inc.",
-    "address": "1 Rue Quintal, Charlemagne",
-    "lat": 45.719268,
-    "lng": -73.484646,
-    "rating": 4.7,
-    "city": "Repentigny"
+    "name": "PHARMAPRIX",
+    "address": "7077 Newman Boulevard Suite #8, Montreal",
+    "lat": 45.4473692,
+    "lng": -73.6171694,
+    "rating": 2.7,
+    "area": "NDG"
   },
   {
-    "name": "Accès pharma - Pharmacie Frédéric Jacques (affiliée à)",
-    "address": "1001 Rue des Migrateurs, Terrebonne",
-    "lat": 45.71910680000001,
-    "lng": -73.5011411,
+    "name": "Proxim Thai Khanh Nguyen",
+    "address": "4451 Rue Sainte-Catherine Ouest, Westmount",
+    "lat": 45.481838,
+    "lng": -73.592651,
+    "rating": 4.1,
+    "area": "NDG"
+  },
+  {
+    "name": "Passionimo Veterinary Hospital of Montreal",
+    "address": "324 Avenue Victoria, Westmount",
+    "lat": 45.4778227,
+    "lng": -73.60118849999999,
+    "rating": 4.5,
+    "area": "NDG"
+  },
+  {
+    "name": "Proxim Noel-Alexandre Bertout pharmacien Inc",
+    "address": "3828 Boulevard Décarie, Montréal",
+    "lat": 45.47677399999999,
+    "lng": -73.614723,
     "rating": 5,
-    "city": "Repentigny"
+    "area": "NDG"
   },
   {
-    "name": "Uniprix Nancy Desmarais et Maude Tremblay",
-    "address": "231 Rue Notre Dame, Repentigny",
-    "lat": 45.7224017,
-    "lng": -73.4621945,
-    "rating": 4.4,
-    "city": "Repentigny"
-  },
-  {
-    "name": "Proxim pharmacie affiliée - Bergeron et Dupuis",
-    "address": "151 Rue Notre Dame, Charlemagne",
-    "lat": 45.71959649999999,
-    "lng": -73.4844911,
-    "rating": 4.5,
-    "city": "Repentigny"
-  },
-  {
-    "name": "Hôpital Vétérinaire Le Gardeur",
-    "address": "413 Rue Saint Paul, Repentigny",
-    "lat": 45.760155,
-    "lng": -73.4854568,
+    "name": "Proximed",
+    "address": "100, 5515 Rue Saint-Jacques O, Montréal",
+    "lat": 45.4690631,
+    "lng": -73.60486139999999,
     "rating": 4.6,
-    "city": "Repentigny"
+    "area": "NDG"
   },
   {
-    "name": "Brunet S. Grégoire, pharm. prop. Affiliée",
-    "address": "288 Boulevard Larochelle, Repentigny",
-    "lat": 45.7330237,
-    "lng": -73.4673248,
-    "rating": 4.2,
-    "city": "Repentigny"
+    "name": "Familiprix Clinique- Cam Uyen Mai Ba",
+    "address": "5325 Avenue Crowley, Montréal",
+    "lat": 45.47205090000001,
+    "lng": -73.6048696,
+    "rating": 3.6,
+    "area": "NDG"
   },
   {
-    "name": "Uniprix François Dupuis",
-    "address": "1000 Montée des Pionniers, Terrebonne",
-    "lat": 45.7257955,
-    "lng": -73.50731189999999,
-    "rating": 4.2,
-    "city": "Repentigny"
+    "name": "shoppers drug mart",
+    "address": "5038 Rue Sherbrooke Ouest, Montréal",
+    "lat": 45.4763895,
+    "lng": -73.6059853,
+    "rating": 3.1,
+    "area": "NDG"
   },
   {
-    "name": "Uniprix KARINE BASTIEN ET JEAN-PHILIPPE PARE",
-    "address": "201 Chemin du Petit-Bois, Varennes",
-    "lat": 45.670471,
-    "lng": -73.427055,
-    "rating": 4.6,
-    "city": "Repentigny"
+    "name": "Pharmacie Daniel Abikhzer | Pharma Glen",
+    "address": "1001 Boulevard Décarie, Montréal",
+    "lat": 45.47334909999999,
+    "lng": -73.6008823,
+    "rating": 4.8,
+    "area": "NDG"
   },
   {
-    "name": "Brunet F. Martineau, pharm. prop. Affilié",
-    "address": "635 Rue Duvernay, Verchères",
-    "lat": 45.7742717,
-    "lng": -73.3519053,
-    "rating": 4.5,
-    "city": "Repentigny"
+    "name": "Mekhael Pharmaciens",
+    "address": "5351 Chemin de la Côte Saint Luc, Montréal",
+    "lat": 45.47976999999999,
+    "lng": -73.6239378,
+    "rating": 5,
+    "area": "NDG"
   },
   {
-    "name": "Clinique Médicale de L'assomption",
-    "address": "814 Boulevard de l'Ange Gardien Nord, L'Assomption",
-    "lat": 45.83920659999999,
-    "lng": -73.4131688,
-    "rating": 2.9,
-    "city": "Repentigny"
+    "name": "Prescriptions 4 US",
+    "address": "6591 Avenue Somerled Suite 202, Montréal",
+    "lat": 45.466988,
+    "lng": -73.6391604,
+    "rating": 0,
+    "area": "NDG"
   },
   {
-    "name": "Uniprix Pharmacie Vinh The Jimmy Pham et Kar Man Lam",
-    "address": "13170 Rue Sherbrooke Est, Montréal",
-    "lat": 45.658234,
-    "lng": -73.508468,
+    "name": "Maison Et Pharmacié",
+    "address": "Canada",
+    "lat": 45.4518576,
+    "lng": -73.6102629,
     "rating": 4.3,
-    "city": "Repentigny"
+    "area": "NDG"
+  },
+  {
+    "name": "Pharmacité Weinbaum",
+    "address": "5333 Boulevard Décarie, Montréal",
+    "lat": 45.4856605,
+    "lng": -73.6328604,
+    "rating": 5,
+    "area": "NDG"
+  },
+  {
+    "name": "Pharmacie M Simon",
+    "address": "5333 Boulevard Décarie, Montréal",
+    "lat": 45.48566059999999,
+    "lng": -73.6328606,
+    "rating": 4.7,
+    "area": "NDG"
+  },
+  {
+    "name": "Phx1833",
+    "address": "7077 Boulevard Newman, LaSalle",
+    "lat": 45.4473431,
+    "lng": -73.6151107,
+    "rating": 0,
+    "area": "NDG"
+  },
+  {
+    "name": "Calea",
+    "address": "4929 Place Olivia, Saint-Laurent",
+    "lat": 45.493193,
+    "lng": -73.7338015,
+    "rating": 3.7,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "La Parapharmacie",
+    "address": "377 Avenue Sainte-Croix, Montréal",
+    "lat": 45.5103656,
+    "lng": -73.6682382,
+    "rating": 3.7,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Proxim KANO & BARSOUM PHCIENS INC",
+    "address": "6363 Route Transcanadienne #101, Saint-Laurent",
+    "lat": 45.495648,
+    "lng": -73.686538,
+    "rating": 4.9,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Accès pharma - Pharmacie Kim Uyen Huynh (affiliée à)",
+    "address": "3820 Boulevard Cote Vertu Ouest, Saint-Laurent",
+    "lat": 45.491873,
+    "lng": -73.7074658,
+    "rating": 4.1,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Brunet",
+    "address": "1605 Boulevard Marcel-Laurin, Saint-Laurent",
+    "lat": 45.5160912,
+    "lng": -73.6963062,
+    "rating": 4.3,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Proxim pharmacie affiliée - Mohamed Mohamed",
+    "address": "6005 Boulevard Henri Bourassa Ouest, Saint-Laurent",
+    "lat": 45.515479,
+    "lng": -73.719061,
+    "rating": 4.9,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Uniprix Clinique J. Blanchette Brusewitz et K. Manoukian inc. (Gouin)",
+    "address": "4929b Place Olivia, Saint-Laurent",
+    "lat": 45.493196,
+    "lng": -73.7337991,
+    "rating": 4.2,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Uniprix",
+    "address": "3131 Boulevard de la Côte Vertu, Montréal",
+    "lat": 45.4995741,
+    "lng": -73.7060319,
+    "rating": 3.5,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Proxim Joëlle Amselem et Daniel Abikhzer",
+    "address": "2071 Rue Saint-Louis, Saint-Laurent",
+    "lat": 45.501715,
+    "lng": -73.681105,
+    "rating": 4,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Rosan for advanced Business CO.Ltd",
+    "address": "Rue Crevier, Montréal",
+    "lat": 45.5184042,
+    "lng": -73.69534829999999,
+    "rating": 0,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Sanavie (Pharmacie Lynn Steinberg Weinberg, Pharmacienne Inc.)",
+    "address": "162 Rue Barr, Montréal",
+    "lat": 45.48173329999999,
+    "lng": -73.6937239,
+    "rating": 4.4,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Pharmacie Nicole Nathalie Abouaccar Inc.",
+    "address": "2300 Boulevard Marcel-Laurin, Montréal",
+    "lat": 45.5201061,
+    "lng": -73.7048777,
+    "rating": 0,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Group Mbh",
+    "address": "5445 Boulevard Henri Bourassa Ouest, Saint-Laurent",
+    "lat": 45.5193977,
+    "lng": -73.7135095,
+    "rating": 0,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Uniprix Nouha Hanna",
+    "address": "1055 Boulevard Cote Vertu Ouest, Saint-Laurent",
+    "lat": 45.518142,
+    "lng": -73.678328,
+    "rating": 4,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "McKesson Canada - Siège Social",
+    "address": "4705 Rue Dobrin, Saint-Laurent",
+    "lat": 45.4953244,
+    "lng": -73.7349578,
+    "rating": 5,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Pharmacie Raji Al-Kurdi Inc.",
+    "address": "4800 Rue Dobrin local 101, Saint-Laurent",
+    "lat": 45.4940757,
+    "lng": -73.73464880000002,
+    "rating": 4.8,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Gabriel Torani et Habib Haddad Pharmaciens Inc | SpecPharma - Traitements Spécialisés",
+    "address": "8500 Boulevard Décarie #100, Mount Royal",
+    "lat": 45.500747,
+    "lng": -73.66385489999999,
+    "rating": 4.9,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "ProPharmacie Inc. Courtier en pharmacie",
+    "address": "5605 Rue Dudemaine, Montréal",
+    "lat": 45.5255162,
+    "lng": -73.70531749999999,
+    "rating": 5,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Pharmacie Sami Obeid",
+    "address": "2435 Manella Road local 120, Mount Royal",
+    "lat": 45.504324,
+    "lng": -73.663721,
+    "rating": 4.7,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "PHARMACIE R MILANE",
+    "address": "1925 Boulevard Keller, Saint-Laurent",
+    "lat": 45.524546,
+    "lng": -73.71306489999999,
+    "rating": 4.2,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "pharmacie R. MILLANE",
+    "address": "1925 Boulevard Keller, Saint-Laurent",
+    "lat": 45.5245483,
+    "lng": -73.7134754,
+    "rating": 3.9,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Proxim Lynda Fortin",
+    "address": "815 Boulevard Cote Vertu Ouest #103, Saint-Laurent",
+    "lat": 45.520275,
+    "lng": -73.675366,
+    "rating": 4.3,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "Pharmacie Côte-Vertu",
+    "address": "815 Boulevard Cote Vertu Ouest #103, Saint-Laurent",
+    "lat": 45.5202758,
+    "lng": -73.67536679999999,
+    "rating": 0,
+    "area": "Saint-Laurent"
+  },
+  {
+    "name": "PJC",
+    "address": "1221 Rue Fleury Est, Montréal",
+    "lat": 45.5596508,
+    "lng": -73.6587062,
+    "rating": 3.3,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Proxim Leen Alghazal Pharmacienne Inc.",
+    "address": "400 Place Juge Desnoyers #6, Laval",
+    "lat": 45.564324,
+    "lng": -73.67256139999999,
+    "rating": 0,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Uniprix Marie-Yseult Laurin et Sandra Lussier",
+    "address": "609 Boulevard Henri-Bourassa Est, Montréal",
+    "lat": 45.556489,
+    "lng": -73.66789899999999,
+    "rating": 4.4,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Rosemary Greco & Sosi Donabet",
+    "address": "9465 Rue Lajeunesse, Montréal",
+    "lat": 45.5503315,
+    "lng": -73.6507227,
+    "rating": 5,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Quoc Dung Nguyen",
+    "address": "2830 Rue Fleury Est, Montréal",
+    "lat": 45.5783084,
+    "lng": -73.64498379999999,
+    "rating": 4.8,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Pharmacie en ligne Picard & Desjardins",
+    "address": "555 Rue Chabanel Ouest Suite 603, Montréal",
+    "lat": 45.5382506,
+    "lng": -73.65582330000001,
+    "rating": 5,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Proxim Alaria Chamoun",
+    "address": "3231 Boulevard Henri-Bourassa Est, Montréal",
+    "lat": 45.583757,
+    "lng": -73.65069799999999,
+    "rating": 4.2,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Proxim Salvatore Modica",
+    "address": "9065 Boulevard Saint-Michel, Montréal",
+    "lat": 45.572036,
+    "lng": -73.627453,
+    "rating": 4.4,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Brunet Clinique S. Bakhache, S. Chouinard, pharm. prop. Affiliés",
+    "address": "1575 Boulevard Henri Bourassa Ouest, Montréal",
+    "lat": 45.5375506,
+    "lng": -73.6794547,
+    "rating": 4.6,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Clinique vétérinaire de la Promenade",
+    "address": "1567 Rue Fleury Est, Montréal",
+    "lat": 45.5634761,
+    "lng": -73.6562237,
+    "rating": 4.3,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Hôpital Vétérinaire du Nord",
+    "address": "9988 Rue Lajeunesse, Montréal",
+    "lat": 45.5521874,
+    "lng": -73.6582595,
+    "rating": 4.3,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Proxim Reim Homsi",
+    "address": "204 Rue Fleury Ouest, Montréal",
+    "lat": 45.545382,
+    "lng": -73.66641700000001,
+    "rating": 4.8,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Uniprix Dorian Margineanu",
+    "address": "300 Place Juge Desnoyers S, Laval",
+    "lat": 45.56356599999999,
+    "lng": -73.6731765,
+    "rating": 4.5,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Jean-Coutu-Pharmacie Mathieu Léger Inc.",
+    "address": "50 Rue Fleury Est, Montréal",
+    "lat": 45.5488419,
+    "lng": -73.6644599,
+    "rating": 3.9,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Pharmacie Kim chi Le Nguyen",
+    "address": "2157 Rue Fleury Est, Montréal",
+    "lat": 45.571972,
+    "lng": -73.650808,
+    "rating": 4,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Gestion Apothecarius Inc",
+    "address": "1420 Rue Legendre Est, Montréal",
+    "lat": 45.5587516,
+    "lng": -73.63757950000002,
+    "rating": 4,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Proxim affiliate pharmacy - Ahrid and Moustapha",
+    "address": "1420 Rue Legendre Est #7, Montréal",
+    "lat": 45.5586073,
+    "lng": -73.6375426,
+    "rating": 3.6,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Medzy",
+    "address": "9320 Boulevard Saint-Laurent Suite 711, Montreal",
+    "lat": 45.544427,
+    "lng": -73.6518693,
+    "rating": 4.2,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Paylan Yetvart Pharmaciens",
+    "address": "8967 Rue Lajeunesse, Montréal",
+    "lat": 45.5481518,
+    "lng": -73.6432835,
+    "rating": 3.6,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Online Pharma - Pharmacie en Ligne Jeremy Bitton, Pharmacy Owner",
+    "address": "433 Rue Chabanel Ouest Suite 1011, Montreal",
+    "lat": 45.53908180000001,
+    "lng": -73.65500209999999,
+    "rating": 4.5,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Vincent Landry et Mélina Tsoumis, pharmaciens",
+    "address": "270 Boulevard de la Concorde Est, Laval",
+    "lat": 45.5776692,
+    "lng": -73.68159399999999,
+    "rating": 0,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Pharmacie Grégoire Arakelian (Costco)",
+    "address": "1015 Rue du Marché Central, Montréal",
+    "lat": 45.5367304,
+    "lng": -73.660674,
+    "rating": 2.8,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Fatima Ait Addi Pharmacienne Proprietaire",
+    "address": "8610 Boulevard Saint-Laurent, Montréal",
+    "lat": 45.5411722,
+    "lng": -73.64022709999999,
+    "rating": 3.5,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Familiprix clinique pharmacie Jean-François Gagnon Inc.",
+    "address": "8581 Boulevard Saint-Laurent, Montréal",
+    "lat": 45.5412272,
+    "lng": -73.6386667,
+    "rating": 4.4,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Pharmacie M Torani-Y Zakaria",
+    "address": "1451 Boulevard Crémazie Est #101, Montréal",
+    "lat": 45.55355369999999,
+    "lng": -73.6259349,
+    "rating": 3.7,
+    "area": "Ahuntsic"
+  },
+  {
+    "name": "Accès pharma - Pharmacie Georges Rizkallah (affiliée à)",
+    "address": "6140 Boulevard Henri-Bourassa Est, Montréal-Nord",
+    "lat": 45.60570329999999,
+    "lng": -73.6134005,
+    "rating": 4.3,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Proxim Pharmacie Duy Lan Vu 9135 Inc.",
+    "address": "9135 Boulevard Pie-IX, Montréal",
+    "lat": 45.580033,
+    "lng": -73.621416,
+    "rating": 5,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Uniprix Morin, Nahas et associés - pharmacie affiliée",
+    "address": "9235 Boulevard Lacordaire, Saint-Léonard",
+    "lat": 45.597299,
+    "lng": -73.60919799999999,
+    "rating": 4,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Uniprix John Max et Associé",
+    "address": "5850 Boulevard Léger, Montréal-Nord",
+    "lat": 45.616629,
+    "lng": -73.628795,
+    "rating": 4.4,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Pharmacie David Pettinicchi",
+    "address": "5511 Rue de Charleroi, Montréal-Nord",
+    "lat": 45.6026478,
+    "lng": -73.62040209999999,
+    "rating": 5,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Karbouch Marie",
+    "address": "11211 Boulevard Lacordaire, Montreal-Nord",
+    "lat": 45.60537579999999,
+    "lng": -73.6183021,
+    "rating": 3,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Uniprix François-Xavier Maher",
+    "address": "5634 Boulevard Henri-Bourassa Est, Montréal",
+    "lat": 45.605836,
+    "lng": -73.62004499999999,
+    "rating": 4,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Kean",
+    "address": "6000 Boulevard Henri-Bourassa Est, Montréal-Nord",
+    "lat": 45.60687230000001,
+    "lng": -73.6167944,
+    "rating": 0,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Proxim John Thomas & Fady Thomas",
+    "address": "5057 Boulevard Henri-Bourassa Est, Montréal-Nord",
+    "lat": 45.6031938,
+    "lng": -73.63118829999999,
+    "rating": 4.6,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Rx Direct",
+    "address": "4611 Boulevard des Grandes-Prairies, Saint-Léonard",
+    "lat": 45.58709469999999,
+    "lng": -73.6212097,
+    "rating": 0,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Pharmacy",
+    "address": "Montreal",
+    "lat": 45.5862956,
+    "lng": -73.6333234,
+    "rating": 0,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Uniprix Morin, Nahas et associés (Boul. Robert) - Pharmacie affiliée",
+    "address": "6009 Boulevard Robert, Saint-Léonard",
+    "lat": 45.592873,
+    "lng": -73.592216,
+    "rating": 4.1,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "International Pharma Works Inc",
+    "address": "6651 Rue Paul-Émile Lamarche, Saint-Léonard",
+    "lat": 45.60040469999999,
+    "lng": -73.58832009999999,
+    "rating": 0,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Fauna hôpital pour animaux exotiques",
+    "address": "5313 Boulevard Lévesque Est, Laval",
+    "lat": 45.61428979999999,
+    "lng": -73.6453322,
+    "rating": 0,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Uniprix Walid El Sadawy et Gaétan Couillard",
+    "address": "4945 Rue Jarry Est, Montréal",
+    "lat": 45.58027,
+    "lng": -73.595942,
+    "rating": 3.2,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Brunet S. Boulos, pharm. prop. Affilié",
+    "address": "3390 Boulevard Henri-Bourassa Est, Montréal",
+    "lat": 45.5867826,
+    "lng": -73.6486536,
+    "rating": 4.1,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Proxim Pharmacie Natalie Martin et Lina Daher Inc",
+    "address": "3461 Boulevard Gouin Est, Montréal",
+    "lat": 45.59072399999999,
+    "lng": -73.651,
+    "rating": 4.8,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Pharmacie Steven Boulos Inc",
+    "address": "3390 Boulevard Henri-Bourassa Est, Montréal-Nord",
+    "lat": 45.5867637,
+    "lng": -73.64860920000001,
+    "rating": 0,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Costco Pharmacy",
+    "address": "7373 Rue Bombardier, Anjou",
+    "lat": 45.6092107,
+    "lng": -73.5853909,
+    "rating": 5,
+    "area": "Montreal-Nord"
+  },
+  {
+    "name": "Pharmacie Michel Hamoui (Pharmacie affiliée a Familiprix)",
+    "address": "5361 Rue Jean-Talon Est, Saint-Léonard",
+    "lat": 45.5796575,
+    "lng": -73.5820245,
+    "rating": 5,
+    "area": "Saint-Leonard"
+  },
+  {
+    "name": "Accès pharma chez Walmart - Pharmacie Rocky Zomparelli & Jimmy Dorcélus",
+    "address": "7600 Boulevard Viau, Saint-Léonard",
+    "lat": 45.574562,
+    "lng": -73.5916125,
+    "rating": 4.4,
+    "area": "Saint-Leonard"
+  },
+  {
+    "name": "Larivière & Massicotte",
+    "address": "8296 Boulevard Pie-IX, Montréal",
+    "lat": 45.5739014,
+    "lng": -73.6092171,
+    "rating": 4.8,
+    "area": "Saint-Leonard"
+  },
+  {
+    "name": "Proxim El-Modafar El-Mostafa",
+    "address": "6555 Rue de Pontoise E107, Montréal",
+    "lat": 45.5804069,
+    "lng": -73.568068,
+    "rating": 0,
+    "area": "Saint-Leonard"
+  },
+  {
+    "name": "Brunet Q. Thai Lam, pharm. prop. Affilié",
+    "address": "7200 Boulevard des Roseraies, Anjou",
+    "lat": 45.59914010000001,
+    "lng": -73.55959899999999,
+    "rating": 3.9,
+    "area": "Saint-Leonard"
+  },
+  {
+    "name": "Clinique Vétérinaire du Quartier",
+    "address": "5937 Rue Bélanger Est, Saint-Léonard",
+    "lat": 45.583849,
+    "lng": -73.57259859999999,
+    "rating": 4.5,
+    "area": "Saint-Leonard"
+  },
+  {
+    "name": "Pharmaprix - Shopper's Drug Mart",
+    "address": "4720 Rue Jarry Est Arr, Montréal",
+    "lat": 45.5775551,
+    "lng": -73.5964528,
+    "rating": 3.7,
+    "area": "Saint-Leonard"
+  },
+  {
+    "name": "Uniprix Pierre Bergeron",
+    "address": "5435 Rue Bélanger, Montréal",
+    "lat": 45.5786712,
+    "lng": -73.57569289999999,
+    "rating": 3.7,
+    "area": "Saint-Leonard"
+  },
+  {
+    "name": "Pharmacie Caroline Milette",
+    "address": "5700 Rue Saint-Zotique Est, Montréal",
+    "lat": 45.5800549,
+    "lng": -73.5692663,
+    "rating": 5,
+    "area": "Saint-Leonard"
+  },
+  {
+    "name": "Pharmacie Daniel Vermette et Heidi Moran Inc",
+    "address": "7675 Rue Lespinay, Saint-Léonard",
+    "lat": 45.5837053,
+    "lng": -73.5851472,
+    "rating": 3,
+    "area": "Saint-Leonard"
+  },
+  {
+    "name": "Pharmacie Van Nguyen - Anjou",
+    "address": "8240 Avenue de Châtillon, Anjou",
+    "lat": 45.60445199999999,
+    "lng": -73.5506454,
+    "rating": 4.9,
+    "area": "Anjou"
+  },
+  {
+    "name": "Proxim Léa Barrak",
+    "address": "8666 Av de Chaumont, Anjou",
+    "lat": 45.61011999999999,
+    "lng": -73.547298,
+    "rating": 4.1,
+    "area": "Anjou"
+  },
+  {
+    "name": "Hôpital Vétérinaire de L’Est inc.",
+    "address": "8700 Avenue Chaumont, Anjou",
+    "lat": 45.6106053,
+    "lng": -73.5467585,
+    "rating": 4.1,
+    "area": "Anjou"
+  },
+  {
+    "name": "Proxim Pharmacie Duy Lan Vu 8327 Inc",
+    "address": "8327 Rue Hochelaga, Montréal",
+    "lat": 45.597454,
+    "lng": -73.522537,
+    "rating": 4.1,
+    "area": "Anjou"
+  },
+  {
+    "name": "IV Tech Pharma Montréal-Est",
+    "address": "9080 Rue Hochelaga, Montréal",
+    "lat": 45.6052633,
+    "lng": -73.51731199999999,
+    "rating": 3.8,
+    "area": "Anjou"
+  },
+  {
+    "name": "Uniprix L. Desormiers et Z. Khoder",
+    "address": "9080 Rue Hochelaga, Montréal",
+    "lat": 45.605263,
+    "lng": -73.51731199999999,
+    "rating": 4.3,
+    "area": "Anjou"
+  },
+  {
+    "name": "Les Entreprises Mortier-Pilon Inc",
+    "address": "7181 Rue Beaubien Est, Anjou",
+    "lat": 45.59452,
+    "lng": -73.55735849999999,
+    "rating": 5,
+    "area": "Anjou"
+  },
+  {
+    "name": "Uniprix K. Lavallée, F. Dupuis et P. Bergeron",
+    "address": "6780 Boulevard Joseph-Renaud, Anjou",
+    "lat": 45.605142,
+    "lng": -73.553235,
+    "rating": 3.4,
+    "area": "Anjou"
+  },
+  {
+    "name": "Pharma Plus",
+    "address": "Les Gorges de, 7960 Rue Alfred, Coaticook",
+    "lat": 45.6110535,
+    "lng": -73.5648621,
+    "rating": 3.7,
+    "area": "Anjou"
+  },
+  {
+    "name": "Uniprix Vinh The Jimmy Pham Pharmacien inc.",
+    "address": "8653 Rue de Grosbois, Montréal",
+    "lat": 45.604872,
+    "lng": -73.53502,
+    "rating": 4.7,
+    "area": "Anjou"
+  },
+  {
+    "name": "Brunet Plus",
+    "address": "Canada",
+    "lat": 45.59926539999999,
+    "lng": -73.5591848,
+    "rating": 3.6,
+    "area": "Anjou"
+  },
+  {
+    "name": "Entrprises Maxor Inc",
+    "address": "6921 Boulevard des Galeries d'Anjou, Anjou",
+    "lat": 45.59582109999999,
+    "lng": -73.5576288,
+    "rating": 0,
+    "area": "Anjou"
+  },
+  {
+    "name": "Gestion Ruby Inc",
+    "address": "7100 Rue Jarry Est, Anjou",
+    "lat": 45.6015755,
+    "lng": -73.5754697,
+    "rating": 0,
+    "area": "Anjou"
+  },
+  {
+    "name": "Pharmacie Co H-C",
+    "address": "2545 Rue des Ormeaux, Montréal",
+    "lat": 45.6020094,
+    "lng": -73.5206237,
+    "rating": 4.7,
+    "area": "Anjou"
+  },
+  {
+    "name": "Uniprix B.H. Trinh, J. B. Blanchette, H.Z. Jakubiak",
+    "address": "9080 Rue Hochelaga Rc02, Montréal",
+    "lat": 45.60522690000001,
+    "lng": -73.51731149999999,
+    "rating": 0,
+    "area": "Anjou"
+  },
+  {
+    "name": "Entreprises Luc Chalut Inc (Les)",
+    "address": "6496 Rue Beaubien Est, Montréal",
+    "lat": 45.5874222,
+    "lng": -73.5606127,
+    "rating": 4,
+    "area": "Anjou"
+  },
+  {
+    "name": "Uniprix Daniel Choute et François-Xavier Maher - Pharmacie affiliée",
+    "address": "6455 Rue Beaubien Est, Montréal",
+    "lat": 45.586164,
+    "lng": -73.562163,
+    "rating": 4.1,
+    "area": "Anjou"
+  },
+  {
+    "name": "Pharmaprix Simplement Santé",
+    "address": "55 De L'Eglise, Montréal",
+    "lat": 45.462891,
+    "lng": -73.564475,
+    "rating": 4.2,
+    "area": "Verdun"
+  },
+  {
+    "name": "Pharmacy Hazboun & Menhem",
+    "address": "2043 Rue Wellington, Montréal",
+    "lat": 45.4786412,
+    "lng": -73.55909919999999,
+    "rating": 3.7,
+    "area": "Verdun"
+  },
+  {
+    "name": "Uniprix Pharmacie Davy Chhuon Pharmacien inc.",
+    "address": "4455 Rue Wellington, Montréal",
+    "lat": 45.45947200000001,
+    "lng": -73.56751299999999,
+    "rating": 3.5,
+    "area": "Verdun"
+  },
+  {
+    "name": "Anipharm",
+    "address": "2010 Boulevard René Lévesque, Verdun",
+    "lat": 45.46716259999999,
+    "lng": -73.54034899999999,
+    "rating": 5,
+    "area": "Verdun"
+  },
+  {
+    "name": "Proxim Nancy Basta et Nourhan Daoud",
+    "address": "Du Sud, 325 Chemin de la Pointe Sud #111, Verdun",
+    "lat": 45.44882800000001,
+    "lng": -73.555807,
+    "rating": 5,
+    "area": "Verdun"
+  },
+  {
+    "name": "M H Lemy",
+    "address": "5101 De Verdun, Verchères",
+    "lat": 45.4554796,
+    "lng": -73.5722499,
+    "rating": 5,
+    "area": "Verdun"
+  },
+  {
+    "name": "Roua",
+    "address": "5443 Avenue Bannantyne, Verdun",
+    "lat": 45.452847,
+    "lng": -73.576959,
+    "rating": 3.9,
+    "area": "Verdun"
+  },
+  {
+    "name": "Uniprix Sharon Abitbol",
+    "address": "2223 Avenue Dollard, Montréal",
+    "lat": 45.432402,
+    "lng": -73.63634499999999,
+    "rating": 3.3,
+    "area": "LaSalle"
+  },
+  {
+    "name": "Uniprix Clinique Najet Rebai - Pharmacie affiliée",
+    "address": "1500 Avenue Dollard, LaSalle",
+    "lat": 45.42706750000001,
+    "lng": -73.6281351,
+    "rating": 3.6,
+    "area": "LaSalle"
+  },
+  {
+    "name": "Canada Post",
+    "address": "40 Westminster North, Montréal-Ouest",
+    "lat": 45.452912,
+    "lng": -73.645764,
+    "rating": 4.6,
+    "area": "LaSalle"
+  },
+  {
+    "name": "Pharmacie Fadi Chamoun et Spiros Marinis - affiliée Familiprix",
+    "address": "9316 Rue Airlie, LaSalle",
+    "lat": 45.423022,
+    "lng": -73.642388,
+    "rating": 4,
+    "area": "LaSalle"
+  },
+  {
+    "name": "Clinique Vétérinaire Dollard",
+    "address": "1551 Avenue Dollard, LaSalle",
+    "lat": 45.42781669999999,
+    "lng": -73.62829140000001,
+    "rating": 4.5,
+    "area": "LaSalle"
+  },
+  {
+    "name": "Uniprix Jean Archambault - affiliated Pharmacy",
+    "address": "8626 Rue Centrale, LaSalle",
+    "lat": 45.417143,
+    "lng": -73.620206,
+    "rating": 4.2,
+    "area": "LaSalle"
+  },
+  {
+    "name": "Uniprix Duy Lan Vu",
+    "address": "259 Rue Saint-Jacques, Lachine",
+    "lat": 45.444312,
+    "lng": -73.647275,
+    "rating": 3.5,
+    "area": "LaSalle"
+  },
+  {
+    "name": "North American Council of Electro - Homeopathy",
+    "address": "1730 Avenue Dollard, LaSalle",
+    "lat": 45.4286728,
+    "lng": -73.6315693,
+    "rating": 5,
+    "area": "LaSalle"
+  },
+  {
+    "name": "Pharmacie Myriame Ngo & Kenneth Chan - Affiliée au Groupe Horizon Santé",
+    "address": "7201 Boulevard Newman, LaSalle",
+    "lat": 45.44317579999999,
+    "lng": -73.6170163,
+    "rating": 4.7,
+    "area": "LaSalle"
+  },
+  {
+    "name": "Proxim pharmacie affiliée - Carole-Anne Budning",
+    "address": "40 Westminster North, Montréal",
+    "lat": 45.452912,
+    "lng": -73.645764,
+    "rating": 4.1,
+    "area": "LaSalle"
+  },
+  {
+    "name": "uniprix",
+    "address": "1198 Rue Notre-Dame, Montréal",
+    "lat": 45.4351242,
+    "lng": -73.6743965,
+    "rating": 3.8,
+    "area": "LaSalle"
+  },
+  {
+    "name": "Uniprix Pharmacie Maciek Zarzycki et Matthieu Rousseau",
+    "address": "3103 Rue Victoria, Lachine",
+    "lat": 45.436384,
+    "lng": -73.690494,
+    "rating": 4.7,
+    "area": "Lachine"
+  },
+  {
+    "name": "Clinique Veterinaire Lac St-Louis",
+    "address": "75 45e Avenue, Lachine",
+    "lat": 45.4376676,
+    "lng": -73.7061461,
+    "rating": 4.6,
+    "area": "Lachine"
+  },
+  {
+    "name": "Uniprix - Lachine",
+    "address": "3103 Rue Victoria, Lachine",
+    "lat": 45.436372,
+    "lng": -73.6905263,
+    "rating": 2.7,
+    "area": "Lachine"
+  },
+  {
+    "name": "Fadi Chamoun et Spiros Marinis - Kannawake - Kateri Pharmacy",
+    "address": "10 Road River, Kahnawake",
+    "lat": 45.4152685,
+    "lng": -73.68306319999999,
+    "rating": 4,
+    "area": "Lachine"
+  },
+  {
+    "name": "Uniprix Rafik Abdel Malek et Reham Zakhary - Pharmacie affiliée",
+    "address": "4887 Boulevard Saint-Charles, Pierrefonds",
+    "lat": 45.466953,
+    "lng": -73.87513799999999,
+    "rating": 3.6,
+    "area": "Pierrefonds"
+  },
+  {
+    "name": "Uniprix William Berryman",
+    "address": "14770 Pierrefonds Boulevard #103, Pierrefonds",
+    "lat": 45.484863,
+    "lng": -73.85785369999999,
+    "rating": 5,
+    "area": "Pierrefonds"
+  },
+  {
+    "name": "Proxim Nancy Bolos pharmacienne inc",
+    "address": "15745 Boulevard de Pierrefonds, Pierrefonds",
+    "lat": 45.47902440000001,
+    "lng": -73.8671409,
+    "rating": 4.8,
+    "area": "Pierrefonds"
+  },
+  {
+    "name": "Pharmacy Valerio Tomaselli et Jonathan Din Inc. Jean Coutu",
+    "address": "4930 Boulevard Saint-Jean, Pierrefonds",
+    "lat": 45.490986,
+    "lng": -73.8521889,
+    "rating": 0,
+    "area": "Pierrefonds"
+  },
+  {
+    "name": "Uniprix Pharmacie Zakrzewski-Jakubiak et Manoukian",
+    "address": "3708 Boulevard Saint-Jean, Dollard-des-Ormeaux",
+    "lat": 45.473613,
+    "lng": -73.836443,
+    "rating": 3.5,
+    "area": "Pierrefonds"
   },
   {
     "name": "Accès pharma - Pharmacie J. Le Truong & N. Hanh Le (affiliée à)",
@@ -1813,7 +1717,1247 @@
     "lat": 45.6540712,
     "lng": -73.5129208,
     "rating": 4.5,
-    "city": "Repentigny"
+    "area": "Pointe-aux-Trembles"
+  },
+  {
+    "name": "Uniprix Pharmacie Vinh The Jimmy Pham et Kar Man Lam",
+    "address": "13170 Rue Sherbrooke Est, Montréal",
+    "lat": 45.658234,
+    "lng": -73.508468,
+    "rating": 4.3,
+    "area": "Pointe-aux-Trembles"
+  },
+  {
+    "name": "Pharmacie Bergeron et Coulombe",
+    "address": "14020 Rue de Montigny, Montréal",
+    "lat": 45.66864100000001,
+    "lng": -73.499234,
+    "rating": 4.2,
+    "area": "Pointe-aux-Trembles"
+  },
+  {
+    "name": "Clinique Vétérinaire St Jean Baptiste",
+    "address": "1576 Boulevard Saint-Jean-Baptiste, Pointe-aux-Trembles",
+    "lat": 45.6421819,
+    "lng": -73.5058686,
+    "rating": 4.5,
+    "area": "Pointe-aux-Trembles"
+  },
+  {
+    "name": "Pharmacy Philippe Vo",
+    "address": "7604 Avenue Querbes, Montréal",
+    "lat": 45.5297475,
+    "lng": -73.62827469999999,
+    "rating": 5,
+    "area": "Outremont"
+  },
+  {
+    "name": "Uniprix NADER ALTAHHAN",
+    "address": "1005 Rue de Liège Ouest, Montréal",
+    "lat": 45.529928,
+    "lng": -73.643903,
+    "rating": 3.7,
+    "area": "Outremont"
+  },
+  {
+    "name": "Proxim",
+    "address": "1067 Avenue Laurier Ouest, Outremont",
+    "lat": 45.517925,
+    "lng": -73.597597,
+    "rating": 4.3,
+    "area": "Outremont"
+  },
+  {
+    "name": "Pharmacie Westmount Square, Pharmacie Emna Mzabi Inc",
+    "address": "1 Carré Westmount suite C-150, Westmount",
+    "lat": 45.48720579999999,
+    "lng": -73.5881366,
+    "rating": 4.7,
+    "area": "Westmount"
+  },
+  {
+    "name": "Proxim pharmacie affiliée - Arto Basmadjian",
+    "address": "3550 Chemin de la Côte-des-Neiges G30, Montréal",
+    "lat": 45.49603549999999,
+    "lng": -73.5861025,
+    "rating": 4.8,
+    "area": "Westmount"
+  },
+  {
+    "name": "Minh A Chu Pharmacien",
+    "address": "3545 Chemin de la Côte-des-Neiges, Montréal",
+    "lat": 45.4966749,
+    "lng": -73.5849867,
+    "rating": 5,
+    "area": "Westmount"
+  },
+  {
+    "name": "Uniprix Martin Graham pharmacien inc.",
+    "address": "905 Boulevard René-Lévesque Ouest, Québec",
+    "lat": 46.79678999999999,
+    "lng": -71.23947799999999,
+    "rating": 3.4,
+    "area": "Quebec City"
+  },
+  {
+    "name": "Globalvet - Clinique vétérinaire du Faubourg",
+    "address": "36 Boulevard René-Lévesque Est, Québec",
+    "lat": 46.8056165,
+    "lng": -71.224841,
+    "rating": 3.9,
+    "area": "Quebec City"
+  },
+  {
+    "name": "Familiprix - André Villeneuve",
+    "address": "241 Chemin Sainte-Foy, Québec",
+    "lat": 46.8045659,
+    "lng": -71.2305834,
+    "rating": 4.7,
+    "area": "Quebec City"
+  },
+  {
+    "name": "Proximed pharmacie affiliée - Blais, Côté et Tremblay",
+    "address": "1750 Avenue de Vitré, Québec",
+    "lat": 46.83703999999999,
+    "lng": -71.22359999999999,
+    "rating": 4.3,
+    "area": "Quebec City"
+  },
+  {
+    "name": "Proxim Frédéric Lahoud",
+    "address": "1149 Avenue Cartier, Québec",
+    "lat": 46.80313699999999,
+    "lng": -71.22494499999999,
+    "rating": 4.5,
+    "area": "Quebec City"
+  },
+  {
+    "name": "Brunet A-A. Gobeil, pharm. prop. Affiliée",
+    "address": "1019 Avenue Cartier, Québec",
+    "lat": 46.8041917,
+    "lng": -71.2262877,
+    "rating": 4.3,
+    "area": "Quebec City"
+  },
+  {
+    "name": "Brunet R. Lafleur, S. Bouliane-Kronmüller et I. Claveau pharm. prop. Affiliés",
+    "address": "210 Rue Marie-de-l'Incarnation, Québec",
+    "lat": 46.8086784,
+    "lng": -71.2462604,
+    "rating": 3.9,
+    "area": "Quebec City"
+  },
+  {
+    "name": "Uniprix Clinique Anne Larochelle Cadoret et Jérôme Bergeron - Pharmacie affiliée",
+    "address": "1200 des, Rue des Soeurs-du-Bon-Pasteur local 200, Québec",
+    "lat": 46.797132,
+    "lng": -71.250973,
+    "rating": 4.6,
+    "area": "Quebec City"
+  },
+  {
+    "name": "Brunet R. Hamani Abdou, pharm. prop. Affiliée",
+    "address": "303 Boulevard Pierre-Bertrand, Québec",
+    "lat": 46.81417279999999,
+    "lng": -71.2641589,
+    "rating": 4,
+    "area": "Quebec City"
+  },
+  {
+    "name": "Accès pharma - Pharmacie Marie-Christine B. Mailloux(affiliée à)",
+    "address": "550 Boulevard Wilfrid-Hamel, Québec",
+    "lat": 46.82448429999999,
+    "lng": -71.2528925,
+    "rating": 3.8,
+    "area": "Quebec City"
+  },
+  {
+    "name": "Uniprix Pierre-Luc Boivin, Emilie Caron et Joanie Gaudreault",
+    "address": "5700 Boulevard Étienne-Dallaire Suite 120, Lévis",
+    "lat": 46.7914279,
+    "lng": -71.1656473,
+    "rating": 4.2,
+    "area": "Quebec City"
+  },
+  {
+    "name": "Brunet C. Faucher, J-P. Paradis, pharm. prop. Affiliés",
+    "address": "6700 Rue Saint-Georges, Lévis",
+    "lat": 46.81536089999999,
+    "lng": -71.17244649999999,
+    "rating": 4.2,
+    "area": "Quebec City"
+  },
+  {
+    "name": "Brunet G. Fleury, V. Blanchet, M. Aparecida Sobrinho, E. Corbin, pharm. prop.",
+    "address": "605 Rue Saint-Joseph Est, Québec",
+    "lat": 46.8150335,
+    "lng": -71.22162639999999,
+    "rating": 4.1,
+    "area": "Quebec City"
+  },
+  {
+    "name": "Pharmacie Frayne & associés",
+    "address": "2012 Boulevard René-Laennec Bureau 275, Laval",
+    "lat": 45.6088517,
+    "lng": -73.7204256,
+    "rating": 4.4,
+    "area": "Laval"
+  },
+  {
+    "name": "Accès pharma - Pharmacie T. Sastre & A. Malkhassian (affiliée à)",
+    "address": "5205 Boulevard Robert-Bourassa, Laval",
+    "lat": 45.61086479999999,
+    "lng": -73.6976518,
+    "rating": 4.3,
+    "area": "Laval"
+  },
+  {
+    "name": "Pharmacie Multi-Soins",
+    "address": "76 Boulevard Bellerose Est, Laval",
+    "lat": 45.6136044,
+    "lng": -73.7308491,
+    "rating": 4.5,
+    "area": "Laval"
+  },
+  {
+    "name": "Uniprix Clinique Suzanne Mehanna - Pharmacie affiliée",
+    "address": "1435 Boulevard Saint-Martin Ouest Suite 202, Laval",
+    "lat": 45.570377,
+    "lng": -73.723927,
+    "rating": 4.1,
+    "area": "Laval"
+  },
+  {
+    "name": "Clini Plus",
+    "address": "1110 Boulevard Vanier, Laval",
+    "lat": 45.6109243,
+    "lng": -73.65822039999999,
+    "rating": 5,
+    "area": "Laval"
+  },
+  {
+    "name": "Veterinary Clinic 440 Inc.",
+    "address": "1676 Boulevard des Laurentides, Vimont",
+    "lat": 45.5958418,
+    "lng": -73.72123239999999,
+    "rating": 4.7,
+    "area": "Laval"
+  },
+  {
+    "name": "Brunet F Baho, M Najm, M Rabbat, pharm. prop. Affiliés",
+    "address": "1160 Boulevard de l'Avenir, Laval",
+    "lat": 45.563507,
+    "lng": -73.72433680000002,
+    "rating": 3.6,
+    "area": "Laval"
+  },
+  {
+    "name": "Uniprix Louis Allard et Amy Girard-Blanchette pharmaciens inc",
+    "address": "1759 Boulevard des Laurentides, Laval",
+    "lat": 45.59887699999999,
+    "lng": -73.723626,
+    "rating": 4.5,
+    "area": "Laval"
+  },
+  {
+    "name": "Proxim Fady Thomas et John Thomas",
+    "address": "1500 Montée Monette, Laval",
+    "lat": 45.601897,
+    "lng": -73.707241,
+    "rating": 5,
+    "area": "Laval"
+  },
+  {
+    "name": "Pharmacie Dominic Fournier",
+    "address": "5020 Boulevard des Laurentides, Laval",
+    "lat": 45.620009,
+    "lng": -73.746168,
+    "rating": 4.7,
+    "area": "Laval"
+  },
+  {
+    "name": "Uniprix Sante Chantal Zeidan",
+    "address": "3323 Boulevard de la Concorde Est, Laval",
+    "lat": 45.593823,
+    "lng": -73.664221,
+    "rating": 4.1,
+    "area": "Laval"
+  },
+  {
+    "name": "Pharmacie affiliée",
+    "address": "3323 Boulevard de la Concorde Est, Laval",
+    "lat": 45.593823,
+    "lng": -73.664221,
+    "rating": 1.5,
+    "area": "Laval"
+  },
+  {
+    "name": "Pharmacie Familiprix Clinique - Suzanne Mehanna pharmacienne",
+    "address": "1435 Boulevard Saint-Martin Ouest, Laval",
+    "lat": 45.57047,
+    "lng": -73.7239422,
+    "rating": 0,
+    "area": "Laval"
+  },
+  {
+    "name": "Beautyretailer",
+    "address": "1446 Boulevard Saint-Martin Ouest Local 10, Laval",
+    "lat": 45.5696575,
+    "lng": -73.7237889,
+    "rating": 0,
+    "area": "Laval"
+  },
+  {
+    "name": "Pharmacie Suzanne Guirguis",
+    "address": "1110 Boulevard Vanier, Laval",
+    "lat": 45.6106239,
+    "lng": -73.6580807,
+    "rating": 4.5,
+    "area": "Laval"
+  },
+  {
+    "name": "Uniprix Suzanne Guirguis",
+    "address": "1110 Boulevard Vanier, Laval",
+    "lat": 45.611126,
+    "lng": -73.65798,
+    "rating": 5,
+    "area": "Laval"
+  },
+  {
+    "name": "Uniprix Gaétan Couillard & Simon Moretti",
+    "address": "6261 Boulevard des Laurentides, Laval",
+    "lat": 45.637241,
+    "lng": -73.75354200000001,
+    "rating": 4.2,
+    "area": "Laval"
+  },
+  {
+    "name": "Pharmacie Van Nguyen - Laval",
+    "address": "3025 Boulevard Tessier, Laval",
+    "lat": 45.56952849999999,
+    "lng": -73.74025759999999,
+    "rating": 5,
+    "area": "Laval"
+  },
+  {
+    "name": "Michel Quesnel Pharmacy",
+    "address": "195 Boulevard Gréber, Gatineau",
+    "lat": 45.4728173,
+    "lng": -75.7008867,
+    "rating": 4.4,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Pharmacie Walmart Gatineau",
+    "address": "640 Boulevard Maloney Ouest, Gatineau",
+    "lat": 45.4808266,
+    "lng": -75.6753463,
+    "rating": 2.8,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Redha Chadda pharmacien",
+    "address": "920 Boulevard Maloney Ouest, Gatineau",
+    "lat": 45.4780491,
+    "lng": -75.6893394,
+    "rating": 0,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Brunet F. Chatain, B. Gagnon, L. Awadalla, pharm. prop. Affiliés",
+    "address": "1150 Boulevard Saint-René Ouest, Gatineau",
+    "lat": 45.48819340000001,
+    "lng": -75.70230099999999,
+    "rating": 4,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Uniprix Martin Beaucage et Marie Kaldas",
+    "address": "22 Rue des Flandres, Gatineau",
+    "lat": 45.471179,
+    "lng": -75.718155,
+    "rating": 4.6,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Accès pharma - Pharmacie Shady Stefanos (affiliée à)",
+    "address": "51 Boulevard de la Gappe, Gatineau",
+    "lat": 45.464738,
+    "lng": -75.7200177,
+    "rating": 4.3,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Accès pharma - Pharmacie Jean-François Rochette (affiliée à)",
+    "address": "640 Boulevard Maloney Ouest, Gatineau",
+    "lat": 45.4812556,
+    "lng": -75.6756431,
+    "rating": 3.8,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Proximed pharmacie affiliée - Proxim Martin Touchette et Massimiliano Tantalo",
+    "address": "656 Boulevard Saint-Joseph, Gatineau",
+    "lat": 45.45270949999999,
+    "lng": -75.7385294,
+    "rating": 4.6,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Accès pharma - Pharmacie Martin Payer (affiliée à)",
+    "address": "425 Boulevard Saint-Joseph, Gatineau",
+    "lat": 45.44556600000001,
+    "lng": -75.733837,
+    "rating": 3.9,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Guardian New Edinburgh Pharmacy",
+    "address": "5 Beechwood Avenue, Ottawa",
+    "lat": 45.438767,
+    "lng": -75.677874,
+    "rating": 3.4,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Uniprix Daniel Coulombe",
+    "address": "325 Boulevard Gréber, Gatineau",
+    "lat": 45.477943,
+    "lng": -75.699908,
+    "rating": 4.4,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Pharmaprix Pharmacy Michael Iskedjian",
+    "address": "1160 Boulevard Saint-Joseph, Gatineau",
+    "lat": 45.47377,
+    "lng": -75.738533,
+    "rating": 3.4,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Proxim Banville Jonathan, Haddad Steven et Lamarche Patrick",
+    "address": "25 Rue De La Savane, Gatineau",
+    "lat": 45.4749062,
+    "lng": -75.70490989999999,
+    "rating": 4.4,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Pharmacies",
+    "address": "200 Boulevard Gréber Suite M2, Gatineau",
+    "lat": 45.47323189999999,
+    "lng": -75.7024392,
+    "rating": 2.8,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Pharmacie Francis Chatain et Benoit Gagnon",
+    "address": "860 Boulevard Saint-René Ouest, Gatineau",
+    "lat": 45.489127,
+    "lng": -75.6880919,
+    "rating": 4.7,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Pharmacie Joëlle Jammal",
+    "address": "accès par la rue, 700 Boulevard du Carrefour, Gatineau",
+    "lat": 45.4856748,
+    "lng": -75.680808,
+    "rating": 5,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Pharmacie Jean-François Graillon, Inc.",
+    "address": "444 Boulevard de l'Hôpital #100, Gatineau",
+    "lat": 45.4908868,
+    "lng": -75.6873942,
+    "rating": 4.5,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Centre d'hébergement Vigi de l'Outaouais",
+    "address": "565 Boulevard de l'Hôpital, Gatineau",
+    "lat": 45.4945909,
+    "lng": -75.6921588,
+    "rating": 3.3,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Uniprix Pharmacie A HASSAN & M CHEAYB INC",
+    "address": "520 Boulevard de l'Hôpital A, Gatineau",
+    "lat": 45.4938839,
+    "lng": -75.6887788,
+    "rating": 5,
+    "area": "Gatineau"
+  },
+  {
+    "name": "Maxi",
+    "address": "2655 Chemin de Chambly, Longueuil",
+    "lat": 45.5247714,
+    "lng": -73.4666359,
+    "rating": 4.1,
+    "area": "Longueuil"
+  },
+  {
+    "name": "Accès pharma - Pharmacie Rita Milky (affiliée à)",
+    "address": "1999 Boulevard Roland-Therrien, Longueuil",
+    "lat": 45.5381339,
+    "lng": -73.47461249999999,
+    "rating": 3.7,
+    "area": "Longueuil"
+  },
+  {
+    "name": "Uniprix I. Hassan, Z. Kassem Hassan et P. Abran",
+    "address": "2828 Rue de Lyon, Longueuil",
+    "lat": 45.514581,
+    "lng": -73.46471199999999,
+    "rating": 4,
+    "area": "Longueuil"
+  },
+  {
+    "name": "Proxim Judith Choquette",
+    "address": "2200 Chemin de Chambly, Longueuil",
+    "lat": 45.526619,
+    "lng": -73.475616,
+    "rating": 4.3,
+    "area": "Longueuil"
+  },
+  {
+    "name": "Clinique Santé Thong Duong - Pharmacie affiliée",
+    "address": "1430 Chemin de Chambly, Longueuil",
+    "lat": 45.53120879999999,
+    "lng": -73.48648039999999,
+    "rating": 5,
+    "area": "Longueuil"
+  },
+  {
+    "name": "Pharmacie Dinh Hieu Luu, pharmacien inc.",
+    "address": "1150 Rue King-George, Longueuil",
+    "lat": 45.5393402,
+    "lng": -73.4678387,
+    "rating": 4.5,
+    "area": "Longueuil"
+  },
+  {
+    "name": "Uniprix Uniprix M Baki, E Bergeron et S Saadi",
+    "address": "1615 Boulevard Jacques-Cartier Est #120, Longueuil",
+    "lat": 45.5407765,
+    "lng": -73.4566333,
+    "rating": 4.7,
+    "area": "Longueuil"
+  },
+  {
+    "name": "Accès pharma - Pharmacie Jacinthe Vincent (affiliée à)",
+    "address": "2877 Chemin de Chambly, Longueuil",
+    "lat": 45.52210900000001,
+    "lng": -73.4609442,
+    "rating": 4.8,
+    "area": "Longueuil"
+  },
+  {
+    "name": "Uniprix Pharmacie Isabelle Fauteux",
+    "address": "1850 Rue King Est, Sherbrooke",
+    "lat": 45.409652,
+    "lng": -71.84738399999999,
+    "rating": 4.4,
+    "area": "Sherbrooke"
+  },
+  {
+    "name": "Uniprix Geneviève Breton et Philippe Tourigny, Pharmaciens inc.",
+    "address": "2235 Rue Galt Ouest, Sherbrooke",
+    "lat": 45.38733,
+    "lng": -71.92775999999999,
+    "rating": 4.2,
+    "area": "Sherbrooke"
+  },
+  {
+    "name": "Uniprix Marie-Josée Blais-Roy",
+    "address": "610 Rue King Est, Sherbrooke",
+    "lat": 45.40778,
+    "lng": -71.875388,
+    "rating": 4,
+    "area": "Sherbrooke"
+  },
+  {
+    "name": "Proxim Louis-Simon Babin, Marc Juneau et Nathalie Marchessault",
+    "address": "624 Rue Bowen Sud, Sherbrooke",
+    "lat": 45.396935,
+    "lng": -71.878316,
+    "rating": 4,
+    "area": "Sherbrooke"
+  },
+  {
+    "name": "PJC Jean Coutu Health-Beauty",
+    "address": "147 Rue Queen, Sherbrooke",
+    "lat": 45.3673307,
+    "lng": -71.85705759999999,
+    "rating": 3.8,
+    "area": "Sherbrooke"
+  },
+  {
+    "name": "M C Lapointe",
+    "address": "147 Rue Queen, Sherbrooke",
+    "lat": 45.3673778,
+    "lng": -71.85676409999999,
+    "rating": 2,
+    "area": "Sherbrooke"
+  },
+  {
+    "name": "Maltais Francois",
+    "address": "1363 Rue Belvédère Sud, Sherbrooke",
+    "lat": 45.3854336,
+    "lng": -71.8961649,
+    "rating": 2.6,
+    "area": "Sherbrooke"
+  },
+  {
+    "name": "Brunet A. Plourde, pharm. prop. Affiliée",
+    "address": "1055 12e Avenue Nord, Sherbrooke",
+    "lat": 45.4224068,
+    "lng": -71.874627,
+    "rating": 4,
+    "area": "Sherbrooke"
+  },
+  {
+    "name": "Pharmacie Pharmaprix Michel Bourque",
+    "address": "420 Rue Belvédère Sud, Sherbrooke",
+    "lat": 45.39566869999999,
+    "lng": -71.8951676,
+    "rating": 3.2,
+    "area": "Sherbrooke"
+  },
+  {
+    "name": "Colis",
+    "address": "610 Rue King Est, Sherbrooke",
+    "lat": 45.4077059,
+    "lng": -71.8754691,
+    "rating": 0,
+    "area": "Sherbrooke"
+  },
+  {
+    "name": "Uniprix Iyad Abou Jamous",
+    "address": "1900 Rue Belvédère Sud, Sherbrooke",
+    "lat": 45.37687040000001,
+    "lng": -71.8926269,
+    "rating": 4.4,
+    "area": "Sherbrooke"
+  },
+  {
+    "name": "Uniprix Danny Gobeil et David Thibault",
+    "address": "330 Rue des Érables, Sherbrooke",
+    "lat": 45.40303199999999,
+    "lng": -71.94651499999999,
+    "rating": 3.7,
+    "area": "Sherbrooke"
+  },
+  {
+    "name": "Danny Gobeil et David Thibault Pharmaciens",
+    "address": "330 Des, Rue des Érables, Sherbrooke",
+    "lat": 45.40303249999999,
+    "lng": -71.9465152,
+    "rating": 5,
+    "area": "Sherbrooke"
+  },
+  {
+    "name": "Bach Heng Ta Pharmacie",
+    "address": "2800 Rue Alice-Girard Suite 100, Sherbrooke",
+    "lat": 45.4430785,
+    "lng": -71.8661889,
+    "rating": 5,
+    "area": "Sherbrooke"
+  },
+  {
+    "name": "R Lajeunesse",
+    "address": "147 Rue Queen, Sherbrooke",
+    "lat": 45.3673778,
+    "lng": -71.85676409999999,
+    "rating": 5,
+    "area": "Sherbrooke"
+  },
+  {
+    "name": "Clinique Santé Fabienne Gravel - Pharmacie affiliée",
+    "address": "164 Rue Price Ouest, Chicoutimi",
+    "lat": 48.42499110000001,
+    "lng": -71.07395029999999,
+    "rating": 5,
+    "area": "Saguenay"
+  },
+  {
+    "name": "J Sirois",
+    "address": "2173 Boulevard de Tadoussac, Chicoutimi",
+    "lat": 48.43746030000001,
+    "lng": -71.0610609,
+    "rating": 1,
+    "area": "Saguenay"
+  },
+  {
+    "name": "Proxim Hélène Montpetit",
+    "address": "394 Rue Saint Vallier #100, Chicoutimi",
+    "lat": 48.42552299999999,
+    "lng": -71.050719,
+    "rating": 4.6,
+    "area": "Saguenay"
+  },
+  {
+    "name": "Acces Pharma",
+    "address": "1451 Boulevard Talbot, Chicoutimi",
+    "lat": 48.4032164,
+    "lng": -71.05715,
+    "rating": 3.6,
+    "area": "Saguenay"
+  },
+  {
+    "name": "Nathalie Belley",
+    "address": "Place Du Royaume, Chicoutimi",
+    "lat": 48.40302919999999,
+    "lng": -71.0569971,
+    "rating": 0,
+    "area": "Saguenay"
+  },
+  {
+    "name": "Brunet C. Boily, C. Tremblay, pharm. prop. Affiliés",
+    "address": "2173 Boulevard de Tadoussac, Chicoutimi",
+    "lat": 48.4378211,
+    "lng": -71.0610324,
+    "rating": 4.5,
+    "area": "Saguenay"
+  },
+  {
+    "name": "Uniprix Kevin Girard pharmacien inc.",
+    "address": "711 Boulevard Sainte-Geneviève, Chicoutimi",
+    "lat": 48.444109,
+    "lng": -71.080906,
+    "rating": 3.9,
+    "area": "Saguenay"
+  },
+  {
+    "name": "Uniprix Pharmacie Kevin Girard inc. - Pharmacie affiliée",
+    "address": "80 Rue Racine Est suite 100, Chicoutimi",
+    "lat": 48.427583,
+    "lng": -71.066127,
+    "rating": 4.3,
+    "area": "Saguenay"
+  },
+  {
+    "name": "Proxim Blackburn et Riverin",
+    "address": "567 Chemin de la Réserve, Chicoutimi",
+    "lat": 48.42344600000001,
+    "lng": -71.088645,
+    "rating": 4.5,
+    "area": "Saguenay"
+  },
+  {
+    "name": "Clinique De Prelevement",
+    "address": "164 Rue Price Ouest, Chicoutimi",
+    "lat": 48.4249298,
+    "lng": -71.07396469999999,
+    "rating": 0,
+    "area": "Saguenay"
+  },
+  {
+    "name": "Valerie Tremblay",
+    "address": "394 Rue Saint Vallier, Chicoutimi",
+    "lat": 48.4256074,
+    "lng": -71.0508503,
+    "rating": 5,
+    "area": "Saguenay"
+  },
+  {
+    "name": "Proxim pharmacie affiliée - Brigitte Laliberté",
+    "address": "875 Chemin Sydenham #20, Chicoutimi",
+    "lat": 48.419235,
+    "lng": -71.042244,
+    "rating": 5,
+    "area": "Saguenay"
+  },
+  {
+    "name": "D Bolduc",
+    "address": "871 Boulevard Sainte-Geneviève, Saguenay",
+    "lat": 48.4477043,
+    "lng": -71.0851533,
+    "rating": 0,
+    "area": "Saguenay"
+  },
+  {
+    "name": "Steve Simard",
+    "address": "1324 Boulevard Talbot, Chicoutimi",
+    "lat": 48.406308,
+    "lng": -71.05870999999999,
+    "rating": 2.5,
+    "area": "Saguenay"
+  },
+  {
+    "name": "Johanne Gagnon Pharmacienne",
+    "address": "1 Boulevard du Royaume Est, Chicoutimi",
+    "lat": 48.40463760000001,
+    "lng": -71.0562867,
+    "rating": 0,
+    "area": "Saguenay"
+  },
+  {
+    "name": "J Asselin",
+    "address": "1480 Boulevard Talbot, Chicoutimi",
+    "lat": 48.40288979999999,
+    "lng": -71.06187070000001,
+    "rating": 1,
+    "area": "Saguenay"
+  },
+  {
+    "name": "Stephane Martel",
+    "address": "1451 Boulevard Talbot, Chicoutimi",
+    "lat": 48.402912,
+    "lng": -71.0570369,
+    "rating": 0,
+    "area": "Saguenay"
+  },
+  {
+    "name": "Pharmacie G . Letourneau",
+    "address": "855 Boulevard Barrette, Chicoutimi",
+    "lat": 48.40466869999999,
+    "lng": -71.09779259999999,
+    "rating": 4.6,
+    "area": "Saguenay"
+  },
+  {
+    "name": "Pharmacie Couture & Champagne",
+    "address": "1955 Rue des Roitelets #103, Chicoutimi",
+    "lat": 48.392734,
+    "lng": -71.0521464,
+    "rating": 4.8,
+    "area": "Saguenay"
+  },
+  {
+    "name": "Uniprix Philippe Drouin - Pharmacie affiliée",
+    "address": "369 De La Couronne, Québec",
+    "lat": 46.8147823,
+    "lng": -71.2248156,
+    "rating": 4.3,
+    "area": "Levis"
+  },
+  {
+    "name": "Proxim pharmacie affiliée - Naceur Naïmi",
+    "address": "400 Boulevard Jean-Lesage #043, Québec",
+    "lat": 46.81688270000001,
+    "lng": -71.2160943,
+    "rating": 4.7,
+    "area": "Levis"
+  },
+  {
+    "name": "Proxim Pierre-Luc Boivin et Michel Godin",
+    "address": "213 Rue Saint-Joseph, Lévis",
+    "lat": 46.82385,
+    "lng": -71.168903,
+    "rating": 4.8,
+    "area": "Levis"
+  },
+  {
+    "name": "Services Cliniques Matte & Petit (Les)",
+    "address": "1191 Avenue Cartier, Québec",
+    "lat": 46.8028539,
+    "lng": -71.2243001,
+    "rating": 0,
+    "area": "Levis"
+  },
+  {
+    "name": "Uniprix Clinique Philippe Drouin - Pharmacie affiliée",
+    "address": "650 Avenue Murray, Québec",
+    "lat": 46.80314,
+    "lng": -71.23975899999999,
+    "rating": 4,
+    "area": "Levis"
+  },
+  {
+    "name": "Uniprix Nancy Champagne - Pharmacie affiliée",
+    "address": "1000 3e Avenue, Québec City",
+    "lat": 46.82682740000001,
+    "lng": -71.22973139999999,
+    "rating": 4.2,
+    "area": "Levis"
+  },
+  {
+    "name": "Uniprix Marc Dontigny",
+    "address": "15 Rue Fusey, Trois-Rivières",
+    "lat": 46.363859,
+    "lng": -72.530078,
+    "rating": 4.5,
+    "area": "Trois-Rivieres"
+  },
+  {
+    "name": "Uniprix Phcie M-P Girouard, C-E Lafreniere, A Giroux et P Drouin Inc",
+    "address": "4520 Boulevard des Récollets #12, Trois-Rivières",
+    "lat": 46.325686,
+    "lng": -72.563661,
+    "rating": 3.9,
+    "area": "Trois-Rivieres"
+  },
+  {
+    "name": "Accès pharma - Pharmacie M. Fontaine (affiliée à)",
+    "address": "4520 Boulevard des Récollets, Trois-Rivières",
+    "lat": 46.32481319999999,
+    "lng": -72.5657823,
+    "rating": 3.5,
+    "area": "Trois-Rivieres"
+  },
+  {
+    "name": "Accès pharma - Pharmacie M Racette (affiliée à)",
+    "address": "300 Rue Barkoff, Trois-Rivières",
+    "lat": 46.3720951,
+    "lng": -72.5596065,
+    "rating": 4.7,
+    "area": "Trois-Rivieres"
+  },
+  {
+    "name": "Proxim Cynthia Vallee-Dupont et Malorie Lambert",
+    "address": "700 Boulevard Thibeau #120, Trois-Rivières",
+    "lat": 46.383529,
+    "lng": -72.548363,
+    "rating": 4.8,
+    "area": "Trois-Rivieres"
+  },
+  {
+    "name": "Brunet I. Baril, I. Levasseur, J-S. Ricard, pharm. prop. Affiliés",
+    "address": "1123 Rue Sainte Marguerite, Trois-Rivières",
+    "lat": 46.342661,
+    "lng": -72.5545392,
+    "rating": 4.3,
+    "area": "Trois-Rivieres"
+  },
+  {
+    "name": "Uniprix Carrefour Trois-Rivières-Ouest",
+    "address": "4520 Boulevard Gene-H.-Kruger, Trois-Rivières",
+    "lat": 46.32645520000001,
+    "lng": -72.5663787,
+    "rating": 0,
+    "area": "Trois-Rivieres"
+  },
+  {
+    "name": "Pharmacie Girouard, Lafrenière",
+    "address": "4520 Boulevard des Récollets, Trois-Rivières",
+    "lat": 46.3252869,
+    "lng": -72.5668594,
+    "rating": 5,
+    "area": "Trois-Rivieres"
+  },
+  {
+    "name": "Accès Pharma chez Walmart",
+    "address": "Walmart, 4520 Boulevard des Récollets, Trois-Rivières",
+    "lat": 46.3248572,
+    "lng": -72.566677,
+    "rating": 2.7,
+    "area": "Trois-Rivieres"
+  },
+  {
+    "name": "Therrien & Brassard Pharmaciens",
+    "address": "5050 Boulevard des Forges, Trois-Rivières",
+    "lat": 46.36184859999999,
+    "lng": -72.5927103,
+    "rating": 4.8,
+    "area": "Trois-Rivieres"
+  },
+  {
+    "name": "Hôpital vétérinaire de Houssart",
+    "address": "806 Boulevard Thibeau, Trois-Rivières",
+    "lat": 46.3862885,
+    "lng": -72.551615,
+    "rating": 4.2,
+    "area": "Trois-Rivieres"
+  },
+  {
+    "name": "Hôpital vétérinaire Les Rivières",
+    "address": "5845 Boulevard des Chenaux, Trois-Rivières",
+    "lat": 46.3639028,
+    "lng": -72.5989467,
+    "rating": 3.8,
+    "area": "Trois-Rivieres"
+  },
+  {
+    "name": "Clinique Sante",
+    "address": "901 Boulevard des Seigneurs, Terrebonne",
+    "lat": 45.7022734,
+    "lng": -73.640401,
+    "rating": 5,
+    "area": "Terrebonne"
+  },
+  {
+    "name": "Familiprix - Terrebonne rue d'Angora",
+    "address": "4790 Rue d'Angora, Terrebonne",
+    "lat": 45.7141745,
+    "lng": -73.6535349,
+    "rating": 4.8,
+    "area": "Terrebonne"
+  },
+  {
+    "name": "Accès pharma - Pharmacie R Coudé, K Bouchard et N Pinto (affiliée à)",
+    "address": "155 Montée Masson, Mascouche",
+    "lat": 45.7237838,
+    "lng": -73.6122324,
+    "rating": 4.2,
+    "area": "Terrebonne"
+  },
+  {
+    "name": "M D'Amours",
+    "address": "3131 Boulevard de Mascouche, Mascouche",
+    "lat": 45.7432921,
+    "lng": -73.60014389999999,
+    "rating": 3.2,
+    "area": "Terrebonne"
+  },
+  {
+    "name": "Uniprix Mike Karim, Issa Karim, Pierre Bergeron & François Dupuis",
+    "address": "1090 Boulevard des Seigneurs, Terrebonne",
+    "lat": 45.7001888,
+    "lng": -73.6444849,
+    "rating": 4.4,
+    "area": "Terrebonne"
+  },
+  {
+    "name": "Uniprix Habiba Haidaoui",
+    "address": "2745 Boulevard de la Pinière, Terrebonne",
+    "lat": 45.717807,
+    "lng": -73.694993,
+    "rating": 4.6,
+    "area": "Terrebonne"
+  },
+  {
+    "name": "Maison Et Pharmacie",
+    "address": "155 Montée Masson, Mascouche",
+    "lat": 45.7239094,
+    "lng": -73.61217860000001,
+    "rating": 0,
+    "area": "Terrebonne"
+  },
+  {
+    "name": "Proxim Proxim pharmacie affiliée – Alexandre Favreau",
+    "address": "2135 Boulevard des Seigneurs, Terrebonne",
+    "lat": 45.718515,
+    "lng": -73.682313,
+    "rating": 4.8,
+    "area": "Terrebonne"
+  },
+  {
+    "name": "Uniprix Jean-Pierre Bois et François Dupuis",
+    "address": "880 Montée Masson, Mascouche",
+    "lat": 45.74360790000001,
+    "lng": -73.6094257,
+    "rating": 3.8,
+    "area": "Terrebonne"
+  },
+  {
+    "name": "Uniprix Pharmacie Marc - André Pilon & Joanie Landry - Pharmacie affiliée",
+    "address": "400 Boulevard du Séminaire Nord A1, Saint-Jean-sur-Richelieu",
+    "lat": 45.311547,
+    "lng": -73.267044,
+    "rating": 3.8,
+    "area": "Saint-Jean-sur-Richelieu"
+  },
+  {
+    "name": "Proxim Martine Clouâtre, pharmacienne",
+    "address": "145 Boulevard Saint-Joseph #101, Saint-Jean-sur-Richelieu",
+    "lat": 45.314462,
+    "lng": -73.25760300000002,
+    "rating": 4.4,
+    "area": "Saint-Jean-sur-Richelieu"
+  },
+  {
+    "name": "Proxim Maude Lenoir, Guillaume Latulippe et Jean-Sébastien Blais",
+    "address": "900 Boulevard du Séminaire Nord #110, Saint-Jean-sur-Richelieu",
+    "lat": 45.331374,
+    "lng": -73.268177,
+    "rating": 4.3,
+    "area": "Saint-Jean-sur-Richelieu"
+  },
+  {
+    "name": "Uniprix A Sabatier, A Perazzelli, G Latulippe et J-S Blais",
+    "address": "795 Boulevard d'Iberville, Saint-Jean-sur-Richelieu",
+    "lat": 45.304598,
+    "lng": -73.230459,
+    "rating": 3.7,
+    "area": "Saint-Jean-sur-Richelieu"
+  },
+  {
+    "name": "Brunet C. Forgues, pharm. prop. Affiliée",
+    "address": "725 Boulevard d'Iberville, Saint-Jean-sur-Richelieu",
+    "lat": 45.3061314,
+    "lng": -73.2315133,
+    "rating": 4.1,
+    "area": "Saint-Jean-sur-Richelieu"
+  },
+  {
+    "name": "Pharmacie Stéphane Turner",
+    "address": "1000 Boulevard du Séminaire Nord, Saint-Jean-sur-Richelieu",
+    "lat": 45.3373001,
+    "lng": -73.2694776,
+    "rating": 3.9,
+    "area": "Saint-Jean-sur-Richelieu"
+  },
+  {
+    "name": "Pharmacie Sylvain Boucher",
+    "address": "100 Boulevard Omer-Marcil, Saint-Jean-sur-Richelieu",
+    "lat": 45.33112750000001,
+    "lng": -73.2959904,
+    "rating": 0,
+    "area": "Saint-Jean-sur-Richelieu"
+  },
+  {
+    "name": "Accès pharma - Pharmacie Pascal Joly (affiliée à)",
+    "address": "100 Boulevard Omer-Marcil, Saint-Jean-sur-Richelieu",
+    "lat": 45.3311945,
+    "lng": -73.2959249,
+    "rating": 4.7,
+    "area": "Saint-Jean-sur-Richelieu"
+  },
+  {
+    "name": "Brunet Alexandre Van Acker-Dugas et Nicolas Provost pharm. prop. Affiliés",
+    "address": "383 Boulevard du Séminaire Nord, Saint-Jean-sur-Richelieu",
+    "lat": 45.31163249999999,
+    "lng": -73.2638058,
+    "rating": 3.6,
+    "area": "Saint-Jean-sur-Richelieu"
+  },
+  {
+    "name": "Uniprix Francis Gince",
+    "address": "395 Rue Jacques-Cartier Sud, Saint-Jean-sur-Richelieu",
+    "lat": 45.277999,
+    "lng": -73.256317,
+    "rating": 4.5,
+    "area": "Saint-Jean-sur-Richelieu"
+  },
+  {
+    "name": "Proxim pharmacie affiliée Boyi Lu, Jean-Sébastien Blais et Guillaume Latulippe",
+    "address": "122 Rue Saint-Jacques, Saint-Jean-sur-Richelieu",
+    "lat": 45.306039,
+    "lng": -73.25476499999999,
+    "rating": 4.5,
+    "area": "Saint-Jean-sur-Richelieu"
+  },
+  {
+    "name": "Uniprix Ralph Mokbel et Viviane Calabrese",
+    "address": "235 2e Avenue #102, Saint-Jean-sur-Richelieu",
+    "lat": 45.30397960000001,
+    "lng": -73.2374936,
+    "rating": 4.9,
+    "area": "Saint-Jean-sur-Richelieu"
+  },
+  {
+    "name": "Pharmacie Papillon",
+    "address": "900 Boulevard du Séminaire Nord, Saint-Jean-sur-Richelieu",
+    "lat": 45.331374,
+    "lng": -73.26817740000001,
+    "rating": 5,
+    "area": "Saint-Jean-sur-Richelieu"
+  },
+  {
+    "name": "Mathieu Mario",
+    "address": "600 Rue Pierre-Caisse, Saint-Jean-sur-Richelieu",
+    "lat": 45.3292467,
+    "lng": -73.2799995,
+    "rating": 3.6,
+    "area": "Saint-Jean-sur-Richelieu"
+  },
+  {
+    "name": "Pharmacie Jean Coutu Santé",
+    "address": "557 Rue Notre-Dame Bureau 101, Repentigny",
+    "lat": 45.7447881,
+    "lng": -73.4389496,
+    "rating": 4.5,
+    "area": "Repentigny"
+  },
+  {
+    "name": "Uniprix Pharmacie G. Fleury, P. Bergeron & F. Dupuis",
+    "address": "200 Boulevard Brien, Repentigny",
+    "lat": 45.747265,
+    "lng": -73.463171,
+    "rating": 4.5,
+    "area": "Repentigny"
+  },
+  {
+    "name": "Accès pharma - Pharmacie R Coudé, K Bouchard & N Pinto (affiliée à)",
+    "address": "100 Boulevard Brien, Repentigny",
+    "lat": 45.742263,
+    "lng": -73.4586568,
+    "rating": 4,
+    "area": "Repentigny"
+  },
+  {
+    "name": "Pharmacie Gosseling & Girard",
+    "address": "100 Boulevard Brien, Repentigny",
+    "lat": 45.7439507,
+    "lng": -73.4566885,
+    "rating": 1,
+    "area": "Repentigny"
+  },
+  {
+    "name": "Groupe Bergeron Dupuis",
+    "address": "227 Rue Notre Dame, Repentigny",
+    "lat": 45.722167,
+    "lng": -73.4623017,
+    "rating": 4.8,
+    "area": "Repentigny"
+  },
+  {
+    "name": "Uniprix Pharmacie Mélanie Pelletier inc.",
+    "address": "1 Rue Quintal, Charlemagne",
+    "lat": 45.719268,
+    "lng": -73.484646,
+    "rating": 4.7,
+    "area": "Repentigny"
+  },
+  {
+    "name": "Accès pharma - Pharmacie Frédéric Jacques (affiliée à)",
+    "address": "1001 Rue des Migrateurs, Terrebonne",
+    "lat": 45.71910680000001,
+    "lng": -73.5011411,
+    "rating": 5,
+    "area": "Repentigny"
+  },
+  {
+    "name": "Bergeron Dupuis",
+    "address": "950 Montée des Pionniers, Terrebonne",
+    "lat": 45.724722,
+    "lng": -73.5072855,
+    "rating": 0,
+    "area": "Repentigny"
+  },
+  {
+    "name": "Uniprix Nancy Desmarais et Maude Tremblay",
+    "address": "231 Rue Notre Dame, Repentigny",
+    "lat": 45.7224017,
+    "lng": -73.4621945,
+    "rating": 4.4,
+    "area": "Repentigny"
+  },
+  {
+    "name": "Proxim pharmacie affiliée - Bergeron et Dupuis",
+    "address": "151 Rue Notre Dame, Charlemagne",
+    "lat": 45.71959649999999,
+    "lng": -73.4844911,
+    "rating": 4.5,
+    "area": "Repentigny"
+  },
+  {
+    "name": "Hôpital Vétérinaire Le Gardeur",
+    "address": "413 Rue Saint Paul, Repentigny",
+    "lat": 45.760155,
+    "lng": -73.4854568,
+    "rating": 4.6,
+    "area": "Repentigny"
+  },
+  {
+    "name": "Brunet S. Grégoire, pharm. prop. Affiliée",
+    "address": "288 Boulevard Larochelle, Repentigny",
+    "lat": 45.7330237,
+    "lng": -73.4673248,
+    "rating": 4.2,
+    "area": "Repentigny"
+  },
+  {
+    "name": "Uniprix François Dupuis",
+    "address": "1000 Montée des Pionniers, Terrebonne",
+    "lat": 45.7257955,
+    "lng": -73.50731189999999,
+    "rating": 4.2,
+    "area": "Repentigny"
   },
   {
     "name": "Pharmacie Nicolas Provost et Guillaume David (Drummondville) Inc.",
@@ -1821,7 +2965,7 @@
     "lat": 45.8656201,
     "lng": -72.502316,
     "rating": 4.5,
-    "city": "Drummondville"
+    "area": "Drummondville"
   },
   {
     "name": "Brunet L. Beaulieu, pharm. prop. Affiliées",
@@ -1829,7 +2973,7 @@
     "lat": 45.8551923,
     "lng": -72.4614644,
     "rating": 4.4,
-    "city": "Drummondville"
+    "area": "Drummondville"
   },
   {
     "name": "Uniprix A GIROUX, P DROUIN ET ASSOCIÉS DRUMMONDVILLE",
@@ -1837,7 +2981,7 @@
     "lat": 45.884085,
     "lng": -72.49355,
     "rating": 4,
-    "city": "Drummondville"
+    "area": "Drummondville"
   },
   {
     "name": "Uniprix Nicolas Blanchette et Marilyne Blanchette, Pharmaciens Inc",
@@ -1845,7 +2989,7 @@
     "lat": 45.88662600000001,
     "lng": -72.491101,
     "rating": 4.8,
-    "city": "Drummondville"
+    "area": "Drummondville"
   },
   {
     "name": "Para Pharma",
@@ -1853,7 +2997,7 @@
     "lat": 45.88953909999999,
     "lng": -72.5078546,
     "rating": 0,
-    "city": "Drummondville"
+    "area": "Drummondville"
   },
   {
     "name": "Accès Pharma",
@@ -1861,7 +3005,7 @@
     "lat": 45.8953867,
     "lng": -72.5238548,
     "rating": 4.7,
-    "city": "Drummondville"
+    "area": "Drummondville"
   },
   {
     "name": "Centre Orthopédique CDD",
@@ -1869,7 +3013,7 @@
     "lat": 45.8866264,
     "lng": -72.49110139999999,
     "rating": 5,
-    "city": "Drummondville"
+    "area": "Drummondville"
   },
   {
     "name": "Uniprix Kathryn Ross Bell, Frederica Doyon, Annabelle Giroux et Philippe Drouin",
@@ -1877,7 +3021,7 @@
     "lat": 45.85629890000001,
     "lng": -72.4658295,
     "rating": 4.9,
-    "city": "Drummondville"
+    "area": "Drummondville"
   },
   {
     "name": "Uniprix Nicolas Blanchette et Maryline Blanchette",
@@ -1885,7 +3029,7 @@
     "lat": 45.884847,
     "lng": -72.48778999999999,
     "rating": 5,
-    "city": "Drummondville"
+    "area": "Drummondville"
   },
   {
     "name": "Clinique Vétérinaire des Voltigeurs",
@@ -1893,23 +3037,7 @@
     "lat": 45.88863920000001,
     "lng": -72.5073728,
     "rating": 4.8,
-    "city": "Drummondville"
-  },
-  {
-    "name": "Brunet K. Tremblay, M-K. Turcotte, pharm. prop. Affiliée",
-    "address": "4565 Boulevard Saint-Joseph, Drummondville",
-    "lat": 45.8380221,
-    "lng": -72.4341373,
-    "rating": 4.3,
-    "city": "Drummondville"
-  },
-  {
-    "name": "Proxim Jean-Sébastien Blais, Joanie Lebreux et Guillaume Latulippe",
-    "address": "264 Chemin Yamaska, Municipalité de Saint-Germain-de-Grantham",
-    "lat": 45.84521159999999,
-    "lng": -72.5649457,
-    "rating": 4.5,
-    "city": "Drummondville"
+    "area": "Drummondville"
   },
   {
     "name": "Uniprix Martin Halley et Matthieu Leduc",
@@ -1917,7 +3045,7 @@
     "lat": 45.798424,
     "lng": -74.010795,
     "rating": 4.2,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Proxim pharmacie affiliée - Bergeron et Raymond",
@@ -1925,7 +3053,7 @@
     "lat": 45.7618118,
     "lng": -73.98858059999999,
     "rating": 4.7,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Brunet J. Normand, pharm. prop. Affilié",
@@ -1933,7 +3061,7 @@
     "lat": 45.7829869,
     "lng": -74.019012,
     "rating": 3.7,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Pharmacie Julie Morneault & Julian Dimanov (affiliés à)",
@@ -1941,7 +3069,7 @@
     "lat": 45.76159819999999,
     "lng": -74.0177357,
     "rating": 4.2,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Proxim Pierre Bergeron et Jean-Christophe Raymond",
@@ -1949,7 +3077,7 @@
     "lat": 45.7667885,
     "lng": -74.0015521,
     "rating": 4.9,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Proxim Simon Lessard",
@@ -1957,7 +3085,7 @@
     "lat": 45.794868,
     "lng": -73.994736,
     "rating": 4.5,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Brunet I. Raymond et A. St-Germain, pharm. prop. Affiliées",
@@ -1965,7 +3093,7 @@
     "lat": 45.7947193,
     "lng": -74.0099937,
     "rating": 4.1,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Uniprix Robin Guénard et Tonia Dinh",
@@ -1973,7 +3101,7 @@
     "lat": 45.777193,
     "lng": -74.00256600000002,
     "rating": 4.4,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Proximed pharmacie affiliée - Simon Lessard",
@@ -1981,7 +3109,7 @@
     "lat": 45.776205,
     "lng": -74.00417,
     "rating": 2.3,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Psj Medicam",
@@ -1989,7 +3117,7 @@
     "lat": 45.7668026,
     "lng": -74.00157759999999,
     "rating": 0,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Beaulieu Monique",
@@ -1997,7 +3125,7 @@
     "lat": 45.767235,
     "lng": -73.9969295,
     "rating": 5,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Pharmacie Patrick Belanger",
@@ -2005,7 +3133,7 @@
     "lat": 45.7919154,
     "lng": -73.99912719999999,
     "rating": 0,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Uniprix Clinique B.H. Trinh, J.B. Blanchette, H.Z. Jakubiak - Pharmacie affiliée",
@@ -2013,7 +3141,7 @@
     "lat": 45.762617,
     "lng": -74.000467,
     "rating": 5,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Centre de Vaccination-Saint-Jérôme",
@@ -2021,7 +3149,7 @@
     "lat": 45.76226,
     "lng": -73.99405,
     "rating": 4.6,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "INVIVA SAINT JEROME",
@@ -2029,7 +3157,7 @@
     "lat": 45.761684,
     "lng": -73.98866220000001,
     "rating": 5,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Pharmacie Saint-Antoine - pharmaciens propriétaires affiliés à Brunet",
@@ -2037,7 +3165,7 @@
     "lat": 45.75873250000001,
     "lng": -73.9858797,
     "rating": 5,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Pharmacie Mario Caron & Assoc",
@@ -2045,7 +3173,7 @@
     "lat": 45.75873250000001,
     "lng": -73.9858797,
     "rating": 0,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Jean coutu",
@@ -2053,39 +3181,7 @@
     "lat": 45.7562222,
     "lng": -74.02145829999999,
     "rating": 3,
-    "city": "Saint-Jerome"
-  },
-  {
-    "name": "Proxim Charles-Mathieu Gagnière",
-    "address": "347 Montée de l'Église #1, Saint-Colomban",
-    "lat": 45.739573,
-    "lng": -74.1380916,
-    "rating": 4.6,
-    "city": "Saint-Jerome"
-  },
-  {
-    "name": "Uniprix Alex Aquilino Vigneault et Isabelle Céré - Pharmacie affiliée",
-    "address": "13900 Rue Saint-Simon, Mirabel",
-    "lat": 45.7042134,
-    "lng": -74.095569,
-    "rating": 4.2,
-    "city": "Saint-Jerome"
-  },
-  {
-    "name": "Accès pharma-Pharmacie Antoine Nassane",
-    "address": "1333 Boulevard Michèle-Bohec, Blainville",
-    "lat": 45.6774198,
-    "lng": -73.912395,
-    "rating": 4.4,
-    "city": "Saint-Jerome"
-  },
-  {
-    "name": "Uniprix Gabriel Gaumond Maringer et Marie-Claude Bigras",
-    "address": "13714 Boulevard Curé-Labelle Suite 100, Mirabel",
-    "lat": 45.703335,
-    "lng": -73.92732,
-    "rating": 4.5,
-    "city": "Saint-Jerome"
+    "area": "Saint-Jerome"
   },
   {
     "name": "Accès pharma - Pharmacie Catherine Charron et San Kinkhat (affiliée à)",
@@ -2093,7 +3189,7 @@
     "lat": 45.4167565,
     "lng": -72.75107659999999,
     "rating": 4.1,
-    "city": "Granby"
+    "area": "Granby"
   },
   {
     "name": "Uniprix Isabelle Dupont",
@@ -2101,7 +3197,7 @@
     "lat": 45.39807,
     "lng": -72.732889,
     "rating": 3.5,
-    "city": "Granby"
+    "area": "Granby"
   },
   {
     "name": "Brunet C. Savoie, S. Guertin, pharm. prop. Affiliés",
@@ -2109,7 +3205,7 @@
     "lat": 45.4096005,
     "lng": -72.7444229,
     "rating": 4.5,
-    "city": "Granby"
+    "area": "Granby"
   },
   {
     "name": "Proxim Richard Auger, Pierre-Luc Lemelin et Isabelle Pelletier",
@@ -2117,7 +3213,7 @@
     "lat": 45.393307,
     "lng": -72.70841399999999,
     "rating": 4.9,
-    "city": "Granby"
+    "area": "Granby"
   },
   {
     "name": "Brunet M-C. Laviolette, P. Riopel, pharm. prop. Affiliés",
@@ -2125,7 +3221,7 @@
     "lat": 45.4220683,
     "lng": -72.7245854,
     "rating": 4,
-    "city": "Granby"
+    "area": "Granby"
   },
   {
     "name": "Uniprix ISABELLE DUPONT",
@@ -2133,7 +3229,7 @@
     "lat": 45.398259,
     "lng": -72.72055,
     "rating": 3,
-    "city": "Granby"
+    "area": "Granby"
   },
   {
     "name": "Uniprix Jacques Laganière",
@@ -2141,7 +3237,7 @@
     "lat": 45.408479,
     "lng": -72.726918,
     "rating": 2.4,
-    "city": "Granby"
+    "area": "Granby"
   },
   {
     "name": "Pharmacy Horizon Santé Residence Simonia",
@@ -2149,7 +3245,7 @@
     "lat": 45.4022098,
     "lng": -72.7347917,
     "rating": 5,
-    "city": "Granby"
+    "area": "Granby"
   },
   {
     "name": "Pharmacie aux herbes naturels et consultation en acupression",
@@ -2157,7 +3253,7 @@
     "lat": 45.4003514,
     "lng": -72.7424552,
     "rating": 0,
-    "city": "Granby"
+    "area": "Granby"
   },
   {
     "name": "Pharmacie Khalil",
@@ -2165,31 +3261,7 @@
     "lat": 45.41684559999999,
     "lng": -72.7511337,
     "rating": 4,
-    "city": "Granby"
-  },
-  {
-    "name": "Pharmacie Sandrine Amadori Mathieu Inc (Affiliée à Groupe Horizon Santé)",
-    "address": "360B Rue Principale, Saint-Alphonse-de-Granby",
-    "lat": 45.3274793,
-    "lng": -72.7894828,
-    "rating": 5,
-    "city": "Granby"
-  },
-  {
-    "name": "Pharmacie Brunet Plus",
-    "address": "89 Boulevard de Bromont, Bromont",
-    "lat": 45.3178683,
-    "lng": -72.6470092,
-    "rating": 4,
-    "city": "Granby"
-  },
-  {
-    "name": "Uniprix J. Laganière, C. Labranche et M.-A. Chu",
-    "address": "82 Boulevard de Bromont A101, Bromont",
-    "lat": 45.322482,
-    "lng": -72.646478,
-    "rating": 2.9,
-    "city": "Granby"
+    "area": "Granby"
   },
   {
     "name": "Actimed - Laboratoire Orthopédique Blainville",
@@ -2197,7 +3269,7 @@
     "lat": 45.6714747,
     "lng": -73.8758258,
     "rating": 4.8,
-    "city": "Blainville"
+    "area": "Blainville"
   },
   {
     "name": "Uniprix Santé Thi Bich Liên Tran",
@@ -2205,7 +3277,15 @@
     "lat": 45.6689,
     "lng": -73.8728,
     "rating": 4.5,
-    "city": "Blainville"
+    "area": "Blainville"
+  },
+  {
+    "name": "Accès pharma-Pharmacie Antoine Nassane",
+    "address": "1333 Boulevard Michèle-Bohec, Blainville",
+    "lat": 45.6774198,
+    "lng": -73.912395,
+    "rating": 4.4,
+    "area": "Blainville"
   },
   {
     "name": "Proxim Gina-Loulou Malek, Hélène Massicotte et Christine Larivière",
@@ -2213,7 +3293,7 @@
     "lat": 45.626828,
     "lng": -73.853951,
     "rating": 4.6,
-    "city": "Blainville"
+    "area": "Blainville"
   },
   {
     "name": "Brunet D. Gélinas, pharm. prop. Affilié",
@@ -2221,7 +3301,7 @@
     "lat": 45.66738240000001,
     "lng": -73.8689878,
     "rating": 3.8,
-    "city": "Blainville"
+    "area": "Blainville"
   },
   {
     "name": "Uniprix Milène Bergeron et Julie Dumont",
@@ -2229,7 +3309,7 @@
     "lat": 45.64019,
     "lng": -73.84448499999999,
     "rating": 4,
-    "city": "Blainville"
+    "area": "Blainville"
   },
   {
     "name": "Patrick Long Pharmacie",
@@ -2237,7 +3317,7 @@
     "lat": 45.6554274,
     "lng": -73.85316999999999,
     "rating": 4.8,
-    "city": "Blainville"
+    "area": "Blainville"
   },
   {
     "name": "Proxim Mona Bachour et Emad Sharobim pharmaciens inc.",
@@ -2245,7 +3325,7 @@
     "lat": 45.6462028,
     "lng": -73.8584819,
     "rating": 5,
-    "city": "Blainville"
+    "area": "Blainville"
   },
   {
     "name": "Hôpital vétérinaire Accès Vet Blainville",
@@ -2253,7 +3333,7 @@
     "lat": 45.6808,
     "lng": -73.91693649999999,
     "rating": 4.5,
-    "city": "Blainville"
+    "area": "Blainville"
   },
   {
     "name": "Pharmacie Sami Soltan à Cité Mirabel",
@@ -2261,7 +3341,7 @@
     "lat": 45.678307,
     "lng": -73.92386599999999,
     "rating": 4.3,
-    "city": "Blainville"
+    "area": "Blainville"
   },
   {
     "name": "Veterinary Clinic Domaine Vert inc.",
@@ -2269,103 +3349,7 @@
     "lat": 45.6740601,
     "lng": -73.9342168,
     "rating": 4.3,
-    "city": "Blainville"
-  },
-  {
-    "name": "Uniprix Nicolas Dion, Maxime Legendre-Jobidon & Gaétan Couillard",
-    "address": "310 Chemin de la Grande-Côte, Rosemère",
-    "lat": 45.635109,
-    "lng": -73.793787,
-    "rating": 4.2,
-    "city": "Blainville"
-  },
-  {
-    "name": "Uniprix Pharmacie Gaétan Couillard",
-    "address": "233 Rue Turgeon #103, Sainte-Thérèse",
-    "lat": 45.6317381,
-    "lng": -73.82949669999999,
-    "rating": 3.7,
-    "city": "Blainville"
-  },
-  {
-    "name": "Patrice Mayrand",
-    "address": "2545 Rue Saint-Jacques, Boisbriand",
-    "lat": 45.622034,
-    "lng": -73.85948789999999,
-    "rating": 0,
-    "city": "Blainville"
-  },
-  {
-    "name": "CENTREDMVET Hôpital vétérinaire d'urgence 24/7 - Rive-Nord de Montréal - Blainville",
-    "address": "20 Boulevard des Châteaux Suite 110, Blainville",
-    "lat": 45.654252,
-    "lng": -73.802897,
-    "rating": 3.7,
-    "city": "Blainville"
-  },
-  {
-    "name": "Accès pharma - Pharmacie A. Kassis & A. Nassane (affiliée à)",
-    "address": "401 Boulevard Curé-Labelle, Rosemère",
-    "lat": 45.6296342,
-    "lng": -73.8222293,
-    "rating": 4.4,
-    "city": "Blainville"
-  },
-  {
-    "name": "Clinique Vétérinaire Vraiment Bête",
-    "address": "30 Boulevard Bouthillier suite 150, Rosemère",
-    "lat": 45.62746449999999,
-    "lng": -73.8204988,
-    "rating": 4.8,
-    "city": "Blainville"
-  },
-  {
-    "name": "Brunet M-C. Cassivi, pharm. prop. Affiliée",
-    "address": "15637 Rue de Saint Augustin, Mirabel",
-    "lat": 45.62796530000001,
-    "lng": -73.97130299999999,
-    "rating": 4.2,
-    "city": "Blainville"
-  },
-  {
-    "name": "Proxim Catherine Archambault, Derek John Bergeron",
-    "address": "448 Rue Blainville Est C, Sainte-Thérèse",
-    "lat": 45.64297629999999,
-    "lng": -73.81640780000001,
-    "rating": 4.3,
-    "city": "Blainville"
-  },
-  {
-    "name": "H Bourgie",
-    "address": "99 Boulevard de Gaulle, Lorraine",
-    "lat": 45.6669583,
-    "lng": -73.78277039999999,
-    "rating": 0,
-    "city": "Blainville"
-  },
-  {
-    "name": "Uniprix M. Leduc, M. Halley et J. Bolduc",
-    "address": "509 Boulevard Arthur-Sauvé, Saint-Eustache",
-    "lat": 45.572008,
-    "lng": -73.91161,
-    "rating": 4.3,
-    "city": "Blainville"
-  },
-  {
-    "name": "Proximed affiliate pharmacy - Richard Cardinal",
-    "address": "170 Rue Saint-Eustache, Saint-Eustache",
-    "lat": 45.5583854,
-    "lng": -73.8934187,
-    "rating": 5,
-    "city": "Blainville"
-  },
-  {
-    "name": "Uniprix MIRCEA ANDREI CIRLAN ET CHRISTOPHE GAUTHIER",
-    "address": "142 25e Avenue A, Saint-Eustache",
-    "lat": 45.573834,
-    "lng": -73.874027,
-    "rating": 4.4,
-    "city": "Blainville"
+    "area": "Blainville"
   },
   {
     "name": "Brunet N. Provost, G. David, pharm. prop. Affiliés",
@@ -2373,7 +3357,7 @@
     "lat": 45.6276471,
     "lng": -72.95248169999999,
     "rating": 4.5,
-    "city": "Saint-Hyacinthe"
+    "area": "Saint-Hyacinthe"
   },
   {
     "name": "Proxim Martine Leblanc",
@@ -2381,7 +3365,7 @@
     "lat": 45.643894,
     "lng": -72.95713769999999,
     "rating": 5,
-    "city": "Saint-Hyacinthe"
+    "area": "Saint-Hyacinthe"
   },
   {
     "name": "Gentès & Tanguay",
@@ -2389,7 +3373,7 @@
     "lat": 45.6310609,
     "lng": -72.9831464,
     "rating": 0,
-    "city": "Saint-Hyacinthe"
+    "area": "Saint-Hyacinthe"
   },
   {
     "name": "Uniprix ISABELLE GINGRAS ET MAKAN DABO",
@@ -2397,7 +3381,7 @@
     "lat": 45.623593,
     "lng": -72.95940800000001,
     "rating": 3.6,
-    "city": "Saint-Hyacinthe"
+    "area": "Saint-Hyacinthe"
   },
   {
     "name": "Accès pharma - Pharmacie Joanie Richard (affiliée à)",
@@ -2405,7 +3389,7 @@
     "lat": 45.6412255,
     "lng": -72.978357,
     "rating": 4.5,
-    "city": "Saint-Hyacinthe"
+    "area": "Saint-Hyacinthe"
   },
   {
     "name": "Pharmacie René-Serge Dionne",
@@ -2413,7 +3397,7 @@
     "lat": 45.6413449,
     "lng": -72.9782894,
     "rating": 5,
-    "city": "Saint-Hyacinthe"
+    "area": "Saint-Hyacinthe"
   },
   {
     "name": "Kevin Boivin",
@@ -2421,7 +3405,7 @@
     "lat": 45.6036571,
     "lng": -72.9798508,
     "rating": 3.4,
-    "city": "Saint-Hyacinthe"
+    "area": "Saint-Hyacinthe"
   },
   {
     "name": "Brunet N. Provost, P. Dupéré, L. Zhang, pharm. prop. Affiliés",
@@ -2429,7 +3413,7 @@
     "lat": 45.64144940000001,
     "lng": -72.8999116,
     "rating": 4.4,
-    "city": "Saint-Hyacinthe"
+    "area": "Saint-Hyacinthe"
   },
   {
     "name": "Proxim Julie Couture et Joseph Ariel Saliba",
@@ -2437,7 +3421,7 @@
     "lat": 45.62013899999999,
     "lng": -72.94766299999999,
     "rating": 4.4,
-    "city": "Saint-Hyacinthe"
+    "area": "Saint-Hyacinthe"
   },
   {
     "name": "Pharmacie Nicole Lussier et Yves Bigaouette",
@@ -2445,7 +3429,7 @@
     "lat": 45.6328908,
     "lng": -72.9683562,
     "rating": 3,
-    "city": "Saint-Hyacinthe"
+    "area": "Saint-Hyacinthe"
   },
   {
     "name": "PlanSanté",
@@ -2453,31 +3437,7 @@
     "lat": 45.63894099999999,
     "lng": -72.963021,
     "rating": 0,
-    "city": "Saint-Hyacinthe"
-  },
-  {
-    "name": "Proxim pharmacie affiliée - Vincent Roy",
-    "address": "1042 Rue Saint-Simon, Sainte-Madeleine",
-    "lat": 45.593748,
-    "lng": -73.090634,
-    "rating": 3.7,
-    "city": "Saint-Hyacinthe"
-  },
-  {
-    "name": "Proxim Pharmacie Aubin, Godbout et Raquepas",
-    "address": "195 Rue Principale, Saint-Damase",
-    "lat": 45.525427,
-    "lng": -73.00998,
-    "rating": 4.8,
-    "city": "Saint-Hyacinthe"
-  },
-  {
-    "name": "Pharmacie Theriault Normand",
-    "address": "75 Avenue Saint-François, Saint-Pie",
-    "lat": 45.505128,
-    "lng": -72.90711999999999,
-    "rating": 4.2,
-    "city": "Saint-Hyacinthe"
+    "area": "Saint-Hyacinthe"
   },
   {
     "name": "Uniprix A. Grenier, M.-J. Lavoie et G. Patry - Pharmacie affiliée",
@@ -2485,7 +3445,7 @@
     "lat": 48.445464,
     "lng": -68.519144,
     "rating": 4.6,
-    "city": "Rimouski"
+    "area": "Rimouski"
   },
   {
     "name": "Shoppers Simply Pharmacy",
@@ -2493,7 +3453,7 @@
     "lat": 48.44784680000001,
     "lng": -68.5342958,
     "rating": 0,
-    "city": "Rimouski"
+    "area": "Rimouski"
   },
   {
     "name": "Proxim Mireille Martin et Gabrielle Marcoux",
@@ -2501,7 +3461,7 @@
     "lat": 48.43977539999999,
     "lng": -68.55394849999999,
     "rating": 4.9,
-    "city": "Rimouski"
+    "area": "Rimouski"
   },
   {
     "name": "Nancy Bouchard",
@@ -2509,7 +3469,7 @@
     "lat": 48.45438679999999,
     "lng": -68.4974134,
     "rating": 5,
-    "city": "Rimouski"
+    "area": "Rimouski"
   },
   {
     "name": "Accès pharma - Pharmacie C Jacques & A Paquet (affiliée à)",
@@ -2517,7 +3477,7 @@
     "lat": 48.4535608,
     "lng": -68.49708369999999,
     "rating": 3.9,
-    "city": "Rimouski"
+    "area": "Rimouski"
   },
   {
     "name": "Clinique vétérinaire du Littoral",
@@ -2525,7 +3485,7 @@
     "lat": 48.46227569999999,
     "lng": -68.5178071,
     "rating": 4.1,
-    "city": "Rimouski"
+    "area": "Rimouski"
   },
   {
     "name": "Uniprix Kareen Deschênes, Jean-Bruno Boulianne et Coralie Couture",
@@ -2533,7 +3493,7 @@
     "lat": 48.43894599999999,
     "lng": -68.554109,
     "rating": 4.3,
-    "city": "Rimouski"
+    "area": "Rimouski"
   },
   {
     "name": "Pharmacie Grégoire Arakelian (Rimouski Inc)",
@@ -2541,15 +3501,7 @@
     "lat": 48.4528079,
     "lng": -68.4910652,
     "rating": 0,
-    "city": "Rimouski"
-  },
-  {
-    "name": "Proxim William Turbide-Landry",
-    "address": "551 Route des Pionniers, Rimouski",
-    "lat": 48.36754999999999,
-    "lng": -68.464377,
-    "rating": 4.8,
-    "city": "Rimouski"
+    "area": "Rimouski"
   },
   {
     "name": "Accès pharma - Pharmacie J-P Trudeau & C Brault (affiliée à)",
@@ -2557,7 +3509,7 @@
     "lat": 46.0369056,
     "lng": -73.41382159999999,
     "rating": 2.9,
-    "city": "Joliette"
+    "area": "Joliette"
   },
   {
     "name": "Proxim pharmacie affiliée - Dupuis et Laurin",
@@ -2565,7 +3517,7 @@
     "lat": 45.99144580000001,
     "lng": -73.4521048,
     "rating": 3.8,
-    "city": "Joliette"
+    "area": "Joliette"
   },
   {
     "name": "Proximed Pharmacie Affiliée - Myriam Chaput",
@@ -2573,7 +3525,7 @@
     "lat": 46.0577656,
     "lng": -73.4784098,
     "rating": 0,
-    "city": "Joliette"
+    "area": "Joliette"
   },
   {
     "name": "Uniprix Michael Guay, M-A Meus, Sébastien Mandanice et G. Couillard",
@@ -2581,7 +3533,7 @@
     "lat": 46.03416000000001,
     "lng": -73.445553,
     "rating": 4.3,
-    "city": "Joliette"
+    "area": "Joliette"
   },
   {
     "name": "Proxim Benoit Farmer, François Dupuis et Pierre Bergeron",
@@ -2589,7 +3541,7 @@
     "lat": 46.0231752,
     "lng": -73.44059539999999,
     "rating": 4.5,
-    "city": "Joliette"
+    "area": "Joliette"
   },
   {
     "name": "Uniprix Pharmacie J. Martineau, J. Riberdy et A. Lavallée",
@@ -2597,7 +3549,7 @@
     "lat": 46.0365021,
     "lng": -73.45279,
     "rating": 4.5,
-    "city": "Joliette"
+    "area": "Joliette"
   },
   {
     "name": "Uniprix Clinique J.Martineau, J. Riberdy et A. Lavallée - Pharmacie affiliée",
@@ -2605,55 +3557,7 @@
     "lat": 46.04627869999999,
     "lng": -73.4542744,
     "rating": 4,
-    "city": "Joliette"
-  },
-  {
-    "name": "Uniprix Julie Deslongchamps",
-    "address": "11 Rue Marcel-Lépine, Saint-Jacques",
-    "lat": 45.953605,
-    "lng": -73.575896,
-    "rating": 4,
-    "city": "Joliette"
-  },
-  {
-    "name": "Proxim Pierre-Alex Laurendeau et Gabrielle Richer",
-    "address": "970 Route Principale, Municipalité de Sainte-Mélanie",
-    "lat": 46.13473700000001,
-    "lng": -73.51324699999999,
-    "rating": 4.7,
-    "city": "Joliette"
-  },
-  {
-    "name": "Julie Thibodeau",
-    "address": "620 Chemin de Joliette, Saint-Félix-de-Valois",
-    "lat": 46.1543337,
-    "lng": -73.4321508,
-    "rating": 4.6,
-    "city": "Joliette"
-  },
-  {
-    "name": "Vetoquinol Canada",
-    "address": "2000 Chemin Georges, Lavaltrie",
-    "lat": 45.93603479999999,
-    "lng": -73.3492005,
-    "rating": 3.8,
-    "city": "Joliette"
-  },
-  {
-    "name": "Proxim Lamia Boutiba",
-    "address": "2700 Boulevard de l'Ange Gardien Nord, L'Assomption",
-    "lat": 45.896176,
-    "lng": -73.43140199999999,
-    "rating": 4.3,
-    "city": "Joliette"
-  },
-  {
-    "name": "Priscilla Roy",
-    "address": "620 Chemin de Joliette, Saint-Félix-de-Valois",
-    "lat": 46.1543193,
-    "lng": -73.4320898,
-    "rating": 1,
-    "city": "Joliette"
+    "area": "Joliette"
   },
   {
     "name": "Uniprix Pharmacie Hoang Nghi Nguyen inc.",
@@ -2661,7 +3565,7 @@
     "lat": 46.05974,
     "lng": -71.969572,
     "rating": 4.5,
-    "city": "Victoriaville"
+    "area": "Victoriaville"
   },
   {
     "name": "Brunet A. Robitaille, E. Luneau-Lambert, N. Huot pharm. prop. Affiliés",
@@ -2669,7 +3573,7 @@
     "lat": 46.05635660000001,
     "lng": -71.9555728,
     "rating": 4.1,
-    "city": "Victoriaville"
+    "area": "Victoriaville"
   },
   {
     "name": "Jean S Croteau",
@@ -2677,7 +3581,7 @@
     "lat": 46.0566936,
     "lng": -71.9556473,
     "rating": 0,
-    "city": "Victoriaville"
+    "area": "Victoriaville"
   },
   {
     "name": "J Bourassa",
@@ -2685,7 +3589,7 @@
     "lat": 46.06792300000001,
     "lng": -71.928595,
     "rating": 0,
-    "city": "Victoriaville"
+    "area": "Victoriaville"
   },
   {
     "name": "Pharmacie Horizon Santé Annie-Eve Rivard Inc.",
@@ -2693,7 +3597,7 @@
     "lat": 48.24709099999999,
     "lng": -79.01867399999999,
     "rating": 4.9,
-    "city": "Rouyn-Noranda"
+    "area": "Rouyn-Noranda"
   },
   {
     "name": "Proxim SARAH BELZILE ET JACINTHE GOULET",
@@ -2701,7 +3605,7 @@
     "lat": 48.24157,
     "lng": -79.019758,
     "rating": 4.8,
-    "city": "Rouyn-Noranda"
+    "area": "Rouyn-Noranda"
   },
   {
     "name": "Brunet M-C. Lévesque, pharm. prop. Affiliée",
@@ -2709,7 +3613,7 @@
     "lat": 48.2419444,
     "lng": -79.0310436,
     "rating": 4.5,
-    "city": "Rouyn-Noranda"
+    "area": "Rouyn-Noranda"
   },
   {
     "name": "Uniprix Véronique Barrette et Julie Bergeron, pharmaciennes inc.",
@@ -2717,7 +3621,7 @@
     "lat": 48.230988,
     "lng": -79.01485199999999,
     "rating": 4.7,
-    "city": "Rouyn-Noranda"
+    "area": "Rouyn-Noranda"
   },
   {
     "name": "Dominique Fiset",
@@ -2725,7 +3629,7 @@
     "lat": 48.24287289999999,
     "lng": -79.04325039999999,
     "rating": 2.6,
-    "city": "Rouyn-Noranda"
+    "area": "Rouyn-Noranda"
   },
   {
     "name": "S Cote",
@@ -2733,7 +3637,7 @@
     "lat": 48.2416174,
     "lng": -79.0197079,
     "rating": 0,
-    "city": "Rouyn-Noranda"
+    "area": "Rouyn-Noranda"
   },
   {
     "name": "Horizon Santé -Annie-eve Rivard",
@@ -2741,7 +3645,7 @@
     "lat": 48.2471669,
     "lng": -79.01864499999999,
     "rating": 0,
-    "city": "Rouyn-Noranda"
+    "area": "Rouyn-Noranda"
   },
   {
     "name": "Peter Wacko Jacinthe Goulet Et",
@@ -2749,7 +3653,7 @@
     "lat": 48.23836459999999,
     "lng": -78.9912432,
     "rating": 0,
-    "city": "Rouyn-Noranda"
+    "area": "Rouyn-Noranda"
   },
   {
     "name": "Uniprix Christophe Gauthier et Mircea Andrei Circlan - Pharmacie affiliée",
@@ -2757,7 +3661,7 @@
     "lat": 45.24150600000001,
     "lng": -74.125948,
     "rating": 4.4,
-    "city": "Salaberry-de-Valleyfield"
+    "area": "Salaberry-de-Valleyfield"
   },
   {
     "name": "C De Champlain",
@@ -2765,7 +3669,7 @@
     "lat": 45.2693906,
     "lng": -74.1184026,
     "rating": 0,
-    "city": "Salaberry-de-Valleyfield"
+    "area": "Salaberry-de-Valleyfield"
   },
   {
     "name": "Brunet M. Bozukova, pharm. prop. Affiliée",
@@ -2773,7 +3677,7 @@
     "lat": 45.2684976,
     "lng": -74.13812829999999,
     "rating": 4.1,
-    "city": "Salaberry-de-Valleyfield"
+    "area": "Salaberry-de-Valleyfield"
   },
   {
     "name": "Indépendant - Pharmacie P. Dufour, J-F. Thibeault, É. Lefebvre et S. Gerges inc.",
@@ -2781,7 +3685,7 @@
     "lat": 45.234626,
     "lng": -74.1198936,
     "rating": 3.7,
-    "city": "Salaberry-de-Valleyfield"
+    "area": "Salaberry-de-Valleyfield"
   },
   {
     "name": "PHARMACIE CLINIQUE DES BÂTISSEURS",
@@ -2789,39 +3693,7 @@
     "lat": 45.23466,
     "lng": -74.1197485,
     "rating": 4.7,
-    "city": "Salaberry-de-Valleyfield"
-  },
-  {
-    "name": "Uniprix Geneviève Dion et Phanthavy Douang-Boulom",
-    "address": "5233 Boulevard Hébert #1, Salaberry-de-Valleyfield",
-    "lat": 45.288907,
-    "lng": -74.04615199999999,
-    "rating": 4.7,
-    "city": "Salaberry-de-Valleyfield"
-  },
-  {
-    "name": "Uniprix Michael Liounis - Pharmacie affiliée",
-    "address": "504 Rue Principale, Saint-Zotique",
-    "lat": 45.251866,
-    "lng": -74.228721,
-    "rating": 4.2,
-    "city": "Salaberry-de-Valleyfield"
-  },
-  {
-    "name": "Proxim Karine Valiquette",
-    "address": "125 Chemin Saint-Féréol #1, Les Cèdres",
-    "lat": 45.3091255,
-    "lng": -74.0591498,
-    "rating": 4.8,
-    "city": "Salaberry-de-Valleyfield"
-  },
-  {
-    "name": "Proxim Claude Villeneuve et Francis Prud'homme",
-    "address": "30 Rue du Pont, Municipalité de paroisse de Saint-Louis-de-Gonzague",
-    "lat": 45.21572800000001,
-    "lng": -73.9928224,
-    "rating": 4.9,
-    "city": "Salaberry-de-Valleyfield"
+    "area": "Salaberry-de-Valleyfield"
   },
   {
     "name": "Accès pharma - Pharmacie Shahin Mirmooji, Tarek Elarabi et Mohamed Sabra (affiliés à)",
@@ -2829,7 +3701,7 @@
     "lat": 50.2267809,
     "lng": -66.3938046,
     "rating": 3.4,
-    "city": "Sept-Iles"
+    "area": "Sept-Iles"
   },
   {
     "name": "Proxim Nathalie Laberge et Karine Bernatchez",
@@ -2837,7 +3709,7 @@
     "lat": 50.20455,
     "lng": -66.384177,
     "rating": 4.5,
-    "city": "Sept-Iles"
+    "area": "Sept-Iles"
   },
   {
     "name": "I Otis",
@@ -2845,7 +3717,7 @@
     "lat": 50.21329679999999,
     "lng": -66.3757921,
     "rating": 0,
-    "city": "Sept-Iles"
+    "area": "Sept-Iles"
   },
   {
     "name": "N Dupont",
@@ -2853,7 +3725,7 @@
     "lat": 50.21329679999999,
     "lng": -66.3757921,
     "rating": 5,
-    "city": "Sept-Iles"
+    "area": "Sept-Iles"
   },
   {
     "name": "F Courtemanche",
@@ -2861,7 +3733,7 @@
     "lat": 50.21329679999999,
     "lng": -66.3757921,
     "rating": 0,
-    "city": "Sept-Iles"
+    "area": "Sept-Iles"
   },
   {
     "name": "Galeries Montagnaises",
@@ -2869,7 +3741,7 @@
     "lat": 50.2263351,
     "lng": -66.39409789999999,
     "rating": 0,
-    "city": "Sept-Iles"
+    "area": "Sept-Iles"
   },
   {
     "name": "PCJ Clinique",
@@ -2877,14 +3749,6 @@
     "lat": 50.23267569999999,
     "lng": -66.3879339,
     "rating": 0,
-    "city": "Sept-Iles"
-  },
-  {
-    "name": "Pharmacie Adam El Bouhssini - Horizon Santé à Maliotenam",
-    "address": "115 Rue Montagnais, Maliotenam",
-    "lat": 50.21661890000001,
-    "lng": -66.194433,
-    "rating": 5,
-    "city": "Sept-Iles"
+    "area": "Sept-Iles"
   }
 ]
