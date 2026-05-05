@@ -5,9 +5,30 @@ import requests
 API_KEY = "AIzaSyCfKSK2CW2po79uLpkKX9ZRz8FF_-feO_M"
 OUTPUT_FILE = "pharmacies_with_coords.json"
 
-# Cities with their coordinates for radius search
-CITIES = [
-    ("Montreal", 45.5017, -73.5673),
+# Montreal districts
+MONTREAL_AREAS = [
+    ("Downtown", 45.5017, -73.5673),
+    ("Plateau", 45.5200, -73.5820),
+    ("Rosemont", 45.5500, -73.5800),
+    ("Hochelaga", 45.5450, -73.5400),
+    ("Cote-des-Neiges", 45.4980, -73.6250),
+    ("NDG", 45.4700, -73.6150),
+    ("Saint-Laurent", 45.5000, -73.7000),
+    ("Ahuntsic", 45.5600, -73.6600),
+    ("Montreal-Nord", 45.6000, -73.6200),
+    ("Saint-Leonard", 45.5900, -73.5950),
+    ("Anjou", 45.6100, -73.5500),
+    ("Verdun", 45.4600, -73.5500),
+    ("LaSalle", 45.4300, -73.6400),
+    ("Lachine", 45.4400, -73.6900),
+    ("Pierrefonds", 45.4800, -73.8700),
+    ("Pointe-aux-Trembles", 45.6500, -73.5000),
+    ("Outremont", 45.5200, -73.6100),
+    ("Westmount", 45.4870, -73.6000),
+]
+
+# Other Quebec cities
+OTHER_CITIES = [
     ("Quebec City", 46.8139, -71.2080),
     ("Laval", 45.6066, -73.7124),
     ("Gatineau", 45.4765, -75.7013),
@@ -32,8 +53,7 @@ CITIES = [
     ("Sept-Iles", 50.2133, -66.3812),
 ]
 
-def search_pharmacies_radius(lat, lng, radius, next_page_token=None):
-    """Search using nearbysearch with radius and pagination"""
+def search_pharmacies(lat, lng, area_name, radius=3000):
     url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
     params = {
         "location": f"{lat},{lng}",
@@ -41,69 +61,74 @@ def search_pharmacies_radius(lat, lng, radius, next_page_token=None):
         "type": "pharmacy",
         "key": API_KEY,
     }
-    if next_page_token:
-        params["pagetoken"] = next_page_token
     
     try:
         response = requests.get(url, params=params, timeout=30)
         if response.status_code == 200:
-            return response.json()
-        return {}
-    except Exception as e:
-        print(f"  Error: {e}")
-        return {}
-
-def main():
-    print("=" * 60)
-    print("MyVita Pharmacy Geocoder")
-    print("=" * 60)
-    
-    all_pharmacies = {}
-    
-    for city_name, lat, lng in CITIES:
-        print(f"\nSearching: {city_name}...")
-        
-        # Search with 3 different radius sizes to get more results
-        for radius in [5000, 10000, 15000]:
-            data = search_pharmacies_radius(lat, lng, radius)
-            results = data.get("results", [])
+            data = response.json()
+            results = []
+            for place in data.get("results", []):
+                results.append({
+                    "name": place.get("name", ""),
+                    "address": place.get("vicinity", ""),
+                    "lat": place.get("geometry", {}).get("location", {}).get("lat", 0),
+                    "lng": place.get("geometry", {}).get("location", {}).get("lng", 0),
+                    "rating": place.get("rating", 0),
+                    "area": area_name,
+                })
             
-            for place in results:
-                name = place.get("name", "")
-                vicinity = place.get("vicinity", "")
-                location = place.get("geometry", {}).get("location", {})
-                rating = place.get("rating", 0)
-                
-                if name not in all_pharmacies:
-                    all_pharmacies[name] = {
-                        "name": name,
-                        "address": vicinity,
-                        "lat": location.get("lat", 0),
-                        "lng": location.get("lng", 0),
-                        "rating": rating,
-                        "city": city_name,
-                    }
-            
-            # Get next page if available
+            # Get page 2 if available
             next_token = data.get("next_page_token")
             if next_token:
                 time.sleep(2)
-                data2 = search_pharmacies_radius(lat, lng, radius, next_token)
-                for place in data2.get("results", []):
-                    name = place.get("name", "")
-                    if name not in all_pharmacies:
-                        all_pharmacies[name] = {
-                            "name": name,
+                params["pagetoken"] = next_token
+                response2 = requests.get(url, params=params, timeout=30)
+                if response2.status_code == 200:
+                    data2 = response2.json()
+                    for place in data2.get("results", []):
+                        results.append({
+                            "name": place.get("name", ""),
                             "address": place.get("vicinity", ""),
                             "lat": place.get("geometry", {}).get("location", {}).get("lat", 0),
                             "lng": place.get("geometry", {}).get("location", {}).get("lng", 0),
                             "rating": place.get("rating", 0),
-                            "city": city_name,
-                        }
+                            "area": area_name,
+                        })
             
-            time.sleep(1)
-        
-        print(f"  Running total: {len(all_pharmacies)} pharmacies")
+            return results
+        return []
+    except Exception as e:
+        print(f"  Error in {area_name}: {e}")
+        return []
+
+def main():
+    print("=" * 60)
+    print("MyVita Pharmacy Geocoder — Full Quebec")
+    print("=" * 60)
+    
+    all_pharmacies = {}
+    
+    # Montreal districts
+    print("\n=== MONTREAL DISTRICTS ===")
+    for area_name, lat, lng in MONTREAL_AREAS:
+        print(f"Searching: Montreal - {area_name}...")
+        results = search_pharmacies(lat, lng, area_name)
+        for p in results:
+            if p["name"] not in all_pharmacies:
+                all_pharmacies[p["name"]] = p
+        print(f"  Found {len(results)}, Total: {len(all_pharmacies)}")
+        time.sleep(0.3)
+    
+    # Other cities
+    print("\n=== OTHER QUEBEC CITIES ===")
+    for city_name, lat, lng in OTHER_CITIES:
+        print(f"Searching: {city_name}...")
+        results = search_pharmacies(lat, lng, city_name, radius=5000)
+        for p in results:
+            if p["name"] not in all_pharmacies:
+                all_pharmacies[p["name"]] = p
+        print(f"  Found {len(results)}, Total: {len(all_pharmacies)}")
+        time.sleep(0.3)
     
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(list(all_pharmacies.values()), f, ensure_ascii=False, indent=2)
