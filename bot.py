@@ -135,17 +135,11 @@ def try_select_free_filter(page):
     Uses exact matching to avoid selecting 'Fees and no fees'.
     """
     strategies = [
-        # Strategy 1: Exact text "No fees" (exact match avoids "Fees and no fees")
         lambda: page.get_by_text("No fees", exact=True).first,
-        # Strategy 2: French exact text
         lambda: page.get_by_text("Sans frais", exact=True).first,
-        # Strategy 3: Label containing exactly "No fees"
         lambda: page.locator("label").filter(has_text=re.compile(r"^No fees$")).first,
-        # Strategy 4: Label containing exactly "Sans frais"
         lambda: page.locator("label").filter(has_text=re.compile(r"^Sans frais$")).first,
-        # Strategy 5: First radio button (usually "No fees" is first)
         lambda: page.locator("input[type='radio']").first,
-        # Strategy 6: Click the first toggle/switch option
         lambda: page.locator("[role='radio']").first,
     ]
 
@@ -171,7 +165,11 @@ def check_for_real_slots(page):
     current_url = page.url
     print(f"   Current URL: {current_url[:120]}")
 
-    # Negative indicators
+    # Check if we landed on results page
+    if "results" in current_url.lower() or "postalcode" in current_url.lower():
+        print("   ✅ On results page!")
+
+    # Negative indicators — no slots
     no_slot_phrases = [
         "aucune disponibilité", "no availability", "aucun rendez-vous",
         "no appointments", "désolé", "sorry", "complet", "full",
@@ -181,7 +179,11 @@ def check_for_real_slots(page):
         if phrase in text_lower:
             return False, f"No slots ({phrase})"
 
-    # Positive indicators
+    # 🎉 POSITIVE: "Availabilities" or "Show all availabilities" means slots exist!
+    if "availabilities" in text_lower or "disponibilités" in text_lower:
+        return True, "Availabilities found!"
+
+    # Other positive indicators
     found_date = re.search(
         r"(\d{1,2}\s+(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre|jan|fév|mar|avr|mai|juin|juil|aoû|sep|oct|nov|déc))",
         text_lower
@@ -224,12 +226,11 @@ def check_availability():
             # 3. SELECT "NO FEES" FILTER — REQUIRED!
             print("🎯 Selecting 'No fees' filter...")
             filter_applied = try_select_free_filter(page)
-            
+
             if not filter_applied:
-                # Try one more time after a short wait (page might still be loading)
                 human_delay(1000, 2000)
                 filter_applied = try_select_free_filter(page)
-            
+
             human_delay(500, 1000)
 
             # 4. Enter Postal Code
