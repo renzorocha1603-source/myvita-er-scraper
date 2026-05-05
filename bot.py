@@ -131,8 +131,7 @@ def debug_page_state(page, step_name):
 def try_select_free_filter(page):
     """
     Select 'No fees' / 'Sans frais' option.
-    This is REQUIRED — Clic Santé blocks search until a filter is selected.
-    Uses exact matching to avoid selecting 'Fees and no fees'.
+    REQUIRED — Clic Santé blocks search until a filter is selected.
     """
     strategies = [
         lambda: page.get_by_text("No fees", exact=True).first,
@@ -158,18 +157,15 @@ def try_select_free_filter(page):
     print("❌ CRITICAL: Could not select 'No fees' — search will fail")
     return False
 
-def check_for_real_slots(page):
-    """Check multiple indicators for available slots"""
+def verify_real_slots(page):
+    """
+    Click into the first clinic to check for REAL dates/times.
+    Returns (has_real_slots, details_string)
+    """
     body_text = page.inner_text("body")
     text_lower = body_text.lower()
-    current_url = page.url
-    print(f"   Current URL: {current_url[:120]}")
 
-    # Check if we landed on results page
-    if "results" in current_url.lower() or "postalcode" in current_url.lower():
-        print("   ✅ On results page!")
-
-    # Negative indicators — no slots
+    # First check negative indicators on the results page
     no_slot_phrases = [
         "aucune disponibilité", "no availability", "aucun rendez-vous",
         "no appointments", "désolé", "sorry", "complet", "full",
@@ -179,23 +175,56 @@ def check_for_real_slots(page):
         if phrase in text_lower:
             return False, f"No slots ({phrase})"
 
-    # 🎉 POSITIVE: "Availabilities" or "Show all availabilities" means slots exist!
+    # Try clicking into the first clinic to see real dates
+    clinic_selectors = [
+        ".establishment-card",
+        "[class*='establishment']",
+        "[class*='result-item']",
+        "a[href*='establishment']",
+        ".clinic-item",
+    ]
+
+    for selector in clinic_selectors:
+        try:
+            clinic = page.locator(selector).first
+            if clinic.count() > 0 and clinic.is_visible():
+                clinic.click(timeout=5000)
+                human_delay(2000, 3000)
+                
+                # Check detail page for real dates
+                detail_text = page.inner_text("body").lower()
+                
+                # Negative on detail page = no real slots
+                if any(p in detail_text for p in ["no availability", "aucune disponibilité", "no slots", "complet"]):
+                    print("   ❌ Clinic shows no real availability")
+                    return False, "No real slots at clinic"
+                
+                # Positive: actual dates or times
+                time_pattern = re.search(r"(\d{1,2}:\d{2})", detail_text)
+                date_pattern = re.search(r"(\d{1,2}\s+(mai|avril|juin|juillet|mai|jan|fév|mar|avr|mai|juin|juil|aoû|sep|oct|nov|déc)\s+\d{4})", detail_text)
+                
+                if time_pattern or date_pattern:
+                    slot_info = []
+                    if date_pattern:
+                        slot_info.append(date_pattern.group())
+                    if time_pattern:
+                        slot_info.append(time_pattern.group())
+                    return True, " | ".join(slot_info)
+                
+                # Go back to results page
+                page.go_back()
+                human_delay(500, 1000)
+                break
+        except:
+            continue
+
+    # Fallback: check results page for indicators
     if "availabilities" in text_lower or "disponibilités" in text_lower:
-        return True, "Availabilities found!"
-
-    # Other positive indicators
-    found_date = re.search(
-        r"(\d{1,2}\s+(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre|jan|fév|mar|avr|mai|juin|juil|aoû|sep|oct|nov|déc))",
-        text_lower
-    )
-    if found_date:
-        return True, f"Date found: {found_date.group()}"
-
-    if "prochain rendez-vous" in text_lower or "next appointment" in text_lower:
-        return True, "Next appointment available"
-
-    if "disponible" in text_lower or "available" in text_lower:
-        return True, "Availability indicated"
+        # Try to find actual dates without clicking
+        dates_found = re.findall(r"(\d{1,2}\s+(jan|fév|mar|avr|mai|juin|juil|aoû|sep|oct|nov|déc)[a-zéûô]*\s+\d{4})", text_lower)
+        if dates_found:
+            return True, f"Dates on results: {dates_found[0][0]}"
+        return True, "Availabilities shown — verify manually"
 
     return False, "No clear indicators"
 
@@ -286,11 +315,12 @@ def check_availability():
 
             debug_page_state(page, "results")
 
-            # 7. Analyze Results
-            has_slots, detail = check_for_real_slots(page)
+            # 7. Verify Real Slots (clicks into first clinic)
+            print("🔍 Verifying real slots...")
+            has_slots, detail = verify_real_slots(page)
 
             if has_slots:
-                print(f"🎉 SUCCESS: Found free slots! ({detail})")
+                print(f"🎉 SUCCESS: Real free slots found! ({detail})")
                 send_notification(postal_code, page.url, True)
                 save_availability(postal_code, True, page.url, detail)
             else:
