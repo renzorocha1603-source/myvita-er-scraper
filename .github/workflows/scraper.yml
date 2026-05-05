@@ -8,19 +8,19 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: pip install requests
-      
+
       - name: Test CKAN API
         run: |
           python -c "
@@ -32,14 +32,15 @@ jobs:
       
       - name: Run scraper
         run: python scraper.py
-      
+
       - name: Show files after scrape
         run: ls -la
-      
+
       - name: Commit and push
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin main
           git add -A
           git status
           git commit -m "Update ER data" || echo "No changes to commit"
