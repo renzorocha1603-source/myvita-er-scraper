@@ -62,7 +62,7 @@ def get_user_token():
 
 def save_availability(postal_code: str, has_slots: bool, booking_url: str, slot_details: str):
     if db is None: return
-    
+
     zone = get_zone(postal_code)
     now = datetime.now().isoformat()
     data = {
@@ -74,7 +74,7 @@ def save_availability(postal_code: str, has_slots: bool, booking_url: str, slot_
         "slot_details": slot_details,
         "last_checked": now,
     }
-    
+
     try:
         db.collection("availability").document(zone).set(data)
         db.collection("availability").document(zone).collection("history").add({
@@ -88,7 +88,7 @@ def save_availability(postal_code: str, has_slots: bool, booking_url: str, slot_
 def send_notification(postal_code: str, booking_url: str, slots_found: bool):
     token = get_user_token()
     if not token or not slots_found: return
-    
+
     try:
         message = messaging.Message(
             notification=messaging.Notification(
@@ -114,7 +114,6 @@ def launch_stealth_browser(p, headless=True):
         viewport={"width": 1280, "height": 800},
         user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
     )
-    # Mask automation flags
     context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
     return browser, context
 
@@ -124,81 +123,83 @@ def debug_page_state(page, step_name):
         page.screenshot(path=f"debug_{step_name}.png")
         body_text = page.inner_text("body")
         print(f"\n📸 DEBUG [{step_name}] - Page text preview:")
-        print(body_text[:300])
+        print(body_text[:400])
         print("...")
     except:
         pass
 
 def try_select_free_filter(page):
-    """Try multiple strategies to click 'Sans frais' filter"""
+    """
+    Select 'No fees' / 'Sans frais' option.
+    This is REQUIRED — Clic Santé blocks search until a filter is selected.
+    Uses exact matching to avoid selecting 'Fees and no fees'.
+    """
     strategies = [
-        # Strategy 1: Exact text match
-        lambda: page.locator("button, label, span, div").filter(
-            has_text=re.compile(r"^(Sans frais|Without fees)$", re.IGNORECASE)
-        ).first,
-        # Strategy 2: Contains text in a clickable element
-        lambda: page.locator("[class*='filter'], [class*='toggle'], [class*='option']").filter(
-            has_text=re.compile(r"sans frais|without fees", re.IGNORECASE)
-        ).first,
-        # Strategy 3: Radio/checkbox inputs
-        lambda: page.locator("input[type='radio'], input[type='checkbox']").filter(
-            has=page.locator("..").filter(has_text=re.compile(r"sans frais|without fees", re.IGNORECASE))
-        ).first,
-        # Strategy 4: Any element containing the text
-        lambda: page.get_by_text(re.compile(r"sans frais|without fees", re.IGNORECASE)).first,
+        # Strategy 1: Exact text "No fees" (exact match avoids "Fees and no fees")
+        lambda: page.get_by_text("No fees", exact=True).first,
+        # Strategy 2: French exact text
+        lambda: page.get_by_text("Sans frais", exact=True).first,
+        # Strategy 3: Label containing exactly "No fees"
+        lambda: page.locator("label").filter(has_text=re.compile(r"^No fees$")).first,
+        # Strategy 4: Label containing exactly "Sans frais"
+        lambda: page.locator("label").filter(has_text=re.compile(r"^Sans frais$")).first,
+        # Strategy 5: First radio button (usually "No fees" is first)
+        lambda: page.locator("input[type='radio']").first,
+        # Strategy 6: Click the first toggle/switch option
+        lambda: page.locator("[role='radio']").first,
     ]
-    
+
     for i, strategy in enumerate(strategies):
         try:
             element = strategy()
-            if element and element.count() > 0:
-                element.wait_for(state="visible", timeout=5000)
+            if element and element.count() > 0 and element.is_visible():
                 element.click(timeout=3000)
-                print(f"✅ Filter clicked with strategy {i+1}")
+                human_delay(500, 1000)
+                print(f"✅ 'No fees' selected (strategy {i+1})")
                 return True
-        except:
+        except Exception as e:
+            print(f"   Strategy {i+1} failed: {e}")
             continue
-    
-    print("⚠️ Filter button not found — continuing without it")
+
+    print("❌ CRITICAL: Could not select 'No fees' — search will fail")
     return False
 
 def check_for_real_slots(page):
     """Check multiple indicators for available slots"""
     body_text = page.inner_text("body")
     text_lower = body_text.lower()
-    
-    # Check page URL first
     current_url = page.url
-    print(f"   Current URL: {current_url[:100]}")
-    
+    print(f"   Current URL: {current_url[:120]}")
+
     # Negative indicators
     no_slot_phrases = [
         "aucune disponibilité", "no availability", "aucun rendez-vous",
         "no appointments", "désolé", "sorry", "complet", "full",
-        "aucun résultat", "no results"
+        "aucun résultat", "no results", "please select an option"
     ]
     for phrase in no_slot_phrases:
         if phrase in text_lower:
             return False, f"No slots ({phrase})"
-    
+
     # Positive indicators
-    found_date = re.search(r"(\d{1,2}\s+(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre|jan|fév|mar|avr|mai|juin|juil|aoû|sep|oct|nov|déc))", text_lower)
+    found_date = re.search(
+        r"(\d{1,2}\s+(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre|jan|fév|mar|avr|mai|juin|juil|aoû|sep|oct|nov|déc))",
+        text_lower
+    )
     if found_date:
         return True, f"Date found: {found_date.group()}"
-    
+
     if "prochain rendez-vous" in text_lower or "next appointment" in text_lower:
         return True, "Next appointment available"
-    
+
     if "disponible" in text_lower or "available" in text_lower:
         return True, "Availability indicated"
-    
+
     return False, "No clear indicators"
 
 def check_availability():
     postal_code = get_postal_code()
     service_url = get_service_url()
-    
-    # Allow overriding headless mode for debugging
     headless = os.getenv("HEADLESS", "true").lower() != "false"
 
     print(f"🚀 Starting Search: {postal_code} @ {datetime.now().strftime('%H:%M:%S')}")
@@ -212,29 +213,34 @@ def check_availability():
             print("📄 Loading page...")
             page.goto(service_url, wait_until="domcontentloaded", timeout=60000)
             human_delay(1500, 2500)
-            debug_page_state(page, "after_load")
 
-            # 2. Try to close any popups/modals
+            # 2. Close any popups/modals
             try:
                 page.keyboard.press("Escape")
                 human_delay(300, 500)
             except:
                 pass
 
-            # 3. Apply "Free Only" Filter (optional - won't stop search if fails)
+            # 3. SELECT "NO FEES" FILTER — REQUIRED!
+            print("🎯 Selecting 'No fees' filter...")
             filter_applied = try_select_free_filter(page)
+            
+            if not filter_applied:
+                # Try one more time after a short wait (page might still be loading)
+                human_delay(1000, 2000)
+                filter_applied = try_select_free_filter(page)
+            
             human_delay(500, 1000)
 
-            # 4. Handle Postal Code Input
+            # 4. Enter Postal Code
             print("⌨️  Entering postal code...")
-            # Try multiple selectors for the postal code input
             postal_selectors = [
                 "input[placeholder*='A1A']",
                 "input[placeholder*='postal']",
                 "input[autocomplete='postal-code']",
                 "input[type='text']",
             ]
-            
+
             postal_box = None
             for selector in postal_selectors:
                 try:
@@ -244,22 +250,20 @@ def check_availability():
                         break
                 except:
                     continue
-            
+
             if postal_box:
                 postal_box.click()
                 human_delay(200, 400)
                 postal_box.fill("")
                 human_delay(100, 200)
-                # Type like a human
                 for char in postal_code:
                     postal_box.type(char, delay=random.randint(50, 150))
                 human_delay(400, 800)
-                page.keyboard.press("Enter")
                 print(f"   Entered: {postal_code}")
             else:
                 print("   ❌ Could not find postal input")
 
-            # 5. Force Click Search Button (Fallback)
+            # 5. Click Search Button
             human_delay(500, 1000)
             search_btn = page.get_by_role("button", name=re.compile(r"Search|Rechercher|Chercher", re.I))
             if search_btn.count() > 0 and search_btn.first.is_visible():
@@ -269,11 +273,10 @@ def check_availability():
             # 6. Wait for Results
             print("⏳ Waiting for results...")
             human_delay(3000, 5000)
-            
-            # Try waiting for specific elements
+
             try:
                 page.wait_for_selector(
-                    ".establishment-card, .results-list, .no-results, [class*='result'], [class*='clinic']", 
+                    ".establishment-card, .results-list, .no-results, [class*='result'], [class*='clinic']",
                     timeout=20000
                 )
                 human_delay(2000, 3000)
@@ -281,7 +284,7 @@ def check_availability():
                 print("   ⚠️ Results container not found — checking anyway")
 
             debug_page_state(page, "results")
-            
+
             # 7. Analyze Results
             has_slots, detail = check_for_real_slots(page)
 
@@ -301,7 +304,6 @@ def check_availability():
             traceback.print_exc()
             return False
         finally:
-            # Keep browser open if in debug mode
             if headless:
                 browser.close()
             else:
