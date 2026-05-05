@@ -1,0 +1,62 @@
+[
+  {
+    "name": "CLSC Hochelaga-Maisonneuve",
+    "checked_at": "2026-05-05T02:50:38.360285",
+    "booking_urls": [],
+    "has_direct_booking": false
+  },
+  {
+    "name": "CLSC Rosemont",
+    "checked_at": "2026-05-05T02:50:38.602025",
+    "booking_urls": [],
+    "has_direct_booking": false
+  },
+  {
+    "name": "CLSC Cote-des-Neiges",
+    "checked_at": "2026-05-05T02:50:38.803666",
+    "booking_urls": [],
+    "has_direct_booking": false
+  },
+  {
+    "name": "CLSC Saint-Michel",
+    "checked_at": "2026-05-05T02:50:38.986410",
+    "booking_urls": [],
+    "has_direct_booking": false
+  },
+  {
+    "name": "CLSC Verdun",
+    "checked_at": "2026-05-05T02:50:39.126922",
+    "booking_urls": [],
+    "has_direct_booking": false
+  },
+  {
+    "name": "CLSC Ahuntsic",
+    "checked_at": "2026-05-05T02:50:39.311192",
+    "booking_urls": [],
+    "has_direct_booking": false
+  },
+  {
+    "name": "CLSC Montreal-Nord",
+    "checked_at": "2026-05-05T02:50:39.501273",
+    "booking_urls": [],
+    "has_direct_booking": false
+  },
+  {
+    "name": "CLSC Riviere-des-Prairies",
+    "checked_at": "2026-05-05T02:50:39.639679",
+    "booking_urls": [],
+    "has_direct_booking": false
+  },
+  {
+    "name": "CLSC Plateau-Mont-Royal",
+    "checked_at": "2026-05-05T02:50:39.823372",
+    "booking_urls": [],
+    "has_direct_booking": false
+  },
+  {
+    "name": "CLSC Saint-Laurent",
+    "checked_at": "2026-05-05T02:50:40.005861",
+    "booking_urls": [],
+    "has_direct_booking": false
+  }
+]
