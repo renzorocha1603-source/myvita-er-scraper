@@ -1,4 +1,4 @@
-name: Run Flu Shot Scraper Daily
+name: run: python lab_test_finder.py
 
 on:
   schedule:
