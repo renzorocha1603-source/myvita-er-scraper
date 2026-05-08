@@ -29,7 +29,7 @@ jobs:
       - name: Run Bot for ${{ matrix.postal }}
         env:
           POSTAL_CODE: ${{ matrix.postal }}
-          FIREBASE_CRED_PATH: firebase-credentials.json
+          FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
         run: python bot.py
       
       - name: Upload availability result
