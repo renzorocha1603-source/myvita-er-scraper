@@ -52,11 +52,26 @@ def get_service_url():
     return f"https://portal3.clicsante.ca/services/{service}"
 
 def get_user_token():
-    token_file = "user_fcm_token.txt"
-    if os.path.exists(token_file):
-        with open(token_file, "r") as f:
-            return f.read().strip()
-    return None
+    """Get FCM token from Firestore (most recent user)"""
+    if db is None:
+        print("❌ Firestore not connected")
+        return None
+    
+    try:
+        # Get the most recent user's FCM token
+        users_ref = db.collection('users').order_by('fcmTokenUpdated', direction='DESCENDING').limit(1)
+        docs = users_ref.stream()
+        for doc in docs:
+            data = doc.to_dict()
+            token = data.get('fcmToken')
+            if token:
+                print(f"📱 Found FCM token from Firestore")
+                return token
+        print("⚠️ No FCM token found in Firestore")
+        return None
+    except Exception as e:
+        print(f"❌ Error reading FCM token: {e}")
+        return None
 
 # === 4. NOTIFICATION & DATA SAVING ===
 
@@ -87,7 +102,10 @@ def save_availability(postal_code: str, has_slots: bool, booking_url: str, slot_
 
 def send_notification(postal_code: str, booking_url: str, slots_found: bool):
     token = get_user_token()
-    if not token or not slots_found: return
+    if not token or not slots_found:
+        if not token:
+            print("⚠️ No FCM token — notification skipped")
+        return
 
     try:
         message = messaging.Message(
@@ -165,7 +183,6 @@ def verify_real_slots(page):
     body_text = page.inner_text("body")
     text_lower = body_text.lower()
 
-    # First check negative indicators on the results page
     no_slot_phrases = [
         "aucune disponibilité", "no availability", "aucun rendez-vous",
         "no appointments", "désolé", "sorry", "complet", "full",
@@ -175,7 +192,6 @@ def verify_real_slots(page):
         if phrase in text_lower:
             return False, f"No slots ({phrase})"
 
-    # Try clicking into the first clinic to see real dates
     clinic_selectors = [
         ".establishment-card",
         "[class*='establishment']",
@@ -191,15 +207,12 @@ def verify_real_slots(page):
                 clinic.click(timeout=5000)
                 human_delay(2000, 3000)
                 
-                # Check detail page for real dates
                 detail_text = page.inner_text("body").lower()
                 
-                # Negative on detail page = no real slots
                 if any(p in detail_text for p in ["no availability", "aucune disponibilité", "no slots", "complet"]):
                     print("   ❌ Clinic shows no real availability")
                     return False, "No real slots at clinic"
                 
-                # Positive: actual dates or times
                 time_pattern = re.search(r"(\d{1,2}:\d{2})", detail_text)
                 date_pattern = re.search(r"(\d{1,2}\s+(mai|avril|juin|juillet|mai|jan|fév|mar|avr|mai|juin|juil|aoû|sep|oct|nov|déc)\s+\d{4})", detail_text)
                 
@@ -211,16 +224,13 @@ def verify_real_slots(page):
                         slot_info.append(time_pattern.group())
                     return True, " | ".join(slot_info)
                 
-                # Go back to results page
                 page.go_back()
                 human_delay(500, 1000)
                 break
         except:
             continue
 
-    # Fallback: check results page for indicators
     if "availabilities" in text_lower or "disponibilités" in text_lower:
-        # Try to find actual dates without clicking
         dates_found = re.findall(r"(\d{1,2}\s+(jan|fév|mar|avr|mai|juin|juil|aoû|sep|oct|nov|déc)[a-zéûô]*\s+\d{4})", text_lower)
         if dates_found:
             return True, f"Dates on results: {dates_found[0][0]}"
@@ -228,8 +238,8 @@ def verify_real_slots(page):
 
     return False, "No clear indicators"
 
-def check_availability():
-    postal_code = get_postal_code()
+def check_availability(postal_code_override=None):
+    postal_code = postal_code_override if postal_code_override else get_postal_code()
     service_url = get_service_url()
     headless = os.getenv("HEADLESS", "true").lower() != "false"
 
@@ -240,19 +250,16 @@ def check_availability():
         page = context.new_page()
 
         try:
-            # 1. Open Site
             print("📄 Loading page...")
             page.goto(service_url, wait_until="domcontentloaded", timeout=60000)
             human_delay(1500, 2500)
 
-            # 2. Close any popups/modals
             try:
                 page.keyboard.press("Escape")
                 human_delay(300, 500)
             except:
                 pass
 
-            # 3. SELECT "NO FEES" FILTER — REQUIRED!
             print("🎯 Selecting 'No fees' filter...")
             filter_applied = try_select_free_filter(page)
 
@@ -262,7 +269,6 @@ def check_availability():
 
             human_delay(500, 1000)
 
-            # 4. Enter Postal Code
             print("⌨️  Entering postal code...")
             postal_selectors = [
                 "input[placeholder*='A1A']",
@@ -293,14 +299,12 @@ def check_availability():
             else:
                 print("   ❌ Could not find postal input")
 
-            # 5. Click Search Button
             human_delay(500, 1000)
             search_btn = page.get_by_role("button", name=re.compile(r"Search|Rechercher|Chercher", re.I))
             if search_btn.count() > 0 and search_btn.first.is_visible():
                 search_btn.first.click()
                 print("   Clicked Search button")
 
-            # 6. Wait for Results
             print("⏳ Waiting for results...")
             human_delay(3000, 5000)
 
@@ -315,7 +319,6 @@ def check_availability():
 
             debug_page_state(page, "results")
 
-            # 7. Verify Real Slots (clicks into first clinic)
             print("🔍 Verifying real slots...")
             has_slots, detail = verify_real_slots(page)
 
@@ -343,4 +346,11 @@ def check_availability():
                 browser.close()
 
 if __name__ == "__main__":
-    check_availability()
+    postal_codes = ["H1Y3H1", "H4L2B5", "H2X1Y7", "G1R2A3", "J8Y3H1"]
+    
+    for postal in postal_codes:
+        print(f"\n{'='*50}")
+        print(f"🔍 Searching: {postal}")
+        print(f"{'='*50}")
+        check_availability(postal_code_override=postal)
+        time.sleep(3)
