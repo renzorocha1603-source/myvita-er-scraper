@@ -20,19 +20,29 @@ ZONES = {
     "J1H": "sherbrooke", "J1K": "sherbrooke",
 }
 
-# === 2. FIREBASE SETUP ===
-FIREBASE_CRED = os.getenv("FIREBASE_CRED_PATH", "firebase-credentials.json")
-
+# === 2. FIREBASE SETUP (via GitHub Secret) ===
 db = None
-if os.path.exists(FIREBASE_CRED):
-    try:
-        cred = credentials.Certificate(FIREBASE_CRED)
+try:
+    creds_json = os.getenv("FIREBASE_CREDENTIALS")
+    if creds_json:
+        cred_dict = json.loads(creds_json)
+        cred = credentials.Certificate(cred_dict)
         if not firebase_admin._apps:
             firebase_admin.initialize_app(cred, {'projectId': 'myvita-app-c5ecd'})
         db = firestore.client()
-        print("✅ Firebase & Firestore initialized")
-    except Exception as e:
-        print(f"⚠️ Firebase Init Error: {e}")
+        print("✅ Firebase & Firestore initialized (via GitHub Secret)")
+    else:
+        # Fallback: try local file for testing
+        if os.path.exists("firebase-credentials.json"):
+            cred = credentials.Certificate("firebase-credentials.json")
+            if not firebase_admin._apps:
+                firebase_admin.initialize_app(cred, {'projectId': 'myvita-app-c5ecd'})
+            db = firestore.client()
+            print("✅ Firebase & Firestore initialized (via local file)")
+        else:
+            print("⚠️ No Firebase credentials found — running without Firestore")
+except Exception as e:
+    print(f"⚠️ Firebase Init Error: {e}")
 
 # === 3. UTILITY FUNCTIONS ===
 
@@ -58,7 +68,6 @@ def get_user_token():
         return None
     
     try:
-        # Get the most recent user's FCM token
         users_ref = db.collection('users').order_by('fcmTokenUpdated', direction='DESCENDING').limit(1)
         docs = users_ref.stream()
         for doc in docs:
