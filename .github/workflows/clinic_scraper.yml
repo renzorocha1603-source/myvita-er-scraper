@@ -1,0 +1,39 @@
+name: MyVita Clinic Scraper
+
+on:
+  schedule:
+    # Run every 45 minutes during Quebec waking hours (8am-8pm EST)
+    # EST = UTC-5, so 12:00 UTC = 7:00am EST, 01:00 UTC = 8:00pm EST
+    - cron: '*/45 12-23,0-1 * * *'
+  workflow_dispatch:  # Manual trigger
+    inputs:
+      postal_code:
+        description: 'Postal code to search'
+        required: false
+        default: 'H1Y3H1'
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50  # Max 50 min (45min cooldown handled in Python)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install playwright firebase-admin requests
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Run clinic scraper
+        env:
+          FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
+          POSTAL_CODE: ${{ github.event.inputs.postal_code || 'H1Y3H1' }}
+        run: python scrapper/clinic_scraper.py
