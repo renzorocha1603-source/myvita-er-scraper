@@ -129,13 +129,17 @@ init_firebase()
 # ══════════════════════════════════════════════════════════════
 
 def get_user_data():
-    """Fetch user data from environment variables (production: from Firestore)"""
+    """
+    Fetch user data from environment variables.
+    For local testing, set these before running.
+    In production, this will come from Firestore.
+    """
     return {
         "first_name": os.getenv("USER_FIRST_NAME", "Jean"),
         "last_name": os.getenv("USER_LAST_NAME", "Tremblay"),
         "ramq": os.getenv("USER_RAMQ", "TREJ6501011234"),
         "ramq_seq": os.getenv("USER_RAMQ_SEQ", "01"),
-        "birth_year": os.getenv("USER_BIRTH_YEAR", "1965"),
+        "birth_date": os.getenv("USER_BIRTH_DATE", "1965-01-15"),
         "sex": os.getenv("USER_SEX", "M"),
         "email": os.getenv("USER_EMAIL", "user@example.com"),
         "phone": os.getenv("USER_PHONE", "5145551234"),
@@ -328,7 +332,6 @@ def geocode_postal_code(postal_code: str) -> dict:
 def get_cardinal_coordinates(base_lat: float, base_lng: float,
                               direction: str, radius_km: int) -> dict:
     """Calculate coordinates in a cardinal direction at given radius"""
-    # Scale offset by radius (base offsets are for ~15km)
     scale = radius_km / 15.0
     offsets = CARDINAL_DIRECTIONS.get(direction, {}).get("offset", (0, 0))
     return {
@@ -340,7 +343,6 @@ def get_cardinal_coordinates(base_lat: float, base_lng: float,
 def discover_clinics_near(postal_code: str, radius_km: int = 15) -> list:
     """
     Use Google Maps Places API (via existing proxy) to find free public clinics.
-    Gemi's recommendation: Places API for verified data, not scraping.
     Returns list of {"name", "place_id", "address", "website", "phone", "rating"}
     Cached in Firestore for 48 hours.
     """
@@ -360,7 +362,6 @@ def discover_clinics_near(postal_code: str, radius_km: int = 15) -> list:
     lat, lng = coords["lat"], coords["lng"]
     all_clinics = []
 
-    # Search terms for free public clinics (no private, no specialists)
     search_terms = [
         "GMF clinique médicale sans rendez-vous",
         "CLSC centre santé",
@@ -382,7 +383,7 @@ def discover_clinics_near(postal_code: str, radius_km: int = 15) -> list:
                     "endpoint": "place/nearbysearch/json",
                     "params": {
                         "location": f"{lat},{lng}",
-                        "radius": radius_km * 1000,  # Convert km to meters
+                        "radius": radius_km * 1000,
                         "keyword": term,
                         "type": "doctor|health",
                         "language": "fr",
@@ -401,7 +402,6 @@ def discover_clinics_near(postal_code: str, radius_km: int = 15) -> list:
                 name = place.get("name", "")
                 name_lower = name.lower()
 
-                # ── FILTER: Exclude non-clinic businesses ──
                 skip_keywords = [
                     "dentiste", "dentist", "dentaire", "orthodontiste",
                     "pharmacie", "pharmacy", "jean coutu", "pharmaprix",
@@ -422,7 +422,6 @@ def discover_clinics_near(postal_code: str, radius_km: int = 15) -> list:
                 if any(kw in name_lower for kw in skip_keywords):
                     continue
 
-                # ── FILTER: Must be clearly a free public medical clinic ──
                 clinic_keywords = [
                     "clinique", "clinic", "gmf", "clsc",
                     "médical", "medical", "centre de santé",
@@ -432,12 +431,10 @@ def discover_clinics_near(postal_code: str, radius_km: int = 15) -> list:
                 if not any(kw in name_lower for kw in clinic_keywords):
                     continue
 
-                # Skip duplicates by place_id
                 place_id = place.get("place_id")
                 if any(c.get("place_id") == place_id for c in all_clinics):
                     continue
 
-                # Get detailed info (website, phone)
                 website = None
                 phone = None
                 try:
@@ -488,7 +485,6 @@ def discover_clinics_near(postal_code: str, radius_km: int = 15) -> list:
 
     print(f"\n✅ Discovered {len(unique_clinics)} unique free clinics")
     
-    # Cache results
     if unique_clinics:
         save_clinic_cache(postal_code, unique_clinics)
 
@@ -499,22 +495,19 @@ def discover_clinics_near(postal_code: str, radius_km: int = 15) -> list:
 # 9. PLATFORM DETECTION — Visit clinic website, find booking link
 # ══════════════════════════════════════════════════════════════
 
-# Gemi's weighted priority: direct platform URLs first, then text search
 BOOKING_LINK_SELECTORS = [
-    # ── TIER 1: Direct platform URLs (highest priority) ──
+    # TIER 1: Direct platform URLs (highest priority)
     "a[href*='pomelo.health']",
     "a[href*='bonjour-sante.ca']",
     "a[href*='clicsante.ca']",
     "a[href*='rvsq.gouv.qc.ca']",
-    
-    # ── TIER 2: Booking path patterns ──
+    # TIER 2: Booking path patterns
     "a[href*='rendez-vous']",
     "a[href*='rdv']",
     "a[href*='booking']",
     "a[href*='appointment']",
     "a[href*='reservation']",
-    
-    # ── TIER 3: Text-based buttons/links ──
+    # TIER 3: Text-based buttons/links
     "a:has-text('Prendre rendez-vous')",
     "a:has-text('Prendre RDV')",
     "a:has-text('Rendez-vous en ligne')",
@@ -523,8 +516,7 @@ BOOKING_LINK_SELECTORS = [
     "button:has-text('Prendre rendez-vous')",
     "button:has-text('Rendez-vous en ligne')",
     "button:has-text('Book appointment')",
-    
-    # ── TIER 4: Contact page fallback (Gemi's suggestion) ──
+    # TIER 4: Contact page fallback
     "a:has-text('Nous joindre')",
     "a:has-text('Contact')",
     "a:has-text('Contactez-nous')",
@@ -544,7 +536,7 @@ def detect_platform_from_url(url: str) -> str:
     elif "bonjour-sante.ca" in url_lower:
         return "bonjour_sante"
     elif "clicsante.ca" in url_lower or "rvsq.gouv.qc.ca" in url_lower:
-        return "clicsante_skip"  # Skipped for free tier
+        return "clicsante_skip"
     else:
         return "unknown"
 
@@ -553,13 +545,10 @@ def find_booking_link(page, clinic_name: str) -> dict:
     """
     Find and click the booking link on a clinic website.
     Returns {"platform": str, "booking_url": str}
-    
-    Gemi's approach: weighted priority — try direct platform URLs first,
-    then text patterns, then contact page fallback.
     """
     print(f"   🔗 Searching booking link on {clinic_name}...")
     
-    for i, selector in enumerate(BOOKING_LINK_SELECTORS):
+    for selector in BOOKING_LINK_SELECTORS:
         if KillSwitch.is_active():
             return {"platform": "kill_switch", "booking_url": ""}
         
@@ -569,20 +558,19 @@ def find_booking_link(page, clinic_name: str) -> dict:
                 continue
             
             href = element.get_attribute("href") or ""
-            text = element.inner_text()[:50] if element.count() > 0 else ""
             print(f"      Trying: {selector[:60]}... → href={href[:80]}")
             
-            # Gemi's safety check: if href already contains a platform URL, use it directly
+            # Direct platform URL in href
             if any(p in href.lower() for p in ["pomelo.health", "bonjour-sante.ca", "clicsante.ca", "rvsq"]):
                 platform = detect_platform_from_url(href)
                 print(f"      🎯 Direct platform link found: {platform}")
                 return {"platform": platform, "booking_url": href}
             
-            # Otherwise click and check redirect
+            # Click and check redirect
             element.click(timeout=5000)
             human_delay(2000, 4000)
             
-            # Check if a new tab opened
+            # Check if new tab opened
             if len(page.context.pages) > 1:
                 new_page = page.context.pages[-1]
                 new_page.bring_to_front()
@@ -597,26 +585,23 @@ def find_booking_link(page, clinic_name: str) -> dict:
             if platform != "unknown":
                 return {"platform": platform, "booking_url": page.url}
             
-            # Go back if we navigated away
             try:
                 page.go_back()
                 human_delay(500, 1000)
             except:
                 pass
                 
-        except Exception as e:
+        except:
             continue
     
-    # ── Gemi's Fallback: Check "Nous joindre" / Contact page ──
+    # Fallback: Check Contact page
     print(f"      ⚠️ No booking link found. Trying Contact page...")
     try:
         contact_link = page.locator("a:has-text('Nous joindre'), a:has-text('Contact')").first
         if contact_link.count() > 0:
             contact_link.click(timeout=5000)
             human_delay(2000, 3000)
-            
-            # Re-scan the contact page for booking links
-            for selector in BOOKING_LINK_SELECTORS[:6]:  # Tier 1 & 2 only
+            for selector in BOOKING_LINK_SELECTORS[:6]:
                 try:
                     element = page.locator(selector).first
                     if element.count() > 0:
@@ -660,7 +645,6 @@ def visit_clinic_and_detect_platform(clinic: dict) -> dict:
             page.goto(website, wait_until="domcontentloaded", timeout=30000)
             human_delay(2000, 3000)
             
-            # Dismiss popups/cookies
             try:
                 page.keyboard.press("Escape")
                 human_delay(300, 500)
@@ -689,47 +673,50 @@ def visit_clinic_and_detect_platform(clinic: dict) -> dict:
 def fill_pomelo_page1_identification(page, user: dict):
     """Page 1: First Name, Last Name, RAMQ, Sequence, Birth Year, Sex"""
     print("      📝 Page 1 — Identification...")
-    if KillSwitch.is_active(): return False
+    if KillSwitch.is_active():
+        return False
+
+    # Extract birth year from full date
+    birth_date = user.get("birth_date", "1965-01-15")
+    birth_year = birth_date.split("-")[0]
 
     try:
-        # First Name
         page.locator("input[name='firstName'], input[aria-label*='Prénom'], #firstName").first.fill(user["first_name"])
         human_delay(300, 600)
-    except: pass
+    except:
+        pass
 
     try:
-        # Last Name
         page.locator("input[name='lastName'], input[aria-label*='Nom de famille'], #lastName").first.fill(user["last_name"])
         human_delay(300, 600)
-    except: pass
+    except:
+        pass
 
     try:
-        # RAMQ Number
         page.locator("input[name*='ramq'], input[name*='assurance'], input[aria-label*='RAMQ']").first.fill(user["ramq"])
         human_delay(300, 600)
-    except: pass
+    except:
+        pass
 
     try:
-        # Sequence Number
         page.locator("input[name*='sequence'], input[name*='seq']").first.fill(user["ramq_seq"])
         human_delay(300, 600)
-    except: pass
+    except:
+        pass
 
     try:
-        # Year of Birth
-        page.locator("input[name*='birth'], input[name*='year'], input[name*='annee']").first.fill(user["birth_year"])
+        page.locator("input[name*='birth'], input[name*='year'], input[name*='annee']").first.fill(birth_year)
         human_delay(300, 600)
-    except: pass
+    except:
+        pass
 
     try:
-        # Sex
         if user["sex"].upper() == "M":
             page.locator("input[value='M'], input[value='male'], label:has-text('Masculin')").first.click()
         else:
             page.locator("input[value='F'], input[value='female'], label:has-text('Féminin')").first.click()
         human_delay(500, 800)
     except:
-        # Try clicking the radio/label directly
         try:
             if user["sex"].upper() == "M":
                 page.get_by_text(re.compile(r"Masculin|Homme", re.I)).first.click()
@@ -739,7 +726,6 @@ def fill_pomelo_page1_identification(page, user: dict):
         except:
             pass
 
-    # Click Continue/Next
     try:
         page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next|Submit", re.I)).first.click()
         human_delay(2000, 3000)
@@ -751,32 +737,36 @@ def fill_pomelo_page1_identification(page, user: dict):
 def fill_pomelo_page2_contact(page, user: dict):
     """Page 2: Email, Phone, Language"""
     print("      📧 Page 2 — Contact...")
-    if KillSwitch.is_active(): return False
+    if KillSwitch.is_active():
+        return False
 
     try:
         page.locator("input[type='email'], input[name*='email'], input[name*='courriel']").first.fill(user["email"])
         human_delay(300, 600)
-    except: pass
+    except:
+        pass
 
     try:
         page.locator("input[type='tel'], input[name*='phone'], input[name*='tel']").first.fill(user["phone"])
         human_delay(300, 600)
-    except: pass
+    except:
+        pass
 
     try:
         page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next", re.I)).first.click()
         human_delay(2000, 3000)
-    except: pass
+    except:
+        pass
     return True
 
 
 def fill_pomelo_page3_consent(page):
     """Page 3: Privacy policy consent"""
     print("      ✅ Page 3 — Consent...")
-    if KillSwitch.is_active(): return False
+    if KillSwitch.is_active():
+        return False
 
     try:
-        # Check consent checkbox
         page.locator("input[type='checkbox']").first.check()
         human_delay(500, 1000)
     except:
@@ -789,16 +779,17 @@ def fill_pomelo_page3_consent(page):
     try:
         page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next", re.I)).first.click()
         human_delay(2000, 3000)
-    except: pass
+    except:
+        pass
     return True
 
 
 def fill_pomelo_page4_search(page, postal_code: str):
     """Page 4: Postal Code, Date, Reason"""
     print(f"      🔍 Page 4 — Search (postal: {postal_code})...")
-    if KillSwitch.is_active(): return False
+    if KillSwitch.is_active():
+        return False
 
-    # Target date: today to MAX_DAYS_AHEAD
     target_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
 
     try:
@@ -809,25 +800,29 @@ def fill_pomelo_page4_search(page, postal_code: str):
         postal_input.click()
         postal_input.fill(postal_code)
         human_delay(500, 1000)
-    except: pass
+    except:
+        pass
 
     try:
         date_input = page.locator("input[type='date'], input[name*='date']").first
         date_input.fill(target_date)
         human_delay(300, 500)
-    except: pass
+    except:
+        pass
 
     try:
         page.get_by_role("button", name=re.compile(r"Rechercher|Search|Chercher", re.I)).first.click()
         human_delay(3000, 5000)
-    except: pass
+    except:
+        pass
     return True
 
 
 def verify_pomelo_calendar(page, clinic_name: str) -> tuple:
     """Check Pomelo calendar for available slots. Returns (has_slots, details)."""
     print("      📅 Checking Pomelo calendar...")
-    if KillSwitch.is_active(): return False, "Kill switch"
+    if KillSwitch.is_active():
+        return False, "Kill switch"
     
     human_delay(2000, 3000)
     body_text = page.inner_text("body").lower()
@@ -919,61 +914,72 @@ def scrape_pomelo_clinic(clinic: dict, user: dict) -> dict:
 def fill_bonjoursante_page1(page, user: dict):
     """Page 1: RAMQ + Postal Code + Distance"""
     print("      📝 Bonjour Santé — Page 1 (RAMQ + Postal)...")
-    if KillSwitch.is_active(): return False
+    if KillSwitch.is_active():
+        return False
 
     try:
         page.locator("input[name*='ramq'], input[name*='assurance']").first.fill(user["ramq"])
         human_delay(400, 800)
-    except: pass
+    except:
+        pass
 
     try:
         page.locator("input[name*='postal'], input[name*='code']").first.fill(user["postal_code"])
         human_delay(400, 800)
-    except: pass
+    except:
+        pass
 
     try:
         page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next|Rechercher", re.I)).first.click()
         human_delay(2000, 3000)
-    except: pass
+    except:
+        pass
     return True
 
 
 def fill_bonjoursante_page2(page, user: dict):
     """Page 2: First Name + Last Name + Sequence + Consent"""
     print("      📝 Bonjour Santé — Page 2 (Patient Info)...")
-    if KillSwitch.is_active(): return False
+    if KillSwitch.is_active():
+        return False
 
     try:
         page.locator("input[name*='firstName'], input[name*='prenom']").first.fill(user["first_name"])
         human_delay(300, 600)
-    except: pass
+    except:
+        pass
 
     try:
         page.locator("input[name*='lastName'], input[name*='nom']").first.fill(user["last_name"])
         human_delay(300, 600)
-    except: pass
+    except:
+        pass
 
     try:
         page.locator("input[name*='sequence'], input[name*='seq']").first.fill(user["ramq_seq"])
         human_delay(300, 600)
-    except: pass
+    except:
+        pass
 
     try:
         page.locator("input[type='checkbox']").first.check()
         human_delay(500, 1000)
-    except: pass
+    except:
+        pass
 
     try:
         page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next", re.I)).first.click()
         human_delay(2000, 3000)
-    except: pass
+    except:
+        pass
     return True
 
 
 def verify_bonjoursante_results(page, clinic_name: str) -> tuple:
     """Check Bonjour Santé results page for available appointments."""
     print("      📅 Checking Bonjour Santé results...")
-    if KillSwitch.is_active(): return False, "Kill switch"
+    if KillSwitch.is_active():
+        return False, "Kill switch"
     
     human_delay(2000, 3000)
     body_text = page.inner_text("body").lower()
@@ -1079,14 +1085,12 @@ def search_clinics_in_zone(user: dict, radius_km: int) -> bool:
     """
     postal = user["postal_code"]
     
-    # Step 1: Discover clinics
     clinics = discover_clinics_near(postal, radius_km)
     
     if not clinics:
         print(f"   No clinics found in {radius_km}km radius")
         return False
     
-    # Step 2: Visit each clinic, detect platform
     detected_clinics = []
     for clinic in clinics:
         if KillSwitch.is_active():
@@ -1095,7 +1099,6 @@ def search_clinics_in_zone(user: dict, radius_km: int) -> bool:
         result = visit_clinic_and_detect_platform(clinic)
         detected_clinics.append(result)
     
-    # Step 3: Route to handlers and scrape
     for clinic in detected_clinics:
         if KillSwitch.is_active():
             return True
@@ -1134,7 +1137,6 @@ def search_clinics_in_zone(user: dict, radius_km: int) -> bool:
 def run_full_search(user_postal: str = None):
     """
     Full tiered search: 15km → 30km → cooldown → repeat.
-    Searches ALL cardinal points within each tier.
     Only targets Pomelo and Bonjour Santé (free tier clinics).
     """
     if user_postal is None:
@@ -1196,6 +1198,13 @@ if __name__ == "__main__":
     print("║        MYVITA CLINIC APPOINTMENT SCRAPER            ║")
     print("║        Free Tier — Pomelo + Bonjour Santé           ║")
     print("╚══════════════════════════════════════════════════════╝")
+    print()
+    print("📋 To insert your info, set these environment variables:")
+    print("   USER_FIRST_NAME   USER_LAST_NAME   USER_RAMQ")
+    print("   USER_RAMQ_SEQ     USER_BIRTH_DATE  USER_SEX")
+    print("   USER_EMAIL        USER_PHONE       POSTAL_CODE")
+    print("   USER_LANGUAGE")
+    print()
     
     postal = os.getenv("POSTAL_CODE", "H1Y3H1")
     run_full_search(user_postal=postal)
