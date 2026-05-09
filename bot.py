@@ -186,7 +186,7 @@ def try_select_free_filter(page):
 def verify_real_slots(page):
     """
     ★ DEEP CALENDAR VERIFICATION ★
-    Clicks through: Results → "Prendre RDV" → Calendar → checks for real dates.
+    Clicks through: Results → Booking button → Calendar → checks for real dates.
     Returns (has_real_slots, details_string, booking_url_or_none)
     """
     body_text = page.inner_text("body")
@@ -230,15 +230,23 @@ def verify_real_slots(page):
                     clinic.click(timeout=5000)
                     human_delay(2000, 3000)
 
-                    # Look for "Prendre RDV" button on clinic detail page
+                    # ★ UPDATED: French + English booking button selectors
                     booking_button_selectors = [
+                        # French
                         "text=Prendre RDV",
                         "text=Prendre rendez-vous",
+                        "a:has-text('Prendre RDV')",
+                        "button:has-text('Prendre RDV')",
+                        # English
+                        "text=Book appt.",
                         "text=Book appointment",
-                        "a[href*='booking']",
-                        "a[href*='appointment']",
-                        "button[class*='book']",
+                        "a:has-text('Book appt')",
+                        "button:has-text('Book appt')",
+                        # Generic
                         "[class*='booking']",
+                        "a[href*='appointment']",
+                        "a[href*='booking']",
+                        "a[href*='rdv']",
                     ]
 
                     booking_btn = None
@@ -252,7 +260,7 @@ def verify_real_slots(page):
                             continue
 
                     if booking_btn:
-                        print("      → Clicking 'Prendre RDV'...")
+                        print("      → Clicking booking button...")
                         booking_btn.click(timeout=5000)
                         human_delay(3000, 4000)
 
@@ -307,7 +315,6 @@ def verify_real_slots(page):
                                 return True, f"Calendar has open dates (Complet count: {complet_count}, Clickable: {clickable_dates})", calendar_url
                             else:
                                 print(f"      ❌ Calendar all full — no real slots")
-                                # Go back and try next clinic
                                 page.go_back()
                                 human_delay(1000, 2000)
                                 continue
@@ -317,7 +324,8 @@ def verify_real_slots(page):
                             human_delay(500, 1000)
                             continue
                     else:
-                        # No booking button found
+                        # No booking button found — this clinic might not have individual booking
+                        print(f"      ℹ️ No booking button — skipping clinic")
                         page.go_back()
                         human_delay(500, 1000)
                         continue
