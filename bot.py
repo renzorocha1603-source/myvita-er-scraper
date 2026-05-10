@@ -61,29 +61,29 @@ def get_user_token():
 
 # === 4. NOTIFICATION & FIRESTORE ===
 
-def send_notification(postal_code: str, clinic_names: list, results_url: str):
+def send_notification(postal_code: str, booking_url: str = None, clinic_names: list = None):
     token = get_user_token()
     if not token:
         print("⚠️ No FCM token — skipping notification")
         return
     try:
-        # Build body with clinic names
-        if clinic_names:
+        if booking_url and 'clients3.clicsante.ca' in booking_url:
+            body = "Touchez pour ouvrir la page de réservation!"
+            url = booking_url
+        elif clinic_names:
             names_text = ", ".join(clinic_names[:3])
-            body = f"{names_text} — Créneaux disponibles! Ouvrez ClicSanté → cherchez {postal_code} → Sans frais"
+            body = f"{names_text} — Créneaux disponibles! Ouvrez ClicSanté → {postal_code} → Sans frais"
+            url = "https://portal3.clicsante.ca/services/blood-test"
         else:
-            body = f"Créneaux trouvés près de {postal_code}. Ouvrez ClicSanté → Sans frais → cherchez {postal_code}"
+            body = f"Créneaux disponibles près de {postal_code}. Ouvrez ClicSanté → Sans frais → {postal_code}"
+            url = "https://portal3.clicsante.ca/services/blood-test"
         
-        # Truncate body to FCM limit
         if len(body) > 250:
             body = body[:247] + "..."
         
         messaging.send(messaging.Message(
-            notification=messaging.Notification(
-                title="🎉 Rendez-vous disponible!",
-                body=body
-            ),
-            data={"url": "https://portal3.clicsante.ca/services/blood-test", "postal_code": postal_code},
+            notification=messaging.Notification(title="🎉 Rendez-vous disponible!", body=body),
+            data={"url": url, "postal_code": postal_code},
             token=token,
         ))
         print(f"✅ FCM Sent: {body[:100]}")
@@ -101,53 +101,36 @@ def save_availability(postal_code, has_slots, booking_url, details, clinics=None
             "booking_url": booking_url, "details": details,
             "clinics": clinics or [], "last_checked": now,
         })
-        db.collection("availability").document(zone).collection("history").add({
-            "slots_found": has_slots, "clinics_found": len(clinics or []), "checked_at": now
-        })
-        print(f"🔥 Firestore: {zone}")
     except Exception as e:
         print(f"❌ Firestore Error: {e}")
 
 # === 5. CLINIC NAME EXTRACTOR ===
 
 def extract_clinic_names(page) -> list:
-    """
-    Extract clinic names from the results page.
-    ClicSanté shows them as text — we scan the page body.
-    """
     clinics = []
     try:
         body = page.inner_text("body")
         lines = body.split('\n')
-        
-        clinic_keywords = [
-            'hospital', 'hôpital', 'clinique', 'clinic', 'clsc', 'gmf',
-            'santé', 'sante', 'medical', 'médical', 'cegep', 'cégep',
-            'point de service', 'notre-dame', 'rosemont', 'saint-laurent',
-            'prélèvements', 'prelevements'
-        ]
-        
+        clinic_keywords = ['hospital', 'hôpital', 'clinique', 'clinic', 'clsc', 'gmf',
+                          'santé', 'sante', 'medical', 'médical', 'cegep', 'cégep',
+                          'point de service', 'notre-dame', 'rosemont', 'saint-laurent',
+                          'prélèvements', 'prelevements', 'maisonneuve', 'cabrini', 'santa']
         for i, line in enumerate(lines):
             line = line.strip()
-            # Skip short lines, distance indicators, UI text
             if len(line) < 8 or '~' in line or 'km' in line.lower():
                 continue
-            if line.lower().startswith(('skip', 'all', 'cancel', 'need', 'login', 'fr', 'specimens', 'fees', 'establishment', 'availabilities', 'results', 'service', 'add to')):
+            if line.lower().startswith(('skip', 'all', 'cancel', 'need', 'login', 'fr', 
+                                        'specimens', 'fees', 'establishment', 'availabilities', 
+                                        'results', 'service', 'add to')):
                 continue
-            
-            # Check if this line looks like a clinic name
+            # Skip lines that look like addresses (start with number, contain "rue", "boul", "avenue", "Montréal", "Québec")
+            if re.match(r'^\d+', line) or any(w in line.lower() for w in ['rue ', 'boul', 'avenue', 'montréal', 'québec']):
+                continue
             if any(kw in line.lower() for kw in clinic_keywords):
-                # Get the next line which might be the address
                 address = lines[i+1].strip() if i+1 < len(lines) else ""
-                if address and ('~' in address or 'km' in address.lower() or len(address) > 30):
+                if address and ('~' in address or 'km' in address.lower()):
                     address = ""
-                
-                clinics.append({
-                    'name': line[:100],
-                    'address': address[:100] if address else ""
-                })
-        
-        # Deduplicate
+                clinics.append({'name': line[:100], 'address': address[:100] if address else ""})
         seen = set()
         unique = []
         for c in clinics:
@@ -155,11 +138,8 @@ def extract_clinic_names(page) -> list:
             if key not in seen:
                 seen.add(key)
                 unique.append(c)
-        
         return unique
-        
-    except Exception as e:
-        print(f"   ⚠️ Name extraction error: {e}")
+    except:
         return []
 
 # === 6. MAIN FUNCTION ===
@@ -170,6 +150,8 @@ def check_availability(postal_code_override=None):
     print(f"\n{'='*60}")
     print(f"🚀 ClicSanté: {postal_code} @ {datetime.now().strftime('%H:%M:%S')}")
     print(f"{'='*60}")
+
+    captured_responses = []
 
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -183,14 +165,29 @@ def check_availability(postal_code_override=None):
         context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         page = context.new_page()
 
+        # ★ Intercept ALL API responses
+        def on_response(response):
+            try:
+                url = response.url
+                if ('clicsante' in url or 'api' in url) and response.status == 200:
+                    ct = response.headers.get('content-type', '')
+                    if 'json' in ct:
+                        body = response.json()
+                        captured_responses.append({'url': url, 'data': body})
+                        if any(kw in url for kw in ['availability', 'etablissement', 'establishment', 'serviceTemplate']):
+                            print(f"📡 API: {url[:120]}")
+            except:
+                pass
+
+        page.on("response", on_response)
+
         try:
             # ── LOAD PAGE ──
             print("📄 Loading ClicSanté...")
             page.goto("https://portal3.clicsante.ca/services/blood-test", 
                      wait_until="networkidle", timeout=45000)
-            human_delay(1.5, 3)
+            human_delay(2, 3)
 
-            # Dismiss popups
             try:
                 page.keyboard.press("Escape")
                 time.sleep(0.3)
@@ -209,15 +206,14 @@ def check_availability(postal_code_override=None):
             human_delay(0.5, 1)
 
             # ── ENTER POSTAL CODE ──
-            print(f"⌨️  Entering postal code: {postal_code}")
+            print(f"⌨️  Entering: {postal_code}")
             try:
-                input_field = page.get_by_placeholder("ex. A1A 1A1")
-                input_field.fill(postal_code)
-                print("   ✅ Entered via placeholder")
+                page.get_by_placeholder("ex. A1A 1A1").fill(postal_code)
+                print("   ✅ Entered")
             except:
                 try:
                     page.locator("input[type='text']").first.fill(postal_code)
-                    print("   ✅ Entered via text input")
+                    print("   ✅ Entered (fallback)")
                 except:
                     pass
             human_delay(0.5, 1)
@@ -232,53 +228,155 @@ def check_availability(postal_code_override=None):
                 except:
                     continue
 
-            # ── WAIT FOR RESULTS ──
-            print("⏳ Waiting for results...")
-            human_delay(7, 12)
+            # ── WAIT FOR RESULTS + API CALLS ──
+            print("⏳ Waiting for results and API responses...")
+            human_delay(8, 14)
 
-            # ── EXTRACT CLINIC NAMES ──
-            print("\n📋 Extracting clinic names...")
-            clinics = extract_clinic_names(page)
-            
-            for i, c in enumerate(clinics[:5]):
-                addr = f" — {c['address']}" if c['address'] else ""
-                print(f"   {i+1}. {c['name']}{addr}")
-            
-            print(f"   ✅ {len(clinics)} clinics found")
-
-            # ── CHECK BODY FOR AVAILABILITY ──
-            body = page.inner_text("body").lower()
-            no_slots = ["aucune disponibilité", "no availability", "aucun rendez-vous", "désolé", "sorry", "aucun résultat"]
-            has_positive = any(x in body for x in ["km", "clinique", "hôpital", "clsc", "gmf", "disponible", "available", "à venir"])
-            has_negative = any(x in body for x in no_slots)
-
-            print(f"   Positive: {has_positive}, Negative: {has_negative}")
-
-            # ── TAKE SCREENSHOT ──
-            results_url = page.url
+            # ── TAKE SCREENSHOT OF RESULTS PAGE ──
             screenshot_path = f"debug_results_{postal_code}.png"
             try:
                 page.screenshot(path=screenshot_path)
-                print(f"📸 Screenshot: {screenshot_path}")
+                print(f"📸 Screenshot saved: {screenshot_path}")
             except:
                 pass
 
-            # ── SEND NOTIFICATION ──
-            if clinics or (has_positive and not has_negative):
-                clinic_names = [c['name'] for c in clinics]
-                print(f"🎉 Sending notification with {len(clinic_names)} clinic names")
-                send_notification(postal_code, clinic_names, results_url)
-                save_availability(postal_code, True, results_url, 
-                                f"{len(clinics)} clinics found", clinics)
+            # ★ CLAUDE: Click into clinic to trigger more API calls
+            print("🏥 Clicking into first clinic to trigger API calls...")
+            click_attempts = [
+                "article", "[class*='establishment']", "[class*='clinic-card']",
+                "[class*='result-item']", ".mat-card", "text=~"
+            ]
+            for selector in click_attempts:
+                try:
+                    el = page.locator(selector).first
+                    if el.count() > 0 and el.is_visible():
+                        el.click(timeout=3000)
+                        print(f"   ✅ Clicked via: {selector}")
+                        human_delay(3, 5)
+                        
+                        # Take screenshot after clicking clinic
+                        try:
+                            page.screenshot(path=f"debug_clinic_{postal_code}.png")
+                            print(f"📸 Clinic screenshot saved")
+                        except:
+                            pass
+                        break
+                except:
+                    continue
+
+            # Try "Prendre RDV" button
+            rdv_clicked = False
+            for selector in [
+                "button:has-text('Prendre RDV')", "button:has-text('Prendre rendez-vous')",
+                "a:has-text('Prendre RDV')", "a:has-text('Prendre rendez-vous')",
+                "button:has-text('Book')", "button:has-text('Réserver')"
+            ]:
+                try:
+                    el = page.locator(selector).first
+                    if el.count() > 0 and el.is_visible():
+                        el.click(timeout=5000)
+                        print(f"   ✅ Clicked RDV: {selector}")
+                        human_delay(3, 5)
+                        rdv_clicked = True
+                        
+                        # ★ CAPTURE URL AFTER CLICKING "PRENDRE RDV"
+                        deep_link_url = page.url
+                        print(f"   🔗 URL after RDV click: {deep_link_url[:120]}")
+                        
+                        # Take screenshot of booking page
+                        try:
+                            page.screenshot(path=f"debug_booking_{postal_code}.png")
+                            print(f"📸 Booking page screenshot saved")
+                        except:
+                            pass
+                        break
+                except:
+                    continue
+
+            print(f"   📡 Captured {len(captured_responses)} API responses")
+
+            # ★ CLAUDE: Parse API responses for establishment IDs
+            print("\n🔬 Parsing API responses for clinic data...")
+            clinic_deep_links = []
+            seen_ids = set()
+
+            for resp in captured_responses:
+                data = resp.get('data', {})
+                
+                # Print raw data structure for debugging
+                if 'availability' in resp.get('url', ''):
+                    print(f"   📦 Availability API keys: {list(data.keys()) if isinstance(data, dict) else 'LIST'}")
+                
+                items = data if isinstance(data, list) else data.get('establishments', data.get('data', data.get('results', [])))
+                
+                if isinstance(items, list):
+                    for item in items:
+                        if not isinstance(item, dict):
+                            continue
+                        est_id = str(item.get('id') or item.get('establishmentId') or item.get('etablissementId', ''))
+                        name = item.get('name') or item.get('nom') or item.get('establishmentName', '')
+                        
+                        if est_id and est_id not in seen_ids and len(est_id) >= 3:
+                            seen_ids.add(est_id)
+                            portal_id = str(item.get('portalId', '65252'))
+                            deep_link = f"https://clients3.clicsante.ca/{portal_id}/take-appt"
+                            params = [f"portalEst={est_id}", f"portalPostalCode={postal_code}", "lang=fr"]
+                            deep_link += "?" + "&".join(params)
+                            
+                            clinic_deep_links.append({
+                                'id': est_id, 'name': str(name)[:80], 'url': deep_link
+                            })
+                            print(f"   🏥 {name[:60]} → {deep_link[:100]}")
+
+            # ★ Extract clinic names from page
+            print("\n📋 Extracting clinic names from page...")
+            page_clinics = extract_clinic_names(page)
+            for i, c in enumerate(page_clinics[:5]):
+                print(f"   {i+1}. {c['name']}")
+
+            # ── CHECK BODY ──
+            body = page.inner_text("body").lower()
+            no_slots = ["aucune disponibilité", "no availability", "aucun rendez-vous", "désolé", "sorry"]
+            has_positive = any(x in body for x in ["km", "clinique", "hôpital", "disponible", "available", "à venir"])
+            has_negative = any(x in body for x in no_slots)
+
+            print(f"\n📊 Results:")
+            print(f"   API deep links: {len(clinic_deep_links)}")
+            print(f"   Page clinics: {len(page_clinics)}")
+            print(f"   RDV clicked: {rdv_clicked}")
+            print(f"   Positive: {has_positive}, Negative: {has_negative}")
+
+            # ★ If we clicked "Prendre RDV" successfully, use the browser URL
+            if rdv_clicked and deep_link_url and 'clicsante' in deep_link_url:
+                print(f"🎉 Using URL from RDV click: {deep_link_url[:120]}")
+                send_notification(postal_code, booking_url=deep_link_url, clinic_names=[c['name'] for c in page_clinics[:3]])
+                save_availability(postal_code, True, deep_link_url, "RDV click URL", page_clinics)
                 return True
+
+            # If API gave us deep links, use those
+            elif clinic_deep_links:
+                best = clinic_deep_links[0]
+                print(f"🎉 Sending API deep link: {best['url'][:100]}")
+                send_notification(postal_code, booking_url=best['url'], clinic_names=[c['name'] for c in clinic_deep_links[:3]])
+                save_availability(postal_code, True, best['url'], f"{len(clinic_deep_links)} deep links", clinic_deep_links)
+                return True
+
+            # Fallback: clinic names in notification
+            elif page_clinics and has_positive and not has_negative:
+                names = [c['name'] for c in page_clinics[:3]]
+                print(f"🎉 Sending clinic names: {names}")
+                send_notification(postal_code, clinic_names=names)
+                save_availability(postal_code, True, "", f"{len(page_clinics)} clinics", page_clinics)
+                return True
+
             elif has_negative:
                 print("❌ No slots")
-                save_availability(postal_code, False, results_url, "No slots", [])
+                save_availability(postal_code, False, "", "No slots", [])
                 return False
             else:
-                print("⚠️ Uncertain — sending anyway")
-                send_notification(postal_code, [], results_url)
-                save_availability(postal_code, True, results_url, "Results page", [])
+                print("⚠️ Uncertain")
+                send_notification(postal_code, clinic_names=[])
+                save_availability(postal_code, True, "", "Uncertain", [])
                 return True
 
         except Exception as e:
@@ -290,7 +388,7 @@ def check_availability(postal_code_override=None):
             browser.close()
 
 
-# === 7. MAIN ENTRY POINT ===
+# === 7. MAIN ===
 
 if __name__ == "__main__":
     for code in ["H1Y3H1"]:
