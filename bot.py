@@ -125,7 +125,7 @@ def send_notification(postal_code: str, booking_url: str, slots_found: bool):
             token=token,
         )
         messaging.send(message)
-        print("✅ FCM Notification Sent")
+        print(f"✅ FCM Notification Sent → {booking_url[:80]}...")
     except Exception as e:
         print(f"❌ FCM Error: {e}")
 
@@ -183,11 +183,95 @@ def try_select_free_filter(page):
     print("❌ CRITICAL: Could not select 'No fees' — search will fail")
     return False
 
+def check_calendar_for_slots(page):
+    """
+    Check the current calendar page for available slots.
+    Handles "Complet" vs "À venir" and navigates months.
+    Returns (has_slots, details)
+    """
+    calendar_text = page.inner_text("body")
+    calendar_lower = calendar_text.lower()
+
+    # Check for "À venir" (coming soon) — these are REAL future slots
+    if "à venir" in calendar_lower or "coming soon" in calendar_lower:
+        # Count how many "À venir" vs "Complet"
+        a_venir_count = calendar_lower.count("à venir")
+        complet_count = calendar_lower.count("complet")
+        print(f"      📅 À venir: {a_venir_count}, Complet: {complet_count}")
+        return True, f"À venir slots found ({a_venir_count} available)"
+
+    # Check for other positive indicators
+    positive_indicators = [
+        "disponible", "available", "ouvert", "open",
+        "sélectionner", "select", "choisir",
+    ]
+    has_positive = any(ind in calendar_lower for ind in positive_indicators)
+    complet_count = calendar_lower.count("complet")
+
+    # Try to find clickable date elements
+    date_selectors = [
+        "[class*='available']",
+        "[class*='disponible']",
+        "[class*='open']",
+        "button[class*='day']:not([disabled])",
+        "td:not([class*='complet']):not([class*='full'])",
+    ]
+
+    clickable_dates = 0
+    for date_sel in date_selectors:
+        try:
+            dates = page.locator(date_sel)
+            if dates.count() > 0:
+                clickable_dates = dates.count()
+                break
+        except:
+            continue
+
+    print(f"      📅 Complet: {complet_count}, Positive: {has_positive}, Clickable: {clickable_dates}")
+
+    if clickable_dates > 0 or (has_positive and complet_count < 20):
+        return True, f"Open dates (clickable: {clickable_dates})"
+
+    # ★ FIX: If everything is "Complet", try next month
+    if complet_count > 20 and clickable_dates == 0:
+        print("      → Current month full, checking next month...")
+        next_month_selectors = [
+            "[aria-label*='Next']",
+            "[aria-label*='Suivant']",
+            "[class*='next']",
+            "button:has-text('›')",
+            "button:has-text('»')",
+            "[class*='pagination'] button:last-child",
+        ]
+        for nm_sel in next_month_selectors:
+            try:
+                next_month = page.locator(nm_sel).first
+                if next_month.count() > 0 and next_month.is_visible():
+                    next_month.click()
+                    human_delay(1000, 2000)
+                    # Re-check after navigating
+                    new_text = page.inner_text("body").lower()
+                    if "à venir" in new_text or "coming soon" in new_text:
+                        a_venir_count = new_text.count("à venir")
+                        print(f"      🎉 Found À venir in next month! ({a_venir_count})")
+                        return True, f"À venir next month ({a_venir_count} available)"
+                    # Check for other positives in new month
+                    if any(ind in new_text for ind in positive_indicators):
+                        print(f"      🎉 Found available slots in next month!")
+                        return True, "Available in next month"
+                    print(f"      Next month also full")
+                    break
+            except:
+                continue
+
+    return False, "No available slots"
+
+
 def verify_real_slots(page):
     """
     ★ DEEP CALENDAR VERIFICATION ★
-    Clicks through: Results → Booking button → Calendar → checks for real dates.
-    Returns (has_real_slots, details_string, booking_url_or_none)
+    Clicks through: Results → clicks clinic → checks calendar for real dates.
+    Returns (has_real_slots, details_string, booking_url)
     """
     body_text = page.inner_text("body")
     text_lower = body_text.lower()
@@ -202,13 +286,67 @@ def verify_real_slots(page):
         if phrase in text_lower:
             return False, f"No slots ({phrase})", None
 
-    # Find clinic cards on results page
+    # ★ FIX: If results page shows availabilities, CLICK the first clinic
+    # to get its calendar URL for the notification
+    if "availabilities" in text_lower or "disponibilités" in text_lower:
+        print("   ⚡ Availabilities detected — clicking first clinic for deep link...")
+        clinic_selectors = [
+            ".establishment-card",
+            "[class*='establishment']",
+            "[class*='result-item']",
+            "a[href*='establishment']",
+            ".clinic-item",
+            "article",
+        ]
+        for selector in clinic_selectors:
+            try:
+                first_clinic = page.locator(selector).first
+                if first_clinic.count() > 0 and first_clinic.is_visible():
+                    clinic_name = first_clinic.inner_text()[:50].replace('\n', ' ')
+                    print(f"   🏥 Clicking: {clinic_name}...")
+                    first_clinic.click(timeout=5000)
+                    human_delay(2000, 3000)
+                    # Now we're on the clinic page — try to get to calendar
+                    booking_url = page.url
+                    
+                    # Try clicking booking button if present
+                    booking_selectors = [
+                        "text=Prendre RDV",
+                        "text=Prendre rendez-vous",
+                        "a:has-text('Prendre RDV')",
+                        "button:has-text('Prendre RDV')",
+                        "text=Book appt.",
+                        "text=Book appointment",
+                        "[class*='booking']",
+                        "a[href*='appointment']",
+                        "a[href*='rdv']",
+                    ]
+                    for btn_sel in booking_selectors:
+                        try:
+                            btn = page.locator(btn_sel).first
+                            if btn.count() > 0 and btn.is_visible():
+                                btn.click(timeout=5000)
+                                human_delay(3000, 4000)
+                                booking_url = page.url
+                                break
+                        except:
+                            continue
+                    
+                    return True, "Availabilities detected — clinic page", booking_url
+            except:
+                continue
+        
+        # Fallback if we couldn't click a clinic
+        return True, "Availabilities shown on results", page.url
+
+    # Deep check — click through clinic cards
     clinic_selectors = [
         ".establishment-card",
         "[class*='establishment']",
         "[class*='result-item']",
         "a[href*='establishment']",
         ".clinic-item",
+        "article",
     ]
 
     for selector in clinic_selectors:
@@ -218,31 +356,26 @@ def verify_real_slots(page):
             if count == 0:
                 continue
 
-            # Try each clinic
             for i in range(min(count, 5)):
                 try:
                     clinic = clinics.nth(i)
                     if not clinic.is_visible():
                         continue
 
-                    clinic_name = clinic.inner_text()[:50]
+                    clinic_name = clinic.inner_text()[:50].replace('\n', ' ')
                     print(f"   🏥 Checking clinic #{i+1}: {clinic_name}...")
                     clinic.click(timeout=5000)
                     human_delay(2000, 3000)
 
-                    # ★ UPDATED: French + English booking button selectors
                     booking_button_selectors = [
-                        # French
                         "text=Prendre RDV",
                         "text=Prendre rendez-vous",
                         "a:has-text('Prendre RDV')",
                         "button:has-text('Prendre RDV')",
-                        # English
                         "text=Book appt.",
                         "text=Book appointment",
                         "a:has-text('Book appt')",
                         "button:has-text('Book appt')",
-                        # Generic
                         "[class*='booking']",
                         "a[href*='appointment']",
                         "a[href*='booking']",
@@ -264,74 +397,42 @@ def verify_real_slots(page):
                         booking_btn.click(timeout=5000)
                         human_delay(3000, 4000)
 
-                        # ★ NOW WE'RE ON THE CALENDAR PAGE ★
                         calendar_url = page.url
                         calendar_text = page.inner_text("body")
                         calendar_lower = calendar_text.lower()
 
-                        # Check if we landed on a real calendar
-                        cal_indicators = ["mai", "juin", "juillet", "janvier", "février", "mars", "avril",
-                                         "may", "june", "july", "january", "february", "march", "april",
-                                         "lun", "mar", "mer", "jeu", "ven", "sam", "dim",
-                                         "mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+                        # Check if we landed on a calendar
+                        cal_indicators = [
+                            "mai", "juin", "juillet", "janvier", "février", "mars", "avril",
+                            "may", "june", "july", "january", "february", "march", "april",
+                            "lun", "mar", "mer", "jeu", "ven", "sam", "dim",
+                            "mon", "tue", "wed", "thu", "fri", "sat", "sun",
+                        ]
 
-                        is_calendar = any(ind in calendar_lower for ind in cal_indicators)
+                        if any(ind in calendar_lower for ind in cal_indicators):
+                            has_slots, details = check_calendar_for_slots(page)
 
-                        if is_calendar:
-                            # Count "Complet" occurrences
-                            complet_count = calendar_lower.count("complet")
-                            
-                            # Look for positive indicators
-                            positive_indicators = [
-                                "disponible", "available", "ouvert", "open",
-                                "à venir", "coming soon",
-                            ]
-                            has_positive = any(ind in calendar_lower for ind in positive_indicators)
-
-                            # Try to find clickable date elements (not "Complet")
-                            date_selectors = [
-                                "[class*='available']",
-                                "[class*='disponible']",
-                                "[class*='open']",
-                                "button[class*='day']:not([disabled])",
-                                "td:not([class*='complet']):not([class*='full'])",
-                            ]
-
-                            clickable_dates = 0
-                            for date_sel in date_selectors:
-                                try:
-                                    dates = page.locator(date_sel)
-                                    if dates.count() > 0:
-                                        clickable_dates = dates.count()
-                                        break
-                                except:
-                                    continue
-
-                            print(f"      📅 Calendar: Complet count={complet_count}, Positive indicators={has_positive}, Clickable dates={clickable_dates}")
-
-                            # REAL slot = not everything is "Complet" AND we found clickable dates OR positive indicators
-                            if clickable_dates > 0 or (has_positive and complet_count < 20):
-                                print(f"      🎉 REAL SLOTS FOUND!")
-                                return True, f"Calendar has open dates (Complet count: {complet_count}, Clickable: {clickable_dates})", calendar_url
+                            if has_slots:
+                                print(f"      🎉 REAL SLOTS FOUND! ({details})")
+                                return True, f"Calendar: {details}", calendar_url
                             else:
-                                print(f"      ❌ Calendar all full — no real slots")
+                                print(f"      ❌ No slots ({details})")
                                 page.go_back()
                                 human_delay(1000, 2000)
                                 continue
                         else:
-                            print(f"      ⚠️ Did not land on calendar — skipping")
+                            print(f"      ⚠️ Not a calendar — skipping")
                             page.go_back()
                             human_delay(500, 1000)
                             continue
                     else:
-                        # No booking button found — this clinic might not have individual booking
-                        print(f"      ℹ️ No booking button — skipping clinic")
+                        print(f"      ℹ️ No booking button — skipping")
                         page.go_back()
                         human_delay(500, 1000)
                         continue
 
                 except Exception as e:
-                    print(f"      ⚠️ Error checking clinic: {e}")
+                    print(f"      ⚠️ Error: {e}")
                     try:
                         page.go_back()
                         human_delay(500, 1000)
@@ -340,14 +441,11 @@ def verify_real_slots(page):
                     continue
 
         except Exception as e:
-            print(f"   ⚠️ Clinic selector error: {e}")
+            print(f"   ⚠️ Selector error: {e}")
             continue
 
-    # Fallback: old logic for backwards compatibility
-    if "availabilities" in text_lower or "disponibilités" in text_lower:
-        return True, "Availabilities shown (fallback)", page.url
-
     return False, "No real slots found", None
+
 
 def check_availability(postal_code_override=None):
     postal_code = postal_code_override if postal_code_override else get_postal_code()
