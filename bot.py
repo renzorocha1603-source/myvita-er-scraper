@@ -1,15 +1,17 @@
-from playwright.sync_api import sync_playwright, TimeoutError
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 import time
 import random
 import os
 import json
 import re
-import requests
 from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, messaging, firestore
 
-# === 1. CONFIGURATION & MAPPING ===
+# ══════════════════════════════════════════════════════════════
+# 1. CONFIGURATION
+# ══════════════════════════════════════════════════════════════
+
 ZONES = {
     "H1Y": "montreal_east", "H1A": "montreal_east", "H1B": "montreal_east",
     "H1C": "montreal_east", "H1H": "montreal_north", "H1J": "montreal_north",
@@ -20,7 +22,10 @@ ZONES = {
     "J1H": "sherbrooke", "J1K": "sherbrooke",
 }
 
-# === 2. FIREBASE SETUP (via GitHub Secret) ===
+# ══════════════════════════════════════════════════════════════
+# 2. FIREBASE SETUP
+# ══════════════════════════════════════════════════════════════
+
 db = None
 try:
     creds_json = os.getenv("FIREBASE_CREDENTIALS")
@@ -31,21 +36,23 @@ try:
             firebase_admin.initialize_app(cred, {'projectId': 'myvita-app-c5ecd'})
         db = firestore.client()
         print("✅ Firebase & Firestore initialized (via GitHub Secret)")
+    elif os.path.exists("firebase-credentials.json"):
+        cred = credentials.Certificate("firebase-credentials.json")
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred, {'projectId': 'myvita-app-c5ecd'})
+        db = firestore.client()
+        print("✅ Firebase & Firestore initialized (via local file)")
     else:
-        if os.path.exists("firebase-credentials.json"):
-            cred = credentials.Certificate("firebase-credentials.json")
-            if not firebase_admin._apps:
-                firebase_admin.initialize_app(cred, {'projectId': 'myvita-app-c5ecd'})
-            db = firestore.client()
-            print("✅ Firebase & Firestore initialized (via local file)")
-        else:
-            print("⚠️ No Firebase credentials found — running without Firestore")
+        print("⚠️ No Firebase credentials found — running without Firestore")
 except Exception as e:
     print(f"⚠️ Firebase Init Error: {e}")
 
-# === 3. UTILITY FUNCTIONS ===
+# ══════════════════════════════════════════════════════════════
+# 3. UTILITY FUNCTIONS
+# ══════════════════════════════════════════════════════════════
 
-def human_delay(min_ms=500, max_ms=1500):
+def human_delay(min_ms=800, max_ms=2500):
+    """Random human-like delay"""
     time.sleep(random.uniform(min_ms, max_ms) / 1000)
 
 def get_zone(postal_code: str) -> str:
@@ -60,12 +67,34 @@ def get_service_url():
     service = os.getenv("SERVICE", "blood-test")
     return f"https://portal3.clicsante.ca/services/{service}"
 
+def debug_screenshot(page, name="debug"):
+    """Save screenshot for debugging"""
+    try:
+        filename = f"debug_{name}_{datetime.now().strftime('%H%M%S')}.png"
+        page.screenshot(path=filename)
+        print(f"📸 Screenshot saved: {filename}")
+    except:
+        pass
+
+def debug_page_text(page, step_name):
+    """Print page text preview for debugging"""
+    try:
+        body_text = page.inner_text("body")
+        print(f"\n📄 PAGE TEXT [{step_name}]:")
+        print(body_text[:500])
+        print("...\n")
+    except:
+        pass
+
+# ══════════════════════════════════════════════════════════════
+# 4. NOTIFICATION & DATA SAVING
+# ══════════════════════════════════════════════════════════════
+
 def get_user_token():
     """Get FCM token from Firestore (most recent user)"""
     if db is None:
         print("❌ Firestore not connected")
         return None
-    
     try:
         users_ref = db.collection('users').order_by('fcmTokenUpdated', direction='DESCENDING').limit(1)
         docs = users_ref.stream()
@@ -81,11 +110,33 @@ def get_user_token():
         print(f"❌ Error reading FCM token: {e}")
         return None
 
-# === 4. NOTIFICATION & DATA SAVING ===
+def send_notification(postal_code: str, booking_url: str):
+    """Send FCM push notification with deep link"""
+    token = get_user_token()
+    if not token:
+        print("⚠️ No FCM token — notification skipped")
+        return
+    try:
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title="🎉 Rendez-vous disponible!",
+                body=f"Créneau trouvé près de {postal_code}. Touchez pour réserver."
+            ),
+            data={
+                "url": booking_url,
+                "postal": postal_code,
+            },
+            token=token,
+        )
+        messaging.send(message)
+        print(f"✅ FCM Notification Sent → {booking_url[:80]}...")
+    except Exception as e:
+        print(f"❌ FCM Error: {e}")
 
 def save_availability(postal_code: str, has_slots: bool, booking_url: str, slot_details: str):
-    if db is None: return
-
+    """Save availability check result to Firestore"""
+    if db is None:
+        return
     zone = get_zone(postal_code)
     now = datetime.now().isoformat()
     data = {
@@ -97,7 +148,6 @@ def save_availability(postal_code: str, has_slots: bool, booking_url: str, slot_
         "slot_details": slot_details,
         "last_checked": now,
     }
-
     try:
         db.collection("availability").document(zone).set(data)
         db.collection("availability").document(zone).collection("history").add({
@@ -108,91 +158,84 @@ def save_availability(postal_code: str, has_slots: bool, booking_url: str, slot_
     except Exception as e:
         print(f"❌ Firestore Error: {e}")
 
-def send_notification(postal_code: str, booking_url: str, slots_found: bool):
-    token = get_user_token()
-    if not token or not slots_found:
-        if not token:
-            print("⚠️ No FCM token — notification skipped")
-        return
-
-    try:
-        message = messaging.Message(
-            notification=messaging.Notification(
-                title="🎉 Free Appointment Found!",
-                body=f"Free slots detected near {postal_code}. Tap to book."
-            ),
-            data={"url": booking_url},
-            token=token,
-        )
-        messaging.send(message)
-        print("✅ FCM Notification Sent")
-    except Exception as e:
-        print(f"❌ FCM Error: {e}")
-
-# === 5. SCRAPING ENGINE ===
+# ══════════════════════════════════════════════════════════════
+# 5. BROWSER SETUP
+# ══════════════════════════════════════════════════════════════
 
 def launch_stealth_browser(p, headless=True):
+    """Launch Playwright browser with stealth settings"""
     browser = p.chromium.launch(
-        headless=headless, 
-        args=["--no-sandbox", "--disable-blink-features=AutomationControlled"]
+        headless=headless,
+        args=[
+            "--no-sandbox",
+            "--disable-blink-features=AutomationControlled",
+            "--disable-dev-shm-usage",
+        ]
     )
     context = browser.new_context(
-        viewport={"width": 1280, "height": 800},
-        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        viewport={"width": 1280, "height": 900},
+        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                   "AppleWebKit/537.36 (KHTML, like Gecko) "
+                   "Chrome/124.0.0.0 Safari/537.36"
     )
-    context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+    context.add_init_script(
+        "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+    )
+    # Block unnecessary resources for speed
+    context.route("**/*.{png,jpg,jpeg,gif,svg,css,font,woff,woff2}", 
+                  lambda route: route.abort())
     return browser, context
 
-def debug_page_state(page, step_name):
-    """Save screenshot and print visible text for debugging"""
-    try:
-        page.screenshot(path=f"debug_{step_name}.png")
-        body_text = page.inner_text("body")
-        print(f"\n📸 DEBUG [{step_name}] - Page text preview:")
-        print(body_text[:400])
-        print("...")
-    except:
-        pass
+# ══════════════════════════════════════════════════════════════
+# 6. NO FEES FILTER — Multiple fallback strategies
+# ══════════════════════════════════════════════════════════════
 
-def try_select_free_filter(page):
+def try_select_no_fees(page):
     """
     Select 'No fees' / 'Sans frais' option.
-    REQUIRED — Clic Santé blocks search until a filter is selected.
+    Uses multiple strategies — checks, clicks, labels, radio buttons.
     """
     strategies = [
-        lambda: page.get_by_text("No fees", exact=True).first,
-        lambda: page.get_by_text("Sans frais", exact=True).first,
-        lambda: page.locator("label").filter(has_text=re.compile(r"^No fees$")).first,
-        lambda: page.locator("label").filter(has_text=re.compile(r"^Sans frais$")).first,
-        lambda: page.locator("input[type='radio']").first,
-        lambda: page.locator("[role='radio']").first,
+        # Strategy 1: Checkbox by label
+        lambda: page.get_by_label("No fees").check(timeout=3000),
+        lambda: page.get_by_label("Sans frais").check(timeout=3000),
+        # Strategy 2: Click exact text
+        lambda: page.get_by_text("No fees", exact=True).first.click(timeout=3000),
+        lambda: page.get_by_text("Sans frais", exact=True).first.click(timeout=3000),
+        # Strategy 3: Label filter
+        lambda: page.locator("label").filter(has_text=re.compile(r"^No fees$")).first.click(timeout=3000),
+        lambda: page.locator("label").filter(has_text=re.compile(r"^Sans frais$")).first.click(timeout=3000),
+        # Strategy 4: Radio button
+        lambda: page.locator("input[type='radio']").first.click(timeout=3000),
+        lambda: page.locator("[role='radio']").first.click(timeout=3000),
     ]
 
     for i, strategy in enumerate(strategies):
         try:
-            element = strategy()
-            if element and element.count() > 0 and element.is_visible():
-                element.click(timeout=3000)
-                human_delay(500, 1000)
-                print(f"✅ 'No fees' selected (strategy {i+1})")
-                return True
+            strategy()
+            human_delay(500, 1000)
+            print(f"✅ 'No fees' selected (strategy {i+1})")
+            return True
         except Exception as e:
-            print(f"   Strategy {i+1} failed: {e}")
             continue
 
     print("❌ CRITICAL: Could not select 'No fees' — search will fail")
     return False
 
+# ══════════════════════════════════════════════════════════════
+# 7. DEEP CALENDAR VERIFICATION — Hybrid (Grok + Deep)
+# ══════════════════════════════════════════════════════════════
+
 def verify_real_slots(page):
     """
-    ★ DEEP CALENDAR VERIFICATION ★
-    Clicks through: Results → Booking button → Calendar → checks for real dates.
-    Returns (has_real_slots, details_string, booking_url_or_none)
+    ★ BULLETPROOF DEEP CALENDAR VERIFICATION ★
+    Combines Grok's quick detection + Deep's ID extraction + month navigation.
+    Returns (has_real_slots, details_string, deep_link_url)
     """
     body_text = page.inner_text("body")
     text_lower = body_text.lower()
 
-    # Quick negative check on results page
+    # ── QUICK NEGATIVE CHECK (Grok's approach) ──
     no_slot_phrases = [
         "aucune disponibilité", "no availability", "aucun rendez-vous",
         "no appointments", "désolé", "sorry",
@@ -202,13 +245,27 @@ def verify_real_slots(page):
         if phrase in text_lower:
             return False, f"No slots ({phrase})", None
 
-    # Find clinic cards on results page
+    # ── QUICK POSITIVE ON RESULTS PAGE (Grok's optimization) ──
+    quick_positive = [
+        "disponible", "places disponibles", "prochain rendez-vous",
+        "availabilities", "disponibilités",
+    ]
+    if any(x in text_lower for x in quick_positive):
+        print("   ⚡ Quick positive detected on results page")
+        return True, "Availability detected on results page", page.url
+
+    # ── DEEP CLINIC VERIFICATION (Deep's approach) ──
+    print("   🔍 Starting deep clinic verification...")
+
     clinic_selectors = [
+        "article",
         ".establishment-card",
         "[class*='establishment']",
         "[class*='result-item']",
         "a[href*='establishment']",
         ".clinic-item",
+        "[class*='clinic']",
+        "[class*='result']",
     ]
 
     for selector in clinic_selectors:
@@ -218,39 +275,48 @@ def verify_real_slots(page):
             if count == 0:
                 continue
 
-            # Try each clinic
+            # Check up to 5 clinics
             for i in range(min(count, 5)):
                 try:
                     clinic = clinics.nth(i)
                     if not clinic.is_visible():
                         continue
 
-                    clinic_name = clinic.inner_text()[:50]
-                    print(f"   🏥 Checking clinic #{i+1}: {clinic_name}...")
-                    clinic.click(timeout=5000)
-                    human_delay(2000, 3000)
+                    clinic_name = clinic.inner_text()[:60].replace('\n', ' ')
+                    print(f"   🏥 Clinic #{i+1}: {clinic_name}...")
+                    clinic.click(timeout=7000)
+                    human_delay(2000, 3500)
 
-                    # ★ UPDATED: French + English booking button selectors
-                    booking_button_selectors = [
-                        # French
+                    # ── EXTRACT IDs from URL ──
+                    current_url = page.url
+                    establishment_id = None
+                    service_id = None
+
+                    id_match = re.search(r'establishmentId[=:]\s*(\d+)', current_url)
+                    if id_match:
+                        establishment_id = id_match.group(1)
+
+                    svc_match = re.search(r'serviceId[=:]\s*(\d+)', current_url)
+                    if svc_match:
+                        service_id = svc_match.group(1)
+
+                    # ── FIND BOOKING BUTTON (Grok's selectors + Deep's selectors) ──
+                    booking_btn = None
+                    booking_selectors = [
                         "text=Prendre RDV",
                         "text=Prendre rendez-vous",
+                        "text=Réserver",
+                        "text=Book",
                         "a:has-text('Prendre RDV')",
                         "button:has-text('Prendre RDV')",
-                        # English
-                        "text=Book appt.",
-                        "text=Book appointment",
-                        "a:has-text('Book appt')",
-                        "button:has-text('Book appt')",
-                        # Generic
+                        "a:has-text('Prendre rendez-vous')",
+                        "button:has-text('Prendre rendez-vous')",
                         "[class*='booking']",
                         "a[href*='appointment']",
-                        "a[href*='booking']",
                         "a[href*='rdv']",
                     ]
 
-                    booking_btn = None
-                    for btn_sel in booking_button_selectors:
+                    for btn_sel in booking_selectors:
                         try:
                             btn = page.locator(btn_sel).first
                             if btn.count() > 0 and btn.is_visible():
@@ -261,38 +327,53 @@ def verify_real_slots(page):
 
                     if booking_btn:
                         print("      → Clicking booking button...")
-                        booking_btn.click(timeout=5000)
-                        human_delay(3000, 4000)
+                        booking_btn.click(timeout=8000)
+                        human_delay(3000, 5000)
 
-                        # ★ NOW WE'RE ON THE CALENDAR PAGE ★
+                        # ── WE'RE ON THE CALENDAR PAGE ──
                         calendar_url = page.url
                         calendar_text = page.inner_text("body")
                         calendar_lower = calendar_text.lower()
 
-                        # Check if we landed on a real calendar
-                        cal_indicators = ["mai", "juin", "juillet", "janvier", "février", "mars", "avril",
-                                         "may", "june", "july", "january", "february", "march", "april",
-                                         "lun", "mar", "mer", "jeu", "ven", "sam", "dim",
-                                         "mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+                        # Try extracting IDs from calendar URL too
+                        if not establishment_id:
+                            id_match = re.search(r'establishmentId[=:]\s*(\d+)', calendar_url)
+                            if id_match:
+                                establishment_id = id_match.group(1)
+                        if not service_id:
+                            svc_match = re.search(r'serviceId[=:]\s*(\d+)', calendar_url)
+                            if svc_match:
+                                service_id = svc_match.group(1)
 
+                        # ── CALENDAR DETECTION (Grok's month check) ──
+                        cal_indicators = [
+                            "mai", "juin", "juillet", "août", "sept", "oct", "nov", "déc",
+                            "janvier", "février", "mars", "avril",
+                            "may", "june", "july", "august", "september", "october",
+                            "january", "february", "march", "april",
+                            "lun", "mar", "mer", "jeu", "ven", "sam", "dim",
+                            "mon", "tue", "wed", "thu", "fri", "sat", "sun",
+                        ]
                         is_calendar = any(ind in calendar_lower for ind in cal_indicators)
 
                         if is_calendar:
-                            # Count "Complet" occurrences
                             complet_count = calendar_lower.count("complet")
-                            
-                            # Look for positive indicators
+
+                            # ── POSITIVE INDICATORS ──
                             positive_indicators = [
                                 "disponible", "available", "ouvert", "open",
-                                "à venir", "coming soon",
+                                "à venir", "coming soon", "réserver", "book now",
+                                "sélectionner", "select", "choisir", "choose",
                             ]
                             has_positive = any(ind in calendar_lower for ind in positive_indicators)
 
-                            # Try to find clickable date elements (not "Complet")
+                            # ── CLICKABLE DATES ──
                             date_selectors = [
                                 "[class*='available']",
                                 "[class*='disponible']",
                                 "[class*='open']",
+                                "[class*='selectable']",
+                                "[class*='clickable']",
                                 "button[class*='day']:not([disabled])",
                                 "td:not([class*='complet']):not([class*='full'])",
                             ]
@@ -307,31 +388,74 @@ def verify_real_slots(page):
                                 except:
                                     continue
 
-                            print(f"      📅 Calendar: Complet count={complet_count}, Positive indicators={has_positive}, Clickable dates={clickable_dates}")
+                            # ── NEXT MONTH NAVIGATION (Deep's improvement) ──
+                            if complet_count > 20 and clickable_dates == 0:
+                                try:
+                                    next_month_selectors = [
+                                        "[aria-label*='Next']",
+                                        "[aria-label*='Suivant']",
+                                        "[class*='next']",
+                                        "button:has-text('›')",
+                                        "button:has-text('»')",
+                                    ]
+                                    for nm_sel in next_month_selectors:
+                                        try:
+                                            next_month = page.locator(nm_sel).first
+                                            if next_month.count() > 0 and next_month.is_visible():
+                                                print("      → Current month full, checking next month...")
+                                                next_month.click()
+                                                human_delay(1000, 2000)
+                                                calendar_url = page.url
+                                                calendar_text = page.inner_text("body")
+                                                calendar_lower = calendar_text.lower()
+                                                complet_count = calendar_lower.count("complet")
+                                                has_positive = any(ind in calendar_lower for ind in positive_indicators)
+                                                for date_sel in date_selectors:
+                                                    try:
+                                                        dates = page.locator(date_sel)
+                                                        if dates.count() > 0:
+                                                            clickable_dates = dates.count()
+                                                            break
+                                                    except:
+                                                        continue
+                                                break
+                                        except:
+                                            continue
+                                except:
+                                    pass
 
-                            # REAL slot = not everything is "Complet" AND we found clickable dates OR positive indicators
-                            if clickable_dates > 0 or (has_positive and complet_count < 20):
-                                print(f"      🎉 REAL SLOTS FOUND!")
-                                return True, f"Calendar has open dates (Complet count: {complet_count}, Clickable: {clickable_dates})", calendar_url
+                            print(f"      📅 Calendar: Complet={complet_count}, Positive={has_positive}, Clickable={clickable_dates}")
+
+                            # ── BUILD DEEP LINK ──
+                            if establishment_id and service_id:
+                                deep_link = f"https://portal3.clicsante.ca/portail/index.html#/appointments/new?establishmentId={establishment_id}&serviceId={service_id}"
+                            elif establishment_id:
+                                deep_link = f"https://portal3.clicsante.ca/portail/index.html#/appointments/new?establishmentId={establishment_id}"
                             else:
-                                print(f"      ❌ Calendar all full — no real slots")
+                                deep_link = calendar_url
+
+                            # ── VERDICT ──
+                            if clickable_dates > 0 or (has_positive and complet_count < 25):
+                                print(f"      🎉 REAL SLOTS FOUND! → {deep_link[:80]}...")
+                                return True, f"Calendar has open dates (Complet: {complet_count}, Clickable: {clickable_dates})", deep_link
+                            else:
+                                print(f"      ❌ Calendar full (Complet: {complet_count})")
                                 page.go_back()
                                 human_delay(1000, 2000)
                                 continue
                         else:
-                            print(f"      ⚠️ Did not land on calendar — skipping")
+                            print(f"      ⚠️ Not a calendar page — skipping")
                             page.go_back()
                             human_delay(500, 1000)
                             continue
                     else:
-                        # No booking button found — this clinic might not have individual booking
-                        print(f"      ℹ️ No booking button — skipping clinic")
+                        print(f"      ℹ️ No booking button — skipping")
                         page.go_back()
                         human_delay(500, 1000)
                         continue
 
                 except Exception as e:
-                    print(f"      ⚠️ Error checking clinic: {e}")
+                    print(f"      ⚠️ Error on clinic: {e}")
                     try:
                         page.go_back()
                         human_delay(500, 1000)
@@ -340,46 +464,51 @@ def verify_real_slots(page):
                     continue
 
         except Exception as e:
-            print(f"   ⚠️ Clinic selector error: {e}")
+            print(f"   ⚠️ Selector error: {e}")
             continue
 
-    # Fallback: old logic for backwards compatibility
-    if "availabilities" in text_lower or "disponibilités" in text_lower:
-        return True, "Availabilities shown (fallback)", page.url
+    return False, "No real slots found after deep check", page.url
 
-    return False, "No real slots found", None
+# ══════════════════════════════════════════════════════════════
+# 8. MAIN AVAILABILITY CHECK
+# ══════════════════════════════════════════════════════════════
 
 def check_availability(postal_code_override=None):
     postal_code = postal_code_override if postal_code_override else get_postal_code()
     service_url = get_service_url()
     headless = os.getenv("HEADLESS", "true").lower() != "false"
 
-    print(f"🚀 Starting Search: {postal_code} @ {datetime.now().strftime('%H:%M:%S')}")
+    print(f"\n{'='*60}")
+    print(f"🚀 ClicSanté Search: {postal_code} @ {datetime.now().strftime('%H:%M:%S')}")
+    print(f"{'='*60}")
 
     with sync_playwright() as p:
         browser, context = launch_stealth_browser(p, headless=headless)
         page = context.new_page()
 
         try:
-            print("📄 Loading page...")
-            page.goto(service_url, wait_until="domcontentloaded", timeout=60000)
-            human_delay(1500, 2500)
+            # Load the service page
+            print("📄 Loading ClicSanté...")
+            page.goto(service_url, wait_until="networkidle", timeout=45000)
+            human_delay(1500, 3000)
 
+            # Dismiss any popups
             try:
                 page.keyboard.press("Escape")
                 human_delay(300, 500)
             except:
                 pass
 
-            print("🎯 Selecting 'No fees' filter...")
-            filter_applied = try_select_free_filter(page)
-
+            # Select "No fees" filter
+            print("🎯 Selecting 'No fees'...")
+            filter_applied = try_select_no_fees(page)
             if not filter_applied:
                 human_delay(1000, 2000)
-                filter_applied = try_select_free_filter(page)
+                filter_applied = try_select_no_fees(page)
 
             human_delay(500, 1000)
 
+            # Enter postal code
             print("⌨️  Entering postal code...")
             postal_selectors = [
                 "input[placeholder*='A1A']",
@@ -408,40 +537,49 @@ def check_availability(postal_code_override=None):
                 human_delay(400, 800)
                 print(f"   Entered: {postal_code}")
             else:
-                print("   ❌ Could not find postal input")
+                print("   ❌ Could not find postal input — trying fallback")
+                try:
+                    page.get_by_placeholder("ex. A1A 1A1").first.fill(postal_code)
+                except:
+                    pass
 
             human_delay(500, 1000)
+
+            # Click Search
             search_btn = page.get_by_role("button", name=re.compile(r"Search|Rechercher|Chercher", re.I))
             if search_btn.count() > 0 and search_btn.first.is_visible():
                 search_btn.first.click()
-                print("   Clicked Search button")
+                print("   🔍 Clicked Search")
 
+            # Wait for results
             print("⏳ Waiting for results...")
-            human_delay(3000, 5000)
-
             try:
                 page.wait_for_selector(
-                    ".establishment-card, .results-list, .no-results, [class*='result'], [class*='clinic']",
-                    timeout=20000
+                    ".establishment-card, .results-list, .no-results, [class*='result'], [class*='clinic'], article",
+                    timeout=25000
                 )
-                human_delay(2000, 3000)
+                human_delay(3000, 5000)
             except:
                 print("   ⚠️ Results container not found — checking anyway")
 
-            debug_page_state(page, "results")
+            # Debug
+            debug_screenshot(page, f"results_{postal_code}")
+            debug_page_text(page, "results")
 
+            # Verify real slots
             print("🔍 Verifying real slots (deep calendar check)...")
-            has_slots, detail, calendar_url = verify_real_slots(page)
-
-            booking_url = calendar_url if calendar_url else page.url
+            has_slots, detail, booking_url = verify_real_slots(page)
 
             if has_slots:
-                print(f"🎉 SUCCESS: Real free slots found! ({detail})")
-                send_notification(postal_code, booking_url, True)
+                print(f"\n🎉 SUCCESS! Real free slots found!")
+                print(f"   Details: {detail}")
+                print(f"   Deep link: {booking_url}")
+                send_notification(postal_code, booking_url)
                 save_availability(postal_code, True, booking_url, detail)
             else:
-                print(f"❌ STATUS: No free slots found ({detail})")
-                save_availability(postal_code, False, booking_url, detail)
+                print(f"\n❌ No free slots found")
+                print(f"   Details: {detail}")
+                save_availability(postal_code, False, page.url, detail)
 
             return has_slots
 
@@ -449,6 +587,7 @@ def check_availability(postal_code_override=None):
             print(f"🚨 Script Error: {e}")
             import traceback
             traceback.print_exc()
+            debug_screenshot(page, f"ERROR_{postal_code}")
             return False
         finally:
             if headless:
@@ -458,9 +597,13 @@ def check_availability(postal_code_override=None):
                 input("Press Enter to close browser...")
                 browser.close()
 
+# ══════════════════════════════════════════════════════════════
+# 9. MAIN ENTRY POINT
+# ══════════════════════════════════════════════════════════════
+
 if __name__ == "__main__":
     postal_codes = ["H1Y3H1", "H4L2B5", "H2X1Y7", "G1R2A3", "J8Y3H1"]
-    
+
     for postal in postal_codes:
         print(f"\n{'='*50}")
         print(f"🔍 Searching: {postal}")
