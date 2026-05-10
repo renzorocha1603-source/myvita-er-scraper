@@ -51,21 +51,15 @@ def get_zone(postal_code: str) -> str:
     return ZONES.get(fsa, f"zone_{fsa}")
 
 def get_user_token():
-    """Get FCM token from Firestore"""
-    if db is None:
-        return None
+    if db is None: return None
     try:
-        users_ref = db.collection('users')\
-            .order_by('fcmTokenUpdated', direction='DESCENDING')\
-            .limit(10)
+        users_ref = db.collection('users').order_by('fcmTokenUpdated', direction='DESCENDING').limit(10)
         docs = users_ref.stream()
         for doc in docs:
             data = doc.to_dict()
             token = data.get('fcmToken')
-            if token:
-                return token
-    except Exception as e:
-        print(f"⚠️ Token fetch error: {e}")
+            if token: return token
+    except: pass
     return None
 
 # === 4. NOTIFICATION & DATA SAVING ===
@@ -73,18 +67,12 @@ def get_user_token():
 def send_notification(postal_code: str, booking_url: str, clinic_name: str = None):
     token = get_user_token()
     if not token:
-        print("⚠️ No FCM token found — skipping notification")
+        print("⚠️ No FCM token — skipping notification")
         return
     try:
-        body = f"Créneaux trouvés près de {postal_code}. Touchez pour réserver."
-        if clinic_name:
-            body = f"{clinic_name} — Créneaux disponibles! Touchez pour réserver."
-
+        body = f"{clinic_name} — Créneaux disponibles! Touchez pour réserver." if clinic_name else f"Créneaux trouvés près de {postal_code}. Touchez pour réserver."
         message = messaging.Message(
-            notification=messaging.Notification(
-                title="🎉 Rendez-vous disponible!",
-                body=body
-            ),
+            notification=messaging.Notification(title="🎉 Rendez-vous disponible!", body=body),
             data={"url": booking_url, "postal_code": postal_code},
             token=token,
         )
@@ -95,276 +83,194 @@ def send_notification(postal_code: str, booking_url: str, clinic_name: str = Non
 
 def save_availability(postal_code: str, has_slots: bool, booking_url: str,
                       details: str, clinics: list = None):
-    if db is None:
-        return
+    if db is None: return
     zone = get_zone(postal_code)
     now = datetime.now().isoformat()
     data = {
-        "service": "blood-test",
-        "postal_code": postal_code,
-        "zone": zone,
-        "slots_found": has_slots,
-        "booking_url": booking_url,
-        "details": details,
-        "clinics": clinics or [],
-        "last_checked": now,
+        "service": "blood-test", "postal_code": postal_code, "zone": zone,
+        "slots_found": has_slots, "booking_url": booking_url,
+        "details": details, "clinics": clinics or [], "last_checked": now,
     }
     try:
         db.collection("availability").document(zone).set(data)
-        db.collection("availability").document(zone)\
-            .collection("history").add({
-                "slots_found": has_slots,
-                "clinics_found": len(clinics) if clinics else 0,
-                "checked_at": now
-            })
+        db.collection("availability").document(zone).collection("history").add({
+            "slots_found": has_slots, "clinics_found": len(clinics) if clinics else 0,
+            "checked_at": now
+        })
         print(f"🔥 Firestore Updated: {zone} — {len(clinics or [])} clinics")
     except Exception as e:
         print(f"❌ Firestore Error: {e}")
 
-# === 5. MAIN FUNCTION ===
+# === 5. POPUP BUSTER ===
+
+def dismiss_popups(page):
+    """Aggressively dismiss any popups, banners, modals, or overlays."""
+    strategies = [
+        lambda: page.keyboard.press("Escape"),
+        lambda: page.keyboard.press("Escape"),
+        lambda: page.locator("[aria-label*='Close'],[aria-label*='close'],[aria-label*='Fermer']").first.click(timeout=1000),
+        lambda: page.locator(".close,.modal-close,.popup-close,.btn-close,.cookie-close").first.click(timeout=1000),
+        lambda: page.locator("button:has-text('Accept'),button:has-text('Accepter'),button:has-text('OK'),button:has-text('Continue'),button:has-text('Continuer')").first.click(timeout=1000),
+        lambda: page.locator("button:has-text('J\\'accepte'),button:has-text('Accepter les cookies')").first.click(timeout=1000),
+        lambda: page.mouse.click(10, 10),
+        lambda: page.mouse.click(640, 10),
+    ]
+    for strategy in strategies:
+        try:
+            strategy()
+            time.sleep(0.2)
+        except:
+            continue
+    human_delay(0.3, 0.6)
+
+def try_click_element(page, selectors, timeout=5000):
+    """Try multiple selectors to click an element. Returns True if successful."""
+    for sel in selectors:
+        try:
+            el = page.locator(sel).first
+            if el.count() > 0 and el.is_visible():
+                el.click(timeout=timeout)
+                return True
+        except:
+            continue
+    return False
+
+# === 6. MAIN CLICK-THROUGH FUNCTION ===
 
 def check_availability(postal_code_override=None):
     """
-    ClicSanté scraper — captures API responses, builds deep links.
-    Uses the availabilitiesByGeolocalisation API endpoint.
+    OPTION B: Full click-through approach.
+    Searches ClicSanté, clicks into the first available clinic,
+    clicks "Prendre RDV", and captures the deep link URL.
     """
-    postal_code = postal_code_override or \
-        os.getenv("POSTAL_CODE", "H1Y3H1").replace(" ", "")
+    postal_code = postal_code_override or os.getenv("POSTAL_CODE", "H1Y3H1").replace(" ", "")
 
     print(f"\n{'='*60}")
     print(f"🚀 ClicSanté Search: {postal_code} @ {datetime.now().strftime('%H:%M:%S')}")
     print(f"{'='*60}")
 
-    captured_api_responses = []
-
     with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=True,
-            args=["--no-sandbox", "--disable-blink-features=AutomationControlled"]
-        )
-        context = browser.new_context(
-            viewport={"width": 1280, "height": 800},
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        )
-        context.add_init_script(
-            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-        )
+        browser = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-blink-features=AutomationControlled"])
+        context = browser.new_context(viewport={"width": 1280, "height": 800},
+                                      user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         page = context.new_page()
 
-        # Intercept ALL API responses
-        def handle_response(response):
-            url = response.url
-            if 'api3.clicsante.ca' in url and response.status == 200:
-                try:
-                    content_type = response.headers.get('content-type', '')
-                    if 'json' in content_type:
-                        body = response.json()
-                        captured_api_responses.append({
-                            'url': url,
-                            'data': body
-                        })
-                        print(f"📡 Captured: {url[:120]}")
-                except Exception:
-                    pass
-
-        page.on("response", handle_response)
-
         try:
+            # ── LOAD PAGE ──
             print("📄 Loading ClicSanté...")
-            page.goto(
-                "https://portal3.clicsante.ca/services/blood-test",
-                wait_until="networkidle",
-                timeout=45000
-            )
-            human_delay(1.5, 3)
+            page.goto("https://portal3.clicsante.ca/services/blood-test", wait_until="networkidle", timeout=45000)
+            human_delay(2, 3)
+            dismiss_popups(page)
 
-            # Dismiss popups
-            try:
-                page.keyboard.press("Escape")
-                human_delay(0.3, 0.5)
-            except:
-                pass
-
-            # Select "No fees"
+            # ── SELECT "NO FEES" ──
             print("🎯 Selecting 'No fees'...")
-            selected = False
-            for text in ["No fees", "Sans frais"]:
-                try:
-                    page.get_by_text(text, exact=True).first.click(timeout=5000)
-                    selected = True
-                    print(f"✅ '{text}' selected")
-                    human_delay(0.5, 1)
-                    break
-                except:
-                    continue
-            if not selected:
-                try:
-                    page.locator("input[type='radio']").first.click(timeout=5000)
-                    human_delay(0.5, 1)
-                except:
-                    pass
+            try_click_element(page, [
+                "text=No fees", "text=Sans frais",
+                "label:has-text('No fees')", "label:has-text('Sans frais')",
+                "input[type='radio']", "[role='radio']"
+            ])
+            human_delay(0.5, 1)
+            print("   ✅ Filter selected")
 
-            # Enter postal code
+            # ── ENTER POSTAL CODE ──
             print(f"⌨️  Entering postal code: {postal_code}")
-            for selector in ["input[placeholder*='A1A']", "input[type='text']"]:
+            for sel in ["input[placeholder*='A1A']", "input[type='text']"]:
                 try:
-                    field = page.locator(selector).first
-                    field.click()
-                    field.fill("")
-                    field.type(postal_code, delay=80)
-                    print(f"✅ Postal code entered")
+                    field = page.locator(sel).first
+                    field.click(); field.fill(""); field.type(postal_code, delay=80)
                     break
-                except:
-                    continue
+                except: continue
+            human_delay(0.5, 1)
+            print("   ✅ Postal code entered")
 
-            human_delay(0.8, 1.5)
-
-            # Click Search
+            # ── CLICK SEARCH ──
             print("🔍 Clicking Search...")
-            try:
-                page.get_by_role("button", name=re.compile(r"Search|Rechercher", re.I)).first.click(timeout=5000)
-                print("✅ Search clicked")
-            except:
-                pass
+            try_click_element(page, ["button:has-text('Search')", "button:has-text('Rechercher')", "button:has-text('Chercher')"])
+            human_delay(1, 2)
 
-            # Wait for results
-            print("⏳ Waiting for results and API responses...")
-            human_delay(10, 16)
+            # ── WAIT FOR RESULTS ──
+            print("⏳ Waiting for results to load...")
+            human_delay(6, 10)
+            dismiss_popups(page)
 
-            # ★ PARSE THE AVAILABILITY API RESPONSE
-            clinics = []
-            availability_data = None
-
-            for api_response in captured_api_responses:
-                url = api_response.get('url', '')
-                data = api_response.get('data', {})
-
-                if 'availabilitiesByGeolocalisation' in url:
-                    availability_data = data
-                    print(f"\n📦 AVAILABILITY API FOUND")
-                    print(f"   Type: {type(data).__name__}")
-                    
-                    if isinstance(data, dict):
-                        print(f"   Top-level keys: {list(data.keys())[:10]}")
-                        # Print first 2000 chars of the raw JSON
-                        raw_json = json.dumps(data, indent=2)
-                        print(f"   RAW JSON (first 2000 chars):")
-                        print(raw_json[:2000])
-                        print("   ...")
-                        
-                        # Try to find establishments list
-                        items = None
-                        for key in ['establishments', 'data', 'results', 'items', 'clinics', 'etablissements']:
-                            if key in data:
-                                items = data[key]
-                                print(f"   Found '{key}' with {len(items) if isinstance(items, list) else 'non-list'} items")
-                                break
-                        
-                        if items is None and isinstance(data, list):
-                            items = data
-                        
-                        if isinstance(items, list) and len(items) > 0:
-                            print(f"   First item keys: {list(items[0].keys()) if isinstance(items[0], dict) else 'not dict'}")
-                            print(f"   First item sample: {json.dumps(items[0], indent=2)[:500]}")
-                            
-                            # Parse each establishment
-                            for item in items[:20]:
-                                if isinstance(item, dict):
-                                    est_id = str(item.get('establishmentId', item.get('id', item.get('etablissementId', ''))))
-                                    name = item.get('establishmentName', item.get('name', item.get('nom', '')))
-                                    address = item.get('address', item.get('adresse', ''))
-                                    portal_id = str(item.get('portalId', '65252'))
-                                    portal_place = str(item.get('portalPlaceId', item.get('placeId', item.get('portalPlace', ''))))
-                                    services = item.get('servicesUnified', item.get('portalServicesUnified', ''))
-                                    
-                                    # Check for actual availability
-                                    avail = item.get('availabilities', item.get('disponibilites', []))
-                                    has_slots = len(avail) > 0 if isinstance(avail, list) else bool(avail)
-                                    
-                                    if est_id:
-                                        # Build URL like the working one
-                                        formatted_postal = postal_code[:3] + "+" + postal_code[3:]
-                                        clinic_url = f"https://clients3.clicsante.ca/{portal_id}/take-appt"
-                                        params = [
-                                            f"portalEst={est_id}",
-                                            f"portalPostalCode={postal_code[:3]}%20{postal_code[3:]}",
-                                            f"lang=fr",
-                                        ]
-                                        if services:
-                                            params.append(f"portalServicesUnified={services if isinstance(services, str) else ','.join(map(str, services))}")
-                                        if portal_place:
-                                            params.append(f"portalPlace={portal_place}")
-                                        
-                                        clinic_url += "?" + "&".join(params)
-                                        
-                                        clinics.append({
-                                            'name': str(name) if name else 'Clinic',
-                                            'address': str(address) if address else '',
-                                            'url': clinic_url,
-                                            'id': est_id,
-                                            'has_slots': has_slots,
-                                            'source': 'api_availability'
-                                        })
-                    elif isinstance(data, list):
-                        print(f"   List with {len(data)} items")
-                        if len(data) > 0 and isinstance(data[0], dict):
-                            print(f"   First item keys: {list(data[0].keys())}")
-                            print(f"   First item: {json.dumps(data[0], indent=2)[:500]}")
-
-            # Check page body
+            # Check body text for availability
             body_text = page.inner_text("body").lower()
-            no_slots_signals = [
-                "aucune disponibilité", "no availability",
-                "aucun rendez-vous", "désolé", "sorry",
-                "aucun résultat", "no results"
-            ]
-            positive_signals = [
-                "disponible", "available", "réservation",
-                "book", "places", "à venir", "prendre rendez-vous"
-            ]
+            no_slots = ["aucune disponibilité", "no availability", "aucun rendez-vous", "désolé", "sorry"]
+            if any(p in body_text for p in no_slots):
+                print("❌ No slots available on results page")
+                save_availability(postal_code, False, page.url, "No slots", [])
+                return False, []
 
-            has_positive = any(w in body_text for w in positive_signals)
-            has_negative = any(w in body_text for w in no_slots_signals)
+            print("   ✅ Results loaded — looking for clinics...")
 
-            print(f"\n📊 Results:")
-            print(f"   Clinics with deep links: {len(clinics)}")
-            print(f"   Positive signals: {has_positive}")
-            print(f"   Negative signals: {has_negative}")
+            # ── CLICK FIRST CLINIC CARD ──
+            print("🏥 Clicking first clinic...")
+            clinic_clicked = try_click_element(page, [
+                ".establishment-card",
+                "[class*='establishment']",
+                "[class*='result-item']",
+                "article",
+                "a[href*='establishment']",
+            ])
+            
+            if clinic_clicked:
+                human_delay(2, 3)
+                dismiss_popups(page)
+                print("   ✅ Clinic page opened")
 
-            if clinics:
-                print(f"\n🎉 {len(clinics)} clinic(s) with deep links!")
-                for i, c in enumerate(clinics[:5]):
-                    print(f"   {i+1}. {c.get('name', 'Unknown')}")
-                    print(f"      {c.get('url', '')[:120]}")
+                # ── CLICK "PRENDRE RDV" ──
+                print("🔘 Clicking 'Prendre RDV'...")
+                booking_clicked = try_click_element(page, [
+                    "text=Prendre RDV",
+                    "text=Prendre rendez-vous",
+                    "button:has-text('Prendre RDV')",
+                    "button:has-text('Prendre rendez-vous')",
+                    "a:has-text('Prendre RDV')",
+                    "text=Book appt.",
+                    "text=Book appointment",
+                    "a[href*='appointment']",
+                    "a[href*='rdv']",
+                    "[class*='booking']",
+                ])
 
-                best_clinic = clinics[0]
-                send_notification(postal_code, best_clinic['url'], best_clinic.get('name'))
-                save_availability(postal_code, True, best_clinic['url'],
-                                f"{len(clinics)} clinics", clinics[:10])
-                return True, clinics
+                if booking_clicked:
+                    human_delay(3, 5)
+                    dismiss_popups(page)
+                    deep_link = page.url
+                    print(f"   🎉 DEEP LINK: {deep_link[:120]}...")
+                    
+                    # Get clinic name from page
+                    try:
+                        clinic_name = page.locator("h1,h2,h3,.clinic-name,.establishment-name").first.inner_text()[:80]
+                    except:
+                        clinic_name = "Clinic"
+                    
+                    print(f"   🏥 Clinic: {clinic_name}")
+                    send_notification(postal_code, deep_link, clinic_name)
+                    save_availability(postal_code, True, deep_link, f"Deep link to {clinic_name}", [{
+                        'name': clinic_name, 'url': deep_link, 'source': 'click_through'
+                    }])
+                    return True, [{'name': clinic_name, 'url': deep_link}]
 
-            elif has_positive and not has_negative:
-                # Solid fallback: send the search URL we know works
-                results_url = f"https://portal3.clicsante.ca/?serviceId=227&postalCode={postal_code[:3]}+{postal_code[3:]}"
-                print(f"⚠️ Using results page: {results_url}")
+                else:
+                    # Clinic page opened but no booking button — send clinic page URL
+                    clinic_url = page.url
+                    print(f"   ⚠️ No booking button — sending clinic page URL")
+                    send_notification(postal_code, clinic_url)
+                    save_availability(postal_code, True, clinic_url, "Clinic page", [])
+                    return True, []
+            else:
+                # Couldn't click a clinic — send results page URL
+                results_url = page.url
+                print(f"   ⚠️ Couldn't click clinic — sending results page")
                 send_notification(postal_code, results_url)
                 save_availability(postal_code, True, results_url, "Results page", [])
                 return True, []
 
-            elif has_negative:
-                print(f"❌ No slots")
-                save_availability(postal_code, False, "", "No slots", [])
-                return False, []
-
-            else:
-                print(f"⚠️ Uncertain")
-                save_availability(postal_code, False, "", "Uncertain", [])
-                return False, []
-
         except Exception as e:
             print(f"🚨 Error: {e}")
-            import traceback
-            traceback.print_exc()
+            import traceback; traceback.print_exc()
             return False, []
         finally:
             browser.close()
@@ -373,9 +279,7 @@ def check_availability(postal_code_override=None):
 # === 7. MAIN ENTRY POINT ===
 
 if __name__ == "__main__":
-    test_codes = ["H1Y3H1"]
-    
-    for code in test_codes:
+    for code in ["H1Y3H1", "H4L2B5", "H2X1Y7", "G1R2A3", "J8Y3H1"]:
         success, clinics = check_availability(code)
         print(f"\n{'─'*40}")
         print(f"Result for {code}: {'✅ Found' if success else '❌ None'}")
