@@ -61,21 +61,32 @@ def get_user_token():
 
 # === 4. NOTIFICATION & FIRESTORE ===
 
-def send_notification(postal_code: str, booking_url: str, clinic_name: str = None):
+def send_notification(postal_code: str, clinic_names: list, results_url: str):
     token = get_user_token()
     if not token:
         print("⚠️ No FCM token — skipping notification")
         return
     try:
-        body = f"Créneaux trouvés près de {postal_code}. Touchez pour réserver."
-        if clinic_name:
-            body = f"{clinic_name} — Créneaux disponibles! Touchez pour réserver."
+        # Build body with clinic names
+        if clinic_names:
+            names_text = ", ".join(clinic_names[:3])
+            body = f"{names_text} — Créneaux disponibles! Ouvrez ClicSanté → cherchez {postal_code} → Sans frais"
+        else:
+            body = f"Créneaux trouvés près de {postal_code}. Ouvrez ClicSanté → Sans frais → cherchez {postal_code}"
+        
+        # Truncate body to FCM limit
+        if len(body) > 250:
+            body = body[:247] + "..."
+        
         messaging.send(messaging.Message(
-            notification=messaging.Notification(title="🎉 Rendez-vous disponible!", body=body),
-            data={"url": booking_url, "postal_code": postal_code},
+            notification=messaging.Notification(
+                title="🎉 Rendez-vous disponible!",
+                body=body
+            ),
+            data={"url": "https://portal3.clicsante.ca/services/blood-test", "postal_code": postal_code},
             token=token,
         ))
-        print(f"✅ FCM Sent → {booking_url[:100]}")
+        print(f"✅ FCM Sent: {body[:100]}")
     except Exception as e:
         print(f"❌ FCM Error: {e}")
 
@@ -97,7 +108,61 @@ def save_availability(postal_code, has_slots, booking_url, details, clinics=None
     except Exception as e:
         print(f"❌ Firestore Error: {e}")
 
-# === 5. MAIN FUNCTION (Grok's simple approach) ===
+# === 5. CLINIC NAME EXTRACTOR ===
+
+def extract_clinic_names(page) -> list:
+    """
+    Extract clinic names from the results page.
+    ClicSanté shows them as text — we scan the page body.
+    """
+    clinics = []
+    try:
+        body = page.inner_text("body")
+        lines = body.split('\n')
+        
+        clinic_keywords = [
+            'hospital', 'hôpital', 'clinique', 'clinic', 'clsc', 'gmf',
+            'santé', 'sante', 'medical', 'médical', 'cegep', 'cégep',
+            'point de service', 'notre-dame', 'rosemont', 'saint-laurent',
+            'prélèvements', 'prelevements'
+        ]
+        
+        for i, line in enumerate(lines):
+            line = line.strip()
+            # Skip short lines, distance indicators, UI text
+            if len(line) < 8 or '~' in line or 'km' in line.lower():
+                continue
+            if line.lower().startswith(('skip', 'all', 'cancel', 'need', 'login', 'fr', 'specimens', 'fees', 'establishment', 'availabilities', 'results', 'service', 'add to')):
+                continue
+            
+            # Check if this line looks like a clinic name
+            if any(kw in line.lower() for kw in clinic_keywords):
+                # Get the next line which might be the address
+                address = lines[i+1].strip() if i+1 < len(lines) else ""
+                if address and ('~' in address or 'km' in address.lower() or len(address) > 30):
+                    address = ""
+                
+                clinics.append({
+                    'name': line[:100],
+                    'address': address[:100] if address else ""
+                })
+        
+        # Deduplicate
+        seen = set()
+        unique = []
+        for c in clinics:
+            key = c['name'][:40].lower()
+            if key not in seen:
+                seen.add(key)
+                unique.append(c)
+        
+        return unique
+        
+    except Exception as e:
+        print(f"   ⚠️ Name extraction error: {e}")
+        return []
+
+# === 6. MAIN FUNCTION ===
 
 def check_availability(postal_code_override=None):
     postal_code = postal_code_override or os.getenv("POSTAL_CODE", "H1Y3H1").replace(" ", "")
@@ -171,47 +236,49 @@ def check_availability(postal_code_override=None):
             print("⏳ Waiting for results...")
             human_delay(7, 12)
 
-            # Try to detect clinic cards
-            try:
-                page.wait_for_selector("article, .establishment-card, [class*='clinic'], text=~", timeout=20000)
-                print("   ✅ Clinic cards detected")
-            except:
-                print("   ⚠️ No cards detected by selector")
-
-            # ── CAPTURE RESULTS PAGE URL ──
-            results_url = page.url
-            print(f"📍 Results URL: {results_url[:120]}...")
+            # ── EXTRACT CLINIC NAMES ──
+            print("\n📋 Extracting clinic names...")
+            clinics = extract_clinic_names(page)
+            
+            for i, c in enumerate(clinics[:5]):
+                addr = f" — {c['address']}" if c['address'] else ""
+                print(f"   {i+1}. {c['name']}{addr}")
+            
+            print(f"   ✅ {len(clinics)} clinics found")
 
             # ── CHECK BODY FOR AVAILABILITY ──
             body = page.inner_text("body").lower()
-            
-            no_slots = ["aucune disponibilité", "no availability", "aucun rendez-vous", "désolé", "sorry"]
+            no_slots = ["aucune disponibilité", "no availability", "aucun rendez-vous", "désolé", "sorry", "aucun résultat"]
             has_positive = any(x in body for x in ["km", "clinique", "hôpital", "clsc", "gmf", "disponible", "available", "à venir"])
             has_negative = any(x in body for x in no_slots)
 
-            print(f"   Positive signals: {has_positive}")
-            print(f"   Negative signals: {has_negative}")
+            print(f"   Positive: {has_positive}, Negative: {has_negative}")
 
-            # ── TAKE SCREENSHOT FOR DEBUG ──
+            # ── TAKE SCREENSHOT ──
+            results_url = page.url
+            screenshot_path = f"debug_results_{postal_code}.png"
             try:
-                page.screenshot(path=f"debug_results_{postal_code}.png")
+                page.screenshot(path=screenshot_path)
+                print(f"📸 Screenshot: {screenshot_path}")
             except:
                 pass
 
-            # ── SEND RESULTS ──
-            if has_positive and not has_negative:
-                print("🎉 Slots available! Sending results page URL")
-                send_notification(postal_code, results_url, "Cliniques disponibles")
-                save_availability(postal_code, True, results_url, "Results page with clinics")
+            # ── SEND NOTIFICATION ──
+            if clinics or (has_positive and not has_negative):
+                clinic_names = [c['name'] for c in clinics]
+                print(f"🎉 Sending notification with {len(clinic_names)} clinic names")
+                send_notification(postal_code, clinic_names, results_url)
+                save_availability(postal_code, True, results_url, 
+                                f"{len(clinics)} clinics found", clinics)
                 return True
             elif has_negative:
-                print("❌ No slots available")
-                save_availability(postal_code, False, results_url, "No slots")
+                print("❌ No slots")
+                save_availability(postal_code, False, results_url, "No slots", [])
                 return False
             else:
-                print("⚠️ Uncertain — sending results page anyway")
-                send_notification(postal_code, results_url)
-                save_availability(postal_code, True, results_url, "Results page (uncertain)")
+                print("⚠️ Uncertain — sending anyway")
+                send_notification(postal_code, [], results_url)
+                save_availability(postal_code, True, results_url, "Results page", [])
                 return True
 
         except Exception as e:
@@ -223,7 +290,7 @@ def check_availability(postal_code_override=None):
             browser.close()
 
 
-# === 6. MAIN ENTRY POINT ===
+# === 7. MAIN ENTRY POINT ===
 
 if __name__ == "__main__":
     for code in ["H1Y3H1"]:
