@@ -194,7 +194,6 @@ def check_calendar_for_slots(page):
 
     # Check for "À venir" (coming soon) — these are REAL future slots
     if "à venir" in calendar_lower or "coming soon" in calendar_lower:
-        # Count how many "À venir" vs "Complet"
         a_venir_count = calendar_lower.count("à venir")
         complet_count = calendar_lower.count("complet")
         print(f"      📅 À venir: {a_venir_count}, Complet: {complet_count}")
@@ -232,7 +231,7 @@ def check_calendar_for_slots(page):
     if clickable_dates > 0 or (has_positive and complet_count < 20):
         return True, f"Open dates (clickable: {clickable_dates})"
 
-    # ★ FIX: If everything is "Complet", try next month
+    # If everything is "Complet", try next month
     if complet_count > 20 and clickable_dates == 0:
         print("      → Current month full, checking next month...")
         next_month_selectors = [
@@ -249,13 +248,11 @@ def check_calendar_for_slots(page):
                 if next_month.count() > 0 and next_month.is_visible():
                     next_month.click()
                     human_delay(1000, 2000)
-                    # Re-check after navigating
                     new_text = page.inner_text("body").lower()
                     if "à venir" in new_text or "coming soon" in new_text:
                         a_venir_count = new_text.count("à venir")
                         print(f"      🎉 Found À venir in next month! ({a_venir_count})")
                         return True, f"À venir next month ({a_venir_count} available)"
-                    # Check for other positives in new month
                     if any(ind in new_text for ind in positive_indicators):
                         print(f"      🎉 Found available slots in next month!")
                         return True, "Available in next month"
@@ -270,7 +267,7 @@ def check_calendar_for_slots(page):
 def verify_real_slots(page):
     """
     ★ DEEP CALENDAR VERIFICATION ★
-    Clicks through: Results → clicks clinic → checks calendar for real dates.
+    Clicks through: Results → clicks clinic → clicks booking button → gets deep link.
     Returns (has_real_slots, details_string, booking_url)
     """
     body_text = page.inner_text("body")
@@ -286,10 +283,9 @@ def verify_real_slots(page):
         if phrase in text_lower:
             return False, f"No slots ({phrase})", None
 
-    # ★ FIX: If results page shows availabilities, CLICK the first clinic
-    # to get its calendar URL for the notification
+    # ★ FIXED: Availabilities detected → click clinic → click booking → get DEEP LINK
     if "availabilities" in text_lower or "disponibilités" in text_lower:
-        print("   ⚡ Availabilities detected — clicking first clinic for deep link...")
+        print("   ⚡ Availabilities detected — navigating to get deep link...")
         clinic_selectors = [
             ".establishment-card",
             "[class*='establishment']",
@@ -303,13 +299,12 @@ def verify_real_slots(page):
                 first_clinic = page.locator(selector).first
                 if first_clinic.count() > 0 and first_clinic.is_visible():
                     clinic_name = first_clinic.inner_text()[:50].replace('\n', ' ')
-                    print(f"   🏥 Clicking: {clinic_name}...")
+                    print(f"   🏥 Clicking clinic: {clinic_name}...")
                     first_clinic.click(timeout=5000)
                     human_delay(2000, 3000)
-                    # Now we're on the clinic page — try to get to calendar
-                    booking_url = page.url
+                    clinic_page_url = page.url
                     
-                    # Try clicking booking button if present
+                    # Now try to click the booking button to get the REAL deep link
                     booking_selectors = [
                         "text=Prendre RDV",
                         "text=Prendre rendez-vous",
@@ -317,26 +312,36 @@ def verify_real_slots(page):
                         "button:has-text('Prendre RDV')",
                         "text=Book appt.",
                         "text=Book appointment",
+                        "a:has-text('Book appt')",
+                        "button:has-text('Book appt')",
                         "[class*='booking']",
                         "a[href*='appointment']",
+                        "a[href*='booking']",
                         "a[href*='rdv']",
                     ]
+                    
                     for btn_sel in booking_selectors:
                         try:
                             btn = page.locator(btn_sel).first
                             if btn.count() > 0 and btn.is_visible():
+                                print(f"      → Clicking: {btn_sel[:40]}...")
                                 btn.click(timeout=5000)
                                 human_delay(3000, 4000)
-                                booking_url = page.url
-                                break
+                                # ★ THIS IS THE DEEP LINK — the clients3.clicsante.ca URL
+                                deep_link = page.url
+                                print(f"      🔗 Deep link: {deep_link[:100]}...")
+                                return True, "Deep link to booking page", deep_link
                         except:
                             continue
                     
-                    return True, "Availabilities detected — clinic page", booking_url
+                    # If we got to the clinic page but couldn't click booking,
+                    # the clinic page URL is still better than the search results
+                    print(f"      ℹ️ Clinic page URL (no booking button found)")
+                    return True, "Clinic page", clinic_page_url
             except:
                 continue
         
-        # Fallback if we couldn't click a clinic
+        # Last resort fallback
         return True, "Availabilities shown on results", page.url
 
     # Deep check — click through clinic cards
@@ -401,7 +406,6 @@ def verify_real_slots(page):
                         calendar_text = page.inner_text("body")
                         calendar_lower = calendar_text.lower()
 
-                        # Check if we landed on a calendar
                         cal_indicators = [
                             "mai", "juin", "juillet", "janvier", "février", "mars", "avril",
                             "may", "june", "july", "january", "february", "march", "april",
