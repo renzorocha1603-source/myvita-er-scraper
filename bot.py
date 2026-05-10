@@ -121,116 +121,12 @@ def save_availability(postal_code: str, has_slots: bool, booking_url: str,
     except Exception as e:
         print(f"❌ Firestore Error: {e}")
 
-# === 5. DEEP LINK BUILDER ===
-
-def build_clinic_url(portal_id: str, establishment_id: str, postal_code: str,
-                     portal_services: str, portal_place: str = "", lang: str = "fr") -> str:
-    """
-    Build the real ClicSanté deep link from API data.
-    Matches the working format: clients3.clicsante.ca/{portalId}/take-appt?portalEst=...&...
-    """
-    formatted_postal = postal_code[:3] + "+" + postal_code[3:]
-    
-    url = f"https://clients3.clicsante.ca/{portal_id}/take-appt"
-    params = []
-    params.append(f"portalEst={establishment_id}")
-    params.append(f"portalPostalCode={postal_code[:3]}%20{postal_code[3:]}")
-    params.append(f"lang={lang}")
-    if portal_services:
-        params.append(f"portalServicesUnified={portal_services}")
-    if portal_place:
-        params.append(f"portalPlace={portal_place}")
-    
-    return url + "?" + "&".join(params)
-
-
-def extract_deep_links_from_api(captured_api_responses, postal_code):
-    """
-    Parse the availabilitiesByGeolocalisation API response
-    and extract real clinic booking URLs.
-    """
-    clinics = []
-
-    for api_response in captured_api_responses:
-        url = api_response.get('url', '')
-        data = api_response.get('data', {})
-
-        if 'availabilitiesByGeolocalisation' in url:
-            print(f"📦 Parsing availability API response...")
-
-            # The API response structure: list of establishments with availability
-            items = data if isinstance(data, list) else data.get('establishments', data.get('data', []))
-
-            if isinstance(items, list):
-                for item in items:
-                    if isinstance(item, dict):
-                        est_id = str(item.get('establishmentId', item.get('id', '')))
-                        name = item.get('establishmentName', item.get('name', item.get('nom', '')))
-                        address = item.get('address', item.get('adresse', ''))
-                        portal_id = str(item.get('portalId', '65252'))
-                        portal_place = str(item.get('portalPlaceId', item.get('placeId', '')))
-                        services = item.get('servicesUnified', item.get('portalServicesUnified', ''))
-                        
-                        # Check if this establishment actually has available slots
-                        availabilities = item.get('availabilities', item.get('disponibilites', []))
-                        has_slots = len(availabilities) > 0 if isinstance(availabilities, list) else bool(availabilities)
-
-                        if est_id and has_slots:
-                            clinic_url = build_clinic_url(
-                                portal_id=portal_id,
-                                establishment_id=est_id,
-                                postal_code=postal_code,
-                                portal_services=services if isinstance(services, str) else '',
-                                portal_place=portal_place
-                            )
-                            clinics.append({
-                                'name': str(name) if name else 'Clinic',
-                                'address': str(address) if address else '',
-                                'url': clinic_url,
-                                'id': est_id,
-                                'has_slots': has_slots,
-                                'source': 'api_availability'
-                            })
-                            print(f"   🏥 {name} → {clinic_url[:100]}...")
-
-    # If no clinics with slots from availability API, fall back to any API data
-    if not clinics:
-        for api_response in captured_api_responses:
-            data = api_response.get('data', {})
-            items = data if isinstance(data, list) else data.get('establishments', data.get('data', []))
-
-            if isinstance(items, list):
-                for item in items:
-                    if isinstance(item, dict):
-                        est_id = str(item.get('establishmentId', item.get('id', '')))
-                        name = item.get('establishmentName', item.get('name', item.get('nom', '')))
-                        portal_id = str(item.get('portalId', '65252'))
-                        
-                        if est_id:
-                            clinic_url = build_clinic_url(
-                                portal_id=portal_id,
-                                establishment_id=est_id,
-                                postal_code=postal_code,
-                                portal_services='',
-                                portal_place=''
-                            )
-                            clinics.append({
-                                'name': str(name) if name else 'Clinic',
-                                'url': clinic_url,
-                                'id': est_id,
-                                'has_slots': True,
-                                'source': 'api_fallback'
-                            })
-
-    return clinics
-
-
-# === 6. MAIN FUNCTION ===
+# === 5. MAIN FUNCTION ===
 
 def check_availability(postal_code_override=None):
     """
-    Searches ClicSanté, intercepts API responses,
-    builds real deep links to clinic booking pages.
+    ClicSanté scraper — captures API responses, builds deep links.
+    Uses the availabilitiesByGeolocalisation API endpoint.
     """
     postal_code = postal_code_override or \
         os.getenv("POSTAL_CODE", "H1Y3H1").replace(" ", "")
@@ -255,7 +151,7 @@ def check_availability(postal_code_override=None):
         )
         page = context.new_page()
 
-        # Intercept ALL API responses from ClicSanté backend
+        # Intercept ALL API responses
         def handle_response(response):
             url = response.url
             if 'api3.clicsante.ca' in url and response.status == 200:
@@ -267,9 +163,7 @@ def check_availability(postal_code_override=None):
                             'url': url,
                             'data': body
                         })
-                        # Only print key APIs to reduce noise
-                        if any(kw in url for kw in ['availability', 'etablissement', 'establishment']):
-                            print(f"📡 Captured: {url[:100]}")
+                        print(f"📡 Captured: {url[:120]}")
                 except Exception:
                     pass
 
@@ -333,14 +227,91 @@ def check_availability(postal_code_override=None):
             except:
                 pass
 
-            # Wait for results and API calls to complete
+            # Wait for results
             print("⏳ Waiting for results and API responses...")
             human_delay(10, 16)
 
-            # ★ BUILD DEEP LINKS FROM API DATA
-            clinics = extract_deep_links_from_api(captured_api_responses, postal_code)
+            # ★ PARSE THE AVAILABILITY API RESPONSE
+            clinics = []
+            availability_data = None
 
-            # Check page body for availability
+            for api_response in captured_api_responses:
+                url = api_response.get('url', '')
+                data = api_response.get('data', {})
+
+                if 'availabilitiesByGeolocalisation' in url:
+                    availability_data = data
+                    print(f"\n📦 AVAILABILITY API FOUND")
+                    print(f"   Type: {type(data).__name__}")
+                    
+                    if isinstance(data, dict):
+                        print(f"   Top-level keys: {list(data.keys())[:10]}")
+                        # Print first 2000 chars of the raw JSON
+                        raw_json = json.dumps(data, indent=2)
+                        print(f"   RAW JSON (first 2000 chars):")
+                        print(raw_json[:2000])
+                        print("   ...")
+                        
+                        # Try to find establishments list
+                        items = None
+                        for key in ['establishments', 'data', 'results', 'items', 'clinics', 'etablissements']:
+                            if key in data:
+                                items = data[key]
+                                print(f"   Found '{key}' with {len(items) if isinstance(items, list) else 'non-list'} items")
+                                break
+                        
+                        if items is None and isinstance(data, list):
+                            items = data
+                        
+                        if isinstance(items, list) and len(items) > 0:
+                            print(f"   First item keys: {list(items[0].keys()) if isinstance(items[0], dict) else 'not dict'}")
+                            print(f"   First item sample: {json.dumps(items[0], indent=2)[:500]}")
+                            
+                            # Parse each establishment
+                            for item in items[:20]:
+                                if isinstance(item, dict):
+                                    est_id = str(item.get('establishmentId', item.get('id', item.get('etablissementId', ''))))
+                                    name = item.get('establishmentName', item.get('name', item.get('nom', '')))
+                                    address = item.get('address', item.get('adresse', ''))
+                                    portal_id = str(item.get('portalId', '65252'))
+                                    portal_place = str(item.get('portalPlaceId', item.get('placeId', item.get('portalPlace', ''))))
+                                    services = item.get('servicesUnified', item.get('portalServicesUnified', ''))
+                                    
+                                    # Check for actual availability
+                                    avail = item.get('availabilities', item.get('disponibilites', []))
+                                    has_slots = len(avail) > 0 if isinstance(avail, list) else bool(avail)
+                                    
+                                    if est_id:
+                                        # Build URL like the working one
+                                        formatted_postal = postal_code[:3] + "+" + postal_code[3:]
+                                        clinic_url = f"https://clients3.clicsante.ca/{portal_id}/take-appt"
+                                        params = [
+                                            f"portalEst={est_id}",
+                                            f"portalPostalCode={postal_code[:3]}%20{postal_code[3:]}",
+                                            f"lang=fr",
+                                        ]
+                                        if services:
+                                            params.append(f"portalServicesUnified={services if isinstance(services, str) else ','.join(map(str, services))}")
+                                        if portal_place:
+                                            params.append(f"portalPlace={portal_place}")
+                                        
+                                        clinic_url += "?" + "&".join(params)
+                                        
+                                        clinics.append({
+                                            'name': str(name) if name else 'Clinic',
+                                            'address': str(address) if address else '',
+                                            'url': clinic_url,
+                                            'id': est_id,
+                                            'has_slots': has_slots,
+                                            'source': 'api_availability'
+                                        })
+                    elif isinstance(data, list):
+                        print(f"   List with {len(data)} items")
+                        if len(data) > 0 and isinstance(data[0], dict):
+                            print(f"   First item keys: {list(data[0].keys())}")
+                            print(f"   First item: {json.dumps(data[0], indent=2)[:500]}")
+
+            # Check page body
             body_text = page.inner_text("body").lower()
             no_slots_signals = [
                 "aucune disponibilité", "no availability",
@@ -356,7 +327,7 @@ def check_availability(postal_code_override=None):
             has_negative = any(w in body_text for w in no_slots_signals)
 
             print(f"\n📊 Results:")
-            print(f"   API clinics with slots: {len(clinics)}")
+            print(f"   Clinics with deep links: {len(clinics)}")
             print(f"   Positive signals: {has_positive}")
             print(f"   Negative signals: {has_negative}")
 
@@ -364,33 +335,29 @@ def check_availability(postal_code_override=None):
                 print(f"\n🎉 {len(clinics)} clinic(s) with deep links!")
                 for i, c in enumerate(clinics[:5]):
                     print(f"   {i+1}. {c.get('name', 'Unknown')}")
-                    print(f"      {c.get('url', '')[:100]}")
+                    print(f"      {c.get('url', '')[:120]}")
 
                 best_clinic = clinics[0]
-                best_url = best_clinic['url']
-                best_name = best_clinic.get('name')
-
-                send_notification(postal_code, best_url, best_name)
-                save_availability(postal_code, True, best_url,
-                                f"{len(clinics)} clinics with deep links", clinics[:10])
+                send_notification(postal_code, best_clinic['url'], best_clinic.get('name'))
+                save_availability(postal_code, True, best_clinic['url'],
+                                f"{len(clinics)} clinics", clinics[:10])
                 return True, clinics
 
             elif has_positive and not has_negative:
-                # API didn't give us URLs but page shows availability
-                # Fall back to results page URL
+                # Solid fallback: send the search URL we know works
                 results_url = f"https://portal3.clicsante.ca/?serviceId=227&postalCode={postal_code[:3]}+{postal_code[3:]}"
-                print(f"⚠️ Using results page fallback: {results_url}")
+                print(f"⚠️ Using results page: {results_url}")
                 send_notification(postal_code, results_url)
-                save_availability(postal_code, True, results_url, "Results page fallback", [])
+                save_availability(postal_code, True, results_url, "Results page", [])
                 return True, []
 
             elif has_negative:
-                print(f"❌ No slots available")
+                print(f"❌ No slots")
                 save_availability(postal_code, False, "", "No slots", [])
                 return False, []
 
             else:
-                print(f"⚠️ Uncertain — no notification sent")
+                print(f"⚠️ Uncertain")
                 save_availability(postal_code, False, "", "Uncertain", [])
                 return False, []
 
@@ -415,6 +382,6 @@ if __name__ == "__main__":
         if clinics:
             for c in clinics[:3]:
                 print(f"  - {c.get('name', 'Unknown')}")
-                print(f"    {c.get('url', '')[:100]}")
+                print(f"    {c.get('url', '')[:120]}")
         print(f"{'─'*40}\n")
         time.sleep(3)
