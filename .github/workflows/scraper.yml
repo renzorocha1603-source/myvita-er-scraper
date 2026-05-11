@@ -43,4 +43,5 @@ jobs:
           git add -A
           git status
           git commit -m "Update ER data" || echo "No changes to commit"
-          git push 
+          git pull --rebase origin main
+          git push
