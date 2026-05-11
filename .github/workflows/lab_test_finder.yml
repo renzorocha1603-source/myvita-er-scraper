@@ -1,39 +1,26 @@
 name: Clic Santé Slot Checker
 
 on:
- 
   workflow_dispatch:           # Manual trigger
 
 jobs:
   check:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        postal: ["H1Y3H1", "H4L2B5", "H2X1Y7", "G1R2A3", "J8Y3H1"]
-      max-parallel: 5
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      
+
       - name: Install Playwright
         run: |
           python -m pip install playwright requests firebase-admin
           playwright install chromium --with-deps
       
-      - name: Run Bot for ${{ matrix.postal }}
+      - name: Run Bot
         env:
-          POSTAL_CODE: ${{ matrix.postal }}
           FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
         run: python bot.py
-      
-      - name: Upload availability result
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: availability-${{ matrix.postal }}
-          path: availability_*.json
