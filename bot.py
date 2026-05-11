@@ -313,7 +313,12 @@ def check_availability(postal_code_override=None):
         return False
 
 
+# === 7. MAIN ENTRY POINT ===
+# Loops through all test postal codes. One notification per code.
+
 if __name__ == "__main__":
-    for code in ["H1Y3H1"]:
+    test_codes = ["H1Y3H1", "H4L2B5", "H2X1Y7", "G1R2A3", "J8Y3H1"]
+    
+    for code in test_codes:
         check_availability(code)
-        time.sleep(3)
+        time.sleep(5)
