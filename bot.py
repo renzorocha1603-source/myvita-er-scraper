@@ -98,7 +98,6 @@ def send_single_notification(user_postal: str, clinics: list):
         print("⚠️ No clinics to notify")
         return
 
-    # Dedup guard
     cache_key = f"{user_postal}"
     now = time.time()
     if cache_key in _recent_notifications:
@@ -218,6 +217,11 @@ def search_single_code(postal_code: str, browser_context) -> list:
             items = data if isinstance(data, list) else data.get('establishments', data.get('data', data.get('results', [])))
 
             if isinstance(items, list):
+                # ★ DEBUG: Print first item keys to find real name field
+                if items and len(items) > 0 and isinstance(items[0], dict):
+                    print(f"   🔑 API keys: {list(items[0].keys())[:25]}")
+                    print(f"   🔑 Sample: {json.dumps(items[0], indent=2)[:600]}")
+                
                 for item in items:
                     if not isinstance(item, dict):
                         continue
@@ -228,7 +232,6 @@ def search_single_code(postal_code: str, browser_context) -> list:
                     if est_id and est_id not in seen_ids and len(est_id) >= 3:
                         seen_ids.add(est_id)
 
-                        # ★ WORKING URL FORMAT — portalId 65252 for blood-test
                         portal_id = str(item.get('portalId', '65252'))
                         deep_link = f"https://clients3.clicsante.ca/{portal_id}/take-appt"
                         params = [
@@ -314,7 +317,6 @@ def check_availability(postal_code_override=None):
 
 
 # === 7. MAIN ENTRY POINT ===
-# Loops through all test postal codes. One notification per code.
 
 if __name__ == "__main__":
     test_codes = ["H1Y3H1", "H4L2B5", "H2X1Y7", "G1R2A3", "J8Y3H1"]
