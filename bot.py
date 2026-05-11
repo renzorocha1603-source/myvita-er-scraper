@@ -85,35 +85,33 @@ def get_user_token():
     except: pass
     return None
 
-# === 4. NOTIFICATION (with dedup guard) ===
+# === 4. NOTIFICATION ===
 
-_recent_notifications = {}
-
-def send_single_notification(user_postal: str, clinics: list):
+def send_final_notification(user_postal: str, all_results: dict):
+    """Send ONE notification after all postal codes are searched."""
     token = get_user_token()
     if not token:
         print("⚠️ No FCM token")
         return
-    if not clinics:
+
+    # Flatten all clinics from all codes
+    all_clinics = []
+    seen_ids = set()
+    for code, clinics in all_results.items():
+        for clinic in clinics:
+            if clinic['id'] not in seen_ids:
+                seen_ids.add(clinic['id'])
+                all_clinics.append(clinic)
+
+    if not all_clinics:
         print("⚠️ No clinics to notify")
         return
 
-    cache_key = f"{user_postal}"
-    now = time.time()
-    if cache_key in _recent_notifications:
-        elapsed = now - _recent_notifications[cache_key]
-        if elapsed < 600:
-            print(f"⚠️ Duplicate notification suppressed ({elapsed:.0f}s since last)")
-            return
-    _recent_notifications[cache_key] = now
-
-    top = clinics[:5]
-    lines = [f"🎉 {len(clinics)} créneaux près de {user_postal}:"]
+    top = all_clinics[:5]
+    lines = [f"🎉 {len(all_clinics)} créneaux près de {user_postal}:"]
     for i, c in enumerate(top):
-        name = c.get('name', 'Clinic')[:40]
-        dist = c.get('distance', '')
-        dist_str = f" ({dist})" if dist else ""
-        lines.append(f"{i+1}. {name}{dist_str}")
+        name = c.get('name', 'Clinic')[:50]
+        lines.append(f"{i+1}. {name}")
 
     body = "\n".join(lines)
     if len(body) > 250:
@@ -126,7 +124,7 @@ def send_single_notification(user_postal: str, clinics: list):
             data={"url": best_url, "postal_code": user_postal},
             token=token,
         ))
-        print(f"✅ Notification sent: {len(clinics)} clinics, {len(top)} shown")
+        print(f"✅ ONE notification sent: {len(all_clinics)} total clinics, {len(top)} shown")
     except Exception as e:
         print(f"❌ FCM Error: {e}")
 
@@ -217,37 +215,44 @@ def search_single_code(postal_code: str, browser_context) -> list:
             items = data if isinstance(data, list) else data.get('establishments', data.get('data', data.get('results', [])))
 
             if isinstance(items, list):
-                # ★ DEBUG: Print first item keys to find real name field
-                if items and len(items) > 0 and isinstance(items[0], dict):
-                    print(f"   🔑 API keys: {list(items[0].keys())[:25]}")
-                    print(f"   🔑 Sample: {json.dumps(items[0], indent=2)[:600]}")
-                
                 for item in items:
                     if not isinstance(item, dict):
                         continue
-                    est_id = str(item.get('id') or item.get('establishmentId') or item.get('etablissementId', ''))
-                    name = item.get('name') or item.get('nom') or item.get('establishmentName', '')
-                    distance = item.get('distance', item.get('distanceKm', ''))
+                    
+                    # ★ Only process items with a 'name' field (real establishments, not service templates)
+                    name = item.get('name', '')
+                    if not name:
+                        continue
+                    
+                    est_id = str(item.get('id', ''))
+                    if not est_id or len(est_id) < 3:
+                        continue
+                    
+                    if est_id in seen_ids:
+                        continue
+                    
+                    seen_ids.add(est_id)
 
-                    if est_id and est_id not in seen_ids and len(est_id) >= 3:
-                        seen_ids.add(est_id)
+                    address = item.get('address', '')
+                    public_url = item.get('public_url', '')
+                    phone = item.get('phone', '')
+                    establishment_type = item.get('establishment_type', '')
 
-                        portal_id = str(item.get('portalId', '65252'))
-                        deep_link = f"https://clients3.clicsante.ca/{portal_id}/take-appt"
-                        params = [
-                            f"portalEst={est_id}",
-                            f"portalPostalCode={postal_code}",
-                            f"lang=fr"
-                        ]
-                        deep_link += "?" + "&".join(params)
+                    # ★ Build URL — prefer public_url from API
+                    if public_url:
+                        deep_link = public_url
+                    else:
+                        deep_link = f"https://clients3.clicsante.ca/65252/take-appt?portalEst={est_id}&portalPostalCode={postal_code}&lang=fr"
 
-                        clinics.append({
-                            'id': est_id,
-                            'name': str(name)[:80] if name else f'Clinic {est_id}',
-                            'url': deep_link,
-                            'distance': str(distance) if distance else '',
-                            'source': 'api_intercept'
-                        })
+                    clinics.append({
+                        'id': est_id,
+                        'name': str(name)[:80],
+                        'address': str(address)[:120] if address else '',
+                        'phone': str(phone) if phone else '',
+                        'url': deep_link,
+                        'type': str(establishment_type) if establishment_type else '',
+                        'source': 'api_intercept'
+                    })
 
     except Exception as e:
         print(f"   ⚠️ Error: {e}")
@@ -259,8 +264,8 @@ def search_single_code(postal_code: str, browser_context) -> list:
 # === 6. MAIN ===
 
 def check_availability(postal_code_override=None):
+    """Collect results for ONE postal code. Returns list of clinics."""
     user_postal = postal_code_override or os.getenv("POSTAL_CODE", "H1Y3H1").replace(" ", "")
-
     search_codes = generate_search_codes(user_postal)
 
     print(f"\n{'='*60}")
@@ -301,26 +306,66 @@ def check_availability(postal_code_override=None):
         finally:
             browser.close()
 
-    print(f"\n{'='*60}")
-    print(f"📊 FINAL: {user_postal} → {len(all_clinics)} unique clinics")
-
-    if all_clinics:
-        for i, c in enumerate(all_clinics[:5]):
-            dist = f" ({c['distance']})" if c['distance'] else ""
-            print(f"   {i+1}. {c['name'][:50]}{dist}")
-        send_single_notification(user_postal, all_clinics)
-        save_availability(user_postal, all_clinics)
-        return True
-    else:
-        print("   ❌ No clinics found")
-        return False
+    print(f"   📊 {user_postal}: {len(all_clinics)} unique clinics")
+    return all_clinics
 
 
 # === 7. MAIN ENTRY POINT ===
+# Collects ALL results first, then sends ONE notification at the end
 
 if __name__ == "__main__":
     test_codes = ["H1Y3H1", "H4L2B5", "H2X1Y7", "G1R2A3", "J8Y3H1"]
     
+    all_results = {}
+    
     for code in test_codes:
-        check_availability(code)
+        clinics = check_availability(code)
+        all_results[code] = clinics
+        if clinics:
+            for i, c in enumerate(clinics[:3]):
+                extra = f" — {c['address'][:60]}" if c.get('address') else ""
+                print(f"      {i+1}. {c['name'][:60]}{extra}")
         time.sleep(5)
+    
+    # ── COLLECT ALL, SEND ONE ──
+    # Flatten and deduplicate across all postal codes
+    all_clinics = []
+    seen_all = set()
+    for code, clinics in all_results.items():
+        for clinic in clinics:
+            if clinic['id'] not in seen_all:
+                seen_all.add(clinic['id'])
+                all_clinics.append(clinic)
+    
+    print(f"\n{'='*60}")
+    print(f"🏁 FINAL: {len(all_clinics)} unique clinics across all codes")
+    
+    if all_clinics:
+        for i, c in enumerate(all_clinics[:10]):
+            extra = f" — {c['address'][:60]}" if c.get('address') else ""
+            print(f"   {i+1}. {c['name'][:60]}{extra}")
+        
+        # Send ONE notification with all results
+        token = get_user_token()
+        if token:
+            top = all_clinics[:5]
+            lines = [f"🎉 {len(all_clinics)} créneaux disponibles:"]
+            for i, c in enumerate(top):
+                name = c.get('name', 'Clinic')[:50]
+                lines.append(f"{i+1}. {name}")
+            body = "\n".join(lines)
+            if len(body) > 250:
+                body = body[:247] + "..."
+            best_url = top[0].get('url', 'https://portal3.clicsante.ca/services/blood-test')
+            
+            try:
+                messaging.send(messaging.Message(
+                    notification=messaging.Notification(title="🎉 Rendez-vous disponibles!", body=body),
+                    data={"url": best_url, "postal_code": test_codes[0]},
+                    token=token,
+                ))
+                print(f"\n✅ ONE notification sent with {len(top)} clinics shown")
+            except Exception as e:
+                print(f"❌ FCM Error: {e}")
+        
+        save_availability(test_codes[0], all_clinics)
