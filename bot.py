@@ -79,7 +79,8 @@ except Exception as e:
 
 # === 3. UTILITIES ===
 
-def human_delay(min_sec=0.8, max_sec=2.5):
+def human_delay(min_sec=0.5, max_sec=3.0):
+    """★ STEALTH: Wider random delay range — more human-like variance."""
     time.sleep(random.uniform(min_sec, max_sec))
 
 def get_user_token():
@@ -92,7 +93,102 @@ def get_user_token():
     except: pass
     return None
 
-# === 4. NOTIFICATION ===
+# === 4. STEALTH ENGINE ===
+
+# ★ Pool of realistic user agents
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+]
+
+# ★ Random viewport sizes — different screen resolutions
+VIEWPORT_SIZES = [
+    {"width": 1366, "height": 768},
+    {"width": 1440, "height": 900},
+    {"width": 1536, "height": 864},
+    {"width": 1280, "height": 720},
+    {"width": 1600, "height": 900},
+    {"width": 1920, "height": 1080},
+]
+
+# ★ Canvas fingerprint evasion script
+CANVAS_EVASION_SCRIPT = """
+// Spoof canvas fingerprint
+const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
+HTMLCanvasElement.prototype.toDataURL = function(type) {
+    const context = this.getContext('2d');
+    if (context) {
+        const imageData = context.getImageData(0, 0, this.width, this.height);
+        // Add subtle random noise to canvas data
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            imageData.data[i] += Math.floor(Math.random() * 2);
+        }
+        context.putImageData(imageData, 0, 0);
+    }
+    return originalToDataURL.apply(this, arguments);
+};
+
+// Spoof WebGL fingerprint
+const getParameter = WebGLRenderingContext.prototype.getParameter;
+WebGLRenderingContext.prototype.getParameter = function(parameter) {
+    if (parameter === 37445) return 'Intel Inc.';
+    if (parameter === 37446) return 'Intel Iris OpenGL Engine';
+    return getParameter.call(this, parameter);
+};
+
+// Hide automation traces
+Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]});
+Object.defineProperty(navigator, 'languages', {get: () => ['fr-CA', 'fr', 'en-CA', 'en']});
+"""
+
+def launch_stealth_browser(p):
+    """★ STEALTH: Launch browser with randomized fingerprint."""
+    browser = p.chromium.launch(
+        headless=True,
+        args=[
+            "--no-sandbox",
+            "--disable-blink-features=AutomationControlled",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+            "--disable-infobars",
+            "--disable-setuid-sandbox",
+            "--disable-web-security",
+            "--disable-features=IsolateOrigins,site-per-process",
+        ]
+    )
+    
+    # ★ Random viewport size
+    viewport = random.choice(VIEWPORT_SIZES)
+    
+    # ★ Random user agent
+    user_agent = random.choice(USER_AGENTS)
+    
+    context = browser.new_context(
+        viewport=viewport,
+        user_agent=user_agent,
+        locale="fr-CA",
+        timezone_id="America/Toronto",
+        # ★ Block unnecessary resources for speed + stealth
+        extra_http_headers={
+            "Accept-Language": "fr-CA,fr;q=0.9,en-CA;q=0.8,en;q=0.7",
+        }
+    )
+    
+    # ★ Canvas + WebGL fingerprint evasion
+    context.add_init_script(CANVAS_EVASION_SCRIPT)
+    
+    # ★ Block images, fonts, CSS for speed (ClicSanté SPA doesn't need them for API calls)
+    context.route("**/*.{png,jpg,jpeg,gif,svg,css,font,woff,woff2,ico}", 
+                  lambda route: route.abort())
+    
+    return browser, context
+
+# === 5. NOTIFICATION ===
 
 def send_notifications(user_postal: str, clinics: list):
     """Send up to 3 notifications — one per clinic."""
@@ -104,7 +200,6 @@ def send_notifications(user_postal: str, clinics: list):
         print("⚠️ No clinics to notify")
         return
 
-    # Send up to 3 notifications, each for a different clinic
     count = min(3, len(clinics))
     sent = 0
     
@@ -123,7 +218,7 @@ def send_notifications(user_postal: str, clinics: list):
             ))
             sent += 1
             print(f"   📱 Notif {i+1}: {name}")
-            time.sleep(1)  # Small delay between notifications
+            time.sleep(random.uniform(0.8, 1.5))
         except Exception as e:
             print(f"   ❌ FCM Error for {name}: {e}")
     
@@ -159,7 +254,7 @@ def save_clinic_to_database(clinic: dict):
     except:
         pass
 
-# === 5. SINGLE CODE SEARCH ===
+# === 6. SINGLE CODE SEARCH ===
 
 def search_single_code(postal_code: str, browser_context) -> list:
     clinics = []
@@ -180,13 +275,16 @@ def search_single_code(postal_code: str, browser_context) -> list:
     page.on("response", on_response)
 
     try:
+        # ★ STEALTH: Random initial delay before loading
+        human_delay(1.0, 3.5)
+        
         page.goto("https://portal3.clicsante.ca/services/blood-test", 
                  wait_until="networkidle", timeout=45000)
-        human_delay(1.5, 3)
+        human_delay(1.5, 4)
 
         try:
             page.keyboard.press("Escape")
-            time.sleep(0.3)
+            time.sleep(random.uniform(0.2, 0.5))
         except:
             pass
 
@@ -196,16 +294,22 @@ def search_single_code(postal_code: str, browser_context) -> list:
                 break
             except:
                 continue
-        human_delay(0.5, 1)
+        human_delay(0.4, 1.2)
 
         try:
-            page.get_by_placeholder("ex. A1A 1A1").fill(postal_code)
+            field = page.get_by_placeholder("ex. A1A 1A1")
+            field.click()
+            human_delay(0.1, 0.3)
+            field.fill(postal_code)
         except:
             try:
-                page.locator("input[type='text']").first.fill(postal_code)
+                field = page.locator("input[type='text']").first
+                field.click()
+                human_delay(0.1, 0.3)
+                field.fill(postal_code)
             except:
                 pass
-        human_delay(0.5, 1)
+        human_delay(0.4, 1.2)
 
         for btn_text in ["Search", "Rechercher", "Chercher"]:
             try:
@@ -214,13 +318,13 @@ def search_single_code(postal_code: str, browser_context) -> list:
             except:
                 continue
 
-        human_delay(8, 12)
+        human_delay(8, 14)
 
         try:
             el = page.locator("text=~").first
             if el.count() > 0 and el.is_visible():
                 el.click(timeout=3000)
-                human_delay(2, 4)
+                human_delay(1.5, 4)
         except:
             pass
 
@@ -269,7 +373,6 @@ def search_single_code(postal_code: str, browser_context) -> list:
                     }
                     
                     clinics.append(clinic)
-                    # Save to permanent database
                     save_clinic_to_database(clinic)
 
     except Exception as e:
@@ -279,7 +382,7 @@ def search_single_code(postal_code: str, browser_context) -> list:
 
     return clinics
 
-# === 6. MAIN ===
+# === 7. MAIN ===
 
 def check_availability(postal_code_override=None):
     """Collect results for ONE postal code. Returns list of clinics."""
@@ -295,15 +398,7 @@ def check_availability(postal_code_override=None):
     seen_ids = set()
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=True,
-            args=["--no-sandbox", "--disable-blink-features=AutomationControlled"]
-        )
-        context = browser.new_context(
-            viewport={"width": 1280, "height": 800},
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        )
-        context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        browser, context = launch_stealth_browser(p)
 
         try:
             for i, code in enumerate(search_codes):
@@ -320,7 +415,7 @@ def check_availability(postal_code_override=None):
                 print(f"   ✅ {len(clinics)} found, {new_count} new (total: {len(all_clinics)})")
 
                 if i < len(search_codes) - 1:
-                    human_delay(2, 4)
+                    human_delay(1.5, 4)
         finally:
             browser.close()
 
@@ -328,7 +423,7 @@ def check_availability(postal_code_override=None):
     return all_clinics
 
 
-# === 7. MAIN ENTRY POINT ===
+# === 8. MAIN ENTRY POINT ===
 
 if __name__ == "__main__":
     test_codes = ["H1Y3H1", "H4L2B5", "H2X1Y7", "G1R2A3", "J8Y3H1"]
@@ -344,8 +439,6 @@ if __name__ == "__main__":
                 print(f"      {i+1}. {c['name'][:60]}{extra}")
         time.sleep(5)
     
-    # ── SEND NOTIFICATIONS ──
-    # Flatten and deduplicate across all postal codes
     all_clinics = []
     seen_all = set()
     for code, clinics in all_results.items():
@@ -363,7 +456,6 @@ if __name__ == "__main__":
             extra = f" — {c['address'][:60]}" if c.get('address') else ""
             print(f"   {i+1}. {c['name'][:60]}{extra}")
         
-        # Send up to 3 notifications (one per clinic)
         token = get_user_token()
         if token:
             count = min(3, len(all_clinics))
@@ -380,7 +472,7 @@ if __name__ == "__main__":
                         token=token,
                     ))
                     print(f"   📱 Notif {i+1}: {name}")
-                    time.sleep(1)
+                    time.sleep(random.uniform(0.8, 1.5))
                 except Exception as e:
                     print(f"   ❌ Error: {e}")
             print(f"\n✅ {count} notification(s) sent")
