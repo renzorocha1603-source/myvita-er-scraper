@@ -42,14 +42,14 @@ def generate_search_codes(postal_code: str) -> list:
     """Claude's fix: deduplicate, include user's code first, max 4 searches."""
     fsas = get_zone_group(postal_code)
     suffix = postal_code[3:]
-    codes = [postal_code]  # User's own code first
-    
+    codes = [postal_code]
+
     for fsa in fsas[:3]:
         candidate = f"{fsa}{suffix}"
         if candidate not in codes:
             codes.append(candidate)
-    
-    return codes[:4]  # Max 4 searches
+
+    return codes[:4]
 
 # === 2. FIREBASE SETUP ===
 db = None
@@ -93,20 +93,12 @@ def get_user_language(postal_code: str = None) -> str:
     lang = os.getenv("USER_LANGUAGE", "").lower()
     if lang in ('en', 'fr'):
         return lang
-    if db and postal_code:
-        try:
-            # Try to find user by zone
-            zone = postal_code[:3].upper()
-            docs = db.collection('users').where('language', 'in', ['en', 'fr']).limit(1).stream()
-            for doc in docs:
-                lang = doc.to_dict().get('language', '').lower()
-                if lang in ('en', 'fr'):
-                    return lang
-        except:
-            pass
     return 'fr'  # Quebec default
 
-# === 4. NOTIFICATION ===
+# === 4. NOTIFICATION (with dedup guard) ===
+
+# Track recent notifications to prevent duplicates
+_recent_notifications = {}
 
 def send_single_notification(user_postal: str, clinics: list):
     token = get_user_token()
@@ -117,6 +109,17 @@ def send_single_notification(user_postal: str, clinics: list):
         print("⚠️ No clinics to notify")
         return
 
+    # ★ DEDUP GUARD: Skip if same notification sent within 10 minutes
+    cache_key = f"{user_postal}"
+    now = time.time()
+    if cache_key in _recent_notifications:
+        elapsed = now - _recent_notifications[cache_key]
+        if elapsed < 600:
+            print(f"⚠️ Duplicate notification suppressed ({elapsed:.0f}s since last)")
+            return
+    
+    _recent_notifications[cache_key] = now
+
     top = clinics[:5]
     lines = [f"🎉 {len(clinics)} créneaux près de {user_postal}:"]
     for i, c in enumerate(top):
@@ -124,7 +127,7 @@ def send_single_notification(user_postal: str, clinics: list):
         dist = c.get('distance', '')
         dist_str = f" ({dist})" if dist else ""
         lines.append(f"{i+1}. {name}{dist_str}")
-    
+
     body = "\n".join(lines)
     if len(body) > 250:
         body = body[:247] + "..."
@@ -175,7 +178,6 @@ def search_single_code(postal_code: str, browser_context) -> list:
 
     page.on("response", on_response)
 
-    # Get language for this search
     lang = get_user_language(postal_code)
 
     try:
@@ -215,7 +217,6 @@ def search_single_code(postal_code: str, browser_context) -> list:
 
         human_delay(8, 12)
 
-        # Click first clinic to trigger more API calls
         try:
             el = page.locator("text=~").first
             if el.count() > 0 and el.is_visible():
@@ -224,12 +225,11 @@ def search_single_code(postal_code: str, browser_context) -> list:
         except:
             pass
 
-        # Parse API responses
         seen_ids = set()
         for resp in captured_responses:
             data = resp.get('data', {})
             items = data if isinstance(data, list) else data.get('establishments', data.get('data', data.get('results', [])))
-            
+
             if isinstance(items, list):
                 for item in items:
                     if not isinstance(item, dict):
@@ -238,11 +238,10 @@ def search_single_code(postal_code: str, browser_context) -> list:
                     name = item.get('name') or item.get('nom') or item.get('establishmentName', '')
                     distance = item.get('distance', item.get('distanceKm', ''))
                     portal_id = str(item.get('portalId', ''))
-                    
+
                     if est_id and est_id not in seen_ids and len(est_id) >= 3:
                         seen_ids.add(est_id)
-                        
-                        # Claude's fix #1: Build URL based on whether we have portalId
+
                         if portal_id:
                             deep_link = f"https://clients3.clicsante.ca/{portal_id}/take-appt"
                             params = [
@@ -252,9 +251,8 @@ def search_single_code(postal_code: str, browser_context) -> list:
                             ]
                             deep_link += "?" + "&".join(params)
                         else:
-                            # Fallback: establishment page
                             deep_link = f"https://portal3.clicsante.ca/etablissement/{est_id}"
-                        
+
                         clinics.append({
                             'id': est_id,
                             'name': str(name)[:80] if name else f'Clinic {est_id}',
@@ -274,10 +272,10 @@ def search_single_code(postal_code: str, browser_context) -> list:
 
 def check_availability(postal_code_override=None):
     user_postal = postal_code_override or os.getenv("POSTAL_CODE", "H1Y3H1").replace(" ", "")
-    
+
     search_codes = generate_search_codes(user_postal)
     lang = get_user_language(user_postal)
-    
+
     print(f"\n{'='*60}")
     print(f"🚀 ClicSanté Search: {user_postal}")
     print(f"   Language: {lang}")
@@ -302,16 +300,16 @@ def check_availability(postal_code_override=None):
             for i, code in enumerate(search_codes):
                 print(f"\n🔍 [{i+1}/{len(search_codes)}] {code}")
                 clinics = search_single_code(code, context)
-                
+
                 new_count = 0
                 for clinic in clinics:
                     if clinic['id'] not in seen_ids:
                         seen_ids.add(clinic['id'])
                         all_clinics.append(clinic)
                         new_count += 1
-                
+
                 print(f"   ✅ {len(clinics)} found, {new_count} new (total: {len(all_clinics)})")
-                
+
                 if i < len(search_codes) - 1:
                     human_delay(2, 4)
         finally:
@@ -319,11 +317,12 @@ def check_availability(postal_code_override=None):
 
     print(f"\n{'='*60}")
     print(f"📊 FINAL: {user_postal} → {len(all_clinics)} unique clinics")
-    
+
     if all_clinics:
         for i, c in enumerate(all_clinics[:5]):
             dist = f" ({c['distance']})" if c['distance'] else ""
             print(f"   {i+1}. {c['name'][:50]}{dist}")
+        # ★ Only ONE notification call, after all searches complete
         send_single_notification(user_postal, all_clinics)
         save_availability(user_postal, all_clinics)
         return True
