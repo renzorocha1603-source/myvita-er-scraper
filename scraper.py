@@ -17,6 +17,16 @@ OUTPUT_FILE = "er_data.json"
 BACKUP_FILE = "er_data_backup.json"
 HEALTH_FILE = "health_check.json"
 
+# ★ STEALTH: Realistic headers to avoid 403 blocks
+STEALTH_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept': 'text/csv,application/csv,text/plain,application/json,*/*',
+    'Accept-Language': 'fr-CA,fr;q=0.9,en-CA;q=0.8,en;q=0.7',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Connection': 'keep-alive',
+    'Cache-Control': 'max-age=0',
+}
+
 def safe_int(value):
     try:
         if isinstance(value, int):
@@ -74,7 +84,7 @@ def get_live_data():
     try:
         response = requests.get(
             url, 
-            headers={'User-Agent': 'Mozilla/5.0'},
+            headers=STEALTH_HEADERS,
             timeout=30
         )
         
@@ -125,7 +135,7 @@ def get_csv_url():
     try:
         response = requests.get(
             CKAN_RESOURCE_API, 
-            headers={'User-Agent': 'Mozilla/5.0'}, 
+            headers=STEALTH_HEADERS, 
             timeout=15
         )
         if response.status_code == 200:
@@ -141,29 +151,31 @@ def get_csv_url():
     return MSSS_DIRECT_URL
 
 def download_csv_as_json(url):
-    """Layer 2b: Download CSV and parse it"""
+    """Layer 2b: Download CSV and parse it — ★ STEALTH HEADERS to avoid 403"""
     print(f"   [Layer 2b] Downloading CSV...")
     
     try:
+        # ★ Use stealth headers to avoid 403 Forbidden
         response = requests.get(
             url, 
-            headers={
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Accept': 'text/csv,application/csv,text/plain',
-                'Accept-Language': 'fr-CA,fr;q=0.9,en;q=0.8',
-            }, 
+            headers=STEALTH_HEADERS,
             timeout=30
         )
         if response.status_code != 200:
             print(f"   ❌ HTTP {response.status_code}")
-            return None, None
+            # Retry once with delay
+            time.sleep(2)
+            response = requests.get(url, headers=STEALTH_HEADERS, timeout=30)
+            if response.status_code != 200:
+                print(f"   ❌ Retry also failed: HTTP {response.status_code}")
+                return None, None
         
         content = response.content
         text = None
         for encoding in ['utf-8-sig', 'utf-8', 'latin-1', 'iso-8859-1']:
             try:
                 text = content.decode(encoding)
-                if 'installation' in text.lower():
+                if 'installation' in text.lower() or 'etablissement' in text.lower():
                     break
             except:
                 continue
@@ -298,7 +310,7 @@ def main():
     # Layer 1: CKAN Datastore API
     hospitals, gov_time = get_live_data()
     
-    # Layer 2: CSV fallback with auto-detecting columns
+    # Layer 2: CSV fallback with stealth headers
     if not hospitals:
         csv_url = get_csv_url()
         hospitals, gov_time = download_csv_as_json(csv_url)
