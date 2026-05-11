@@ -39,16 +39,13 @@ def get_zone_group(postal_code: str) -> list:
     return [fsa]
 
 def generate_search_codes(postal_code: str) -> list:
-    """Claude's fix: deduplicate, include user's code first, max 4 searches."""
     fsas = get_zone_group(postal_code)
     suffix = postal_code[3:]
     codes = [postal_code]
-
     for fsa in fsas[:3]:
         candidate = f"{fsa}{suffix}"
         if candidate not in codes:
             codes.append(candidate)
-
     return codes[:4]
 
 # === 2. FIREBASE SETUP ===
@@ -88,16 +85,8 @@ def get_user_token():
     except: pass
     return None
 
-def get_user_language(postal_code: str = None) -> str:
-    """Claude's fix: detect user language from Firestore or env."""
-    lang = os.getenv("USER_LANGUAGE", "").lower()
-    if lang in ('en', 'fr'):
-        return lang
-    return 'fr'  # Quebec default
-
 # === 4. NOTIFICATION (with dedup guard) ===
 
-# Track recent notifications to prevent duplicates
 _recent_notifications = {}
 
 def send_single_notification(user_postal: str, clinics: list):
@@ -109,7 +98,7 @@ def send_single_notification(user_postal: str, clinics: list):
         print("⚠️ No clinics to notify")
         return
 
-    # ★ DEDUP GUARD: Skip if same notification sent within 10 minutes
+    # Dedup guard
     cache_key = f"{user_postal}"
     now = time.time()
     if cache_key in _recent_notifications:
@@ -117,7 +106,6 @@ def send_single_notification(user_postal: str, clinics: list):
         if elapsed < 600:
             print(f"⚠️ Duplicate notification suppressed ({elapsed:.0f}s since last)")
             return
-    
     _recent_notifications[cache_key] = now
 
     top = clinics[:5]
@@ -178,8 +166,6 @@ def search_single_code(postal_code: str, browser_context) -> list:
 
     page.on("response", on_response)
 
-    lang = get_user_language(postal_code)
-
     try:
         page.goto("https://portal3.clicsante.ca/services/blood-test", 
                  wait_until="networkidle", timeout=45000)
@@ -225,6 +211,7 @@ def search_single_code(postal_code: str, browser_context) -> list:
         except:
             pass
 
+        # Parse API responses
         seen_ids = set()
         for resp in captured_responses:
             data = resp.get('data', {})
@@ -237,21 +224,19 @@ def search_single_code(postal_code: str, browser_context) -> list:
                     est_id = str(item.get('id') or item.get('establishmentId') or item.get('etablissementId', ''))
                     name = item.get('name') or item.get('nom') or item.get('establishmentName', '')
                     distance = item.get('distance', item.get('distanceKm', ''))
-                    portal_id = str(item.get('portalId', ''))
 
                     if est_id and est_id not in seen_ids and len(est_id) >= 3:
                         seen_ids.add(est_id)
 
-                        if portal_id:
-                            deep_link = f"https://clients3.clicsante.ca/{portal_id}/take-appt"
-                            params = [
-                                f"portalEst={est_id}",
-                                f"portalPostalCode={postal_code}",
-                                f"lang={lang}"
-                            ]
-                            deep_link += "?" + "&".join(params)
-                        else:
-                            deep_link = f"https://portal3.clicsante.ca/etablissement/{est_id}"
+                        # ★ WORKING URL FORMAT — portalId 65252 for blood-test
+                        portal_id = str(item.get('portalId', '65252'))
+                        deep_link = f"https://clients3.clicsante.ca/{portal_id}/take-appt"
+                        params = [
+                            f"portalEst={est_id}",
+                            f"portalPostalCode={postal_code}",
+                            f"lang=fr"
+                        ]
+                        deep_link += "?" + "&".join(params)
 
                         clinics.append({
                             'id': est_id,
@@ -274,11 +259,9 @@ def check_availability(postal_code_override=None):
     user_postal = postal_code_override or os.getenv("POSTAL_CODE", "H1Y3H1").replace(" ", "")
 
     search_codes = generate_search_codes(user_postal)
-    lang = get_user_language(user_postal)
 
     print(f"\n{'='*60}")
     print(f"🚀 ClicSanté Search: {user_postal}")
-    print(f"   Language: {lang}")
     print(f"   Searching {len(search_codes)} codes: {search_codes}")
     print(f"{'='*60}")
 
@@ -322,7 +305,6 @@ def check_availability(postal_code_override=None):
         for i, c in enumerate(all_clinics[:5]):
             dist = f" ({c['distance']})" if c['distance'] else ""
             print(f"   {i+1}. {c['name'][:50]}{dist}")
-        # ★ Only ONE notification call, after all searches complete
         send_single_notification(user_postal, all_clinics)
         save_availability(user_postal, all_clinics)
         return True
