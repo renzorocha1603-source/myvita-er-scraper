@@ -14,16 +14,23 @@ ZONE_GROUPS = {
     "montreal_east": ["H1Y", "H1A", "H1B", "H1C", "H1Z", "H1W", "H1V"],
     "montreal_north": ["H1H", "H1J", "H4L", "H4M", "H2E", "H2G", "H2H", "H3N", "H3L"],
     "montreal_central": ["H2X", "H3A", "H3B", "H2Y", "H3C", "H3G", "H3H", "H2Z"],
-    "montreal_west": ["H3Z", "H4A", "H4B", "H4C", "H4V", "H4W"],
+    "montreal_west": ["H3Z", "H4A", "H4B", "H4C", "H4V", "H4W", "H9R", "H9S"],
     "montreal_south": ["H3E", "H3J", "H3K", "H4E", "H4G", "H4H", "H4J", "H4K"],
     "laval": ["H7T", "H7V", "H7W", "H7X", "H7Y", "H7Z"],
-    "longueuil": ["J4K", "J4L", "J4M", "J4N", "J4P", "J4R"],
-    "quebec_central": ["G1R", "G1S", "G1K", "G1L", "G1M", "G1N"],
-    "quebec_ste_foy": ["G1V", "G1W", "G1X", "G1Y"],
-    "gatineau_hull": ["J8Y", "J8Z", "J8X", "J8V", "J8W"],
-    "sherbrooke": ["J1H", "J1K", "J1L", "J1M", "J1N"],
-    "trois_rivieres": ["G8Z", "G9A", "G9B", "G9C"],
-    "saguenay": ["G7H", "G7X", "G7Y", "G7Z"],
+    "longueuil": ["J4K", "J4L", "J4M", "J4N", "J4P", "J4R", "J4S", "J4T"],
+    "quebec_central": ["G1R", "G1S", "G1K", "G1L", "G1M", "G1N", "G1P", "G1T"],
+    "quebec_ste_foy": ["G1V", "G1W", "G1X", "G1Y", "G2B", "G2C"],
+    "gatineau_hull": ["J8Y", "J8Z", "J8X", "J8V", "J8W", "J8T", "J8P"],
+    "gatineau_aylmer": ["J9A", "J9B", "J9H", "J9J", "J9X", "J9Y"],
+    "sherbrooke": ["J1H", "J1K", "J1L", "J1M", "J1N", "J1X", "J1Y"],
+    "trois_rivieres": ["G8Z", "G9A", "G9B", "G9C", "G8T", "G8V"],
+    "saguenay": ["G7H", "G7X", "G7Y", "G7Z", "G7B", "G7J"],
+    "outaouais_rural": ["J0X", "J0V", "J0W", "J0Y", "J0Z"],
+    "laurentides": ["J7V", "J7W", "J7X", "J7Y", "J7Z", "J8A", "J8B", "J8C"],
+    "monteregie": ["J2W", "J2X", "J2Y", "J3A", "J3B", "J3E", "J3G", "J3H", "J3L", "J3M", "J3P"],
+    "estrie": ["J0A", "J0B", "J0C", "J0E", "J0H", "J0J", "J0K", "J0L", "J0M"],
+    "mauricie": ["G8Z", "G9A", "G9B", "G9C", "G8T", "G8V", "G8W", "G8Y"],
+    "bas_st_laurent": ["G0K", "G0L", "G0M", "G5L", "G5M", "G5N", "G5R", "G5T"],
 }
 
 FSA_TO_ZONE = {}
@@ -87,46 +94,40 @@ def get_user_token():
 
 # === 4. NOTIFICATION ===
 
-def send_final_notification(user_postal: str, all_results: dict):
-    """Send ONE notification after all postal codes are searched."""
+def send_notifications(user_postal: str, clinics: list):
+    """Send up to 3 notifications — one per clinic."""
     token = get_user_token()
     if not token:
         print("⚠️ No FCM token")
         return
-
-    # Flatten all clinics from all codes
-    all_clinics = []
-    seen_ids = set()
-    for code, clinics in all_results.items():
-        for clinic in clinics:
-            if clinic['id'] not in seen_ids:
-                seen_ids.add(clinic['id'])
-                all_clinics.append(clinic)
-
-    if not all_clinics:
+    if not clinics:
         print("⚠️ No clinics to notify")
         return
 
-    top = all_clinics[:5]
-    lines = [f"🎉 {len(all_clinics)} créneaux près de {user_postal}:"]
-    for i, c in enumerate(top):
-        name = c.get('name', 'Clinic')[:50]
-        lines.append(f"{i+1}. {name}")
-
-    body = "\n".join(lines)
-    if len(body) > 250:
-        body = body[:247] + "..."
-    best_url = top[0].get('url', 'https://portal3.clicsante.ca/services/blood-test')
-
-    try:
-        messaging.send(messaging.Message(
-            notification=messaging.Notification(title="🎉 Rendez-vous disponibles!", body=body),
-            data={"url": best_url, "postal_code": user_postal},
-            token=token,
-        ))
-        print(f"✅ ONE notification sent: {len(all_clinics)} total clinics, {len(top)} shown")
-    except Exception as e:
-        print(f"❌ FCM Error: {e}")
+    # Send up to 3 notifications, each for a different clinic
+    count = min(3, len(clinics))
+    sent = 0
+    
+    for i in range(count):
+        clinic = clinics[i]
+        name = clinic.get('name', 'Clinic')[:50]
+        
+        try:
+            messaging.send(messaging.Message(
+                notification=messaging.Notification(
+                    title="🎉 Rendez-vous disponible!",
+                    body=f"{name} — Touchez pour réserver"
+                ),
+                data={"url": clinic['url'], "postal_code": user_postal},
+                token=token,
+            ))
+            sent += 1
+            print(f"   📱 Notif {i+1}: {name}")
+            time.sleep(1)  # Small delay between notifications
+        except Exception as e:
+            print(f"   ❌ FCM Error for {name}: {e}")
+    
+    print(f"✅ {sent} notification(s) sent for {user_postal}")
 
 def save_availability(user_postal, clinics):
     if db is None: return
@@ -142,6 +143,21 @@ def save_availability(user_postal, clinics):
         })
     except Exception as e:
         print(f"❌ Firestore Error: {e}")
+
+def save_clinic_to_database(clinic: dict):
+    """Save clinic info to permanent Firestore database."""
+    if db is None: return
+    try:
+        db.collection("clinic_database").document(clinic['id']).set({
+            'name': clinic.get('name', ''),
+            'address': clinic.get('address', ''),
+            'phone': clinic.get('phone', ''),
+            'url': clinic.get('url', ''),
+            'type': clinic.get('type', ''),
+            'last_seen': datetime.now().isoformat(),
+        }, merge=True)
+    except:
+        pass
 
 # === 5. SINGLE CODE SEARCH ===
 
@@ -219,7 +235,6 @@ def search_single_code(postal_code: str, browser_context) -> list:
                     if not isinstance(item, dict):
                         continue
                     
-                    # ★ Only process items with a 'name' field (real establishments, not service templates)
                     name = item.get('name', '')
                     if not name:
                         continue
@@ -238,13 +253,12 @@ def search_single_code(postal_code: str, browser_context) -> list:
                     phone = item.get('phone', '')
                     establishment_type = item.get('establishment_type', '')
 
-                    # ★ Build URL — prefer public_url from API
                     if public_url:
                         deep_link = public_url
                     else:
                         deep_link = f"https://clients3.clicsante.ca/65252/take-appt?portalEst={est_id}&portalPostalCode={postal_code}&lang=fr"
 
-                    clinics.append({
+                    clinic = {
                         'id': est_id,
                         'name': str(name)[:80],
                         'address': str(address)[:120] if address else '',
@@ -252,7 +266,11 @@ def search_single_code(postal_code: str, browser_context) -> list:
                         'url': deep_link,
                         'type': str(establishment_type) if establishment_type else '',
                         'source': 'api_intercept'
-                    })
+                    }
+                    
+                    clinics.append(clinic)
+                    # Save to permanent database
+                    save_clinic_to_database(clinic)
 
     except Exception as e:
         print(f"   ⚠️ Error: {e}")
@@ -311,7 +329,6 @@ def check_availability(postal_code_override=None):
 
 
 # === 7. MAIN ENTRY POINT ===
-# Collects ALL results first, then sends ONE notification at the end
 
 if __name__ == "__main__":
     test_codes = ["H1Y3H1", "H4L2B5", "H2X1Y7", "G1R2A3", "J8Y3H1"]
@@ -327,7 +344,7 @@ if __name__ == "__main__":
                 print(f"      {i+1}. {c['name'][:60]}{extra}")
         time.sleep(5)
     
-    # ── COLLECT ALL, SEND ONE ──
+    # ── SEND NOTIFICATIONS ──
     # Flatten and deduplicate across all postal codes
     all_clinics = []
     seen_all = set()
@@ -339,33 +356,35 @@ if __name__ == "__main__":
     
     print(f"\n{'='*60}")
     print(f"🏁 FINAL: {len(all_clinics)} unique clinics across all codes")
+    print(f"📱 Sending notifications for top 3 clinics...\n")
     
     if all_clinics:
-        for i, c in enumerate(all_clinics[:10]):
+        for i, c in enumerate(all_clinics[:5]):
             extra = f" — {c['address'][:60]}" if c.get('address') else ""
             print(f"   {i+1}. {c['name'][:60]}{extra}")
         
-        # Send ONE notification with all results
+        # Send up to 3 notifications (one per clinic)
         token = get_user_token()
         if token:
-            top = all_clinics[:5]
-            lines = [f"🎉 {len(all_clinics)} créneaux disponibles:"]
-            for i, c in enumerate(top):
-                name = c.get('name', 'Clinic')[:50]
-                lines.append(f"{i+1}. {name}")
-            body = "\n".join(lines)
-            if len(body) > 250:
-                body = body[:247] + "..."
-            best_url = top[0].get('url', 'https://portal3.clicsante.ca/services/blood-test')
-            
-            try:
-                messaging.send(messaging.Message(
-                    notification=messaging.Notification(title="🎉 Rendez-vous disponibles!", body=body),
-                    data={"url": best_url, "postal_code": test_codes[0]},
-                    token=token,
-                ))
-                print(f"\n✅ ONE notification sent with {len(top)} clinics shown")
-            except Exception as e:
-                print(f"❌ FCM Error: {e}")
+            count = min(3, len(all_clinics))
+            for i in range(count):
+                clinic = all_clinics[i]
+                name = clinic.get('name', 'Clinic')[:50]
+                try:
+                    messaging.send(messaging.Message(
+                        notification=messaging.Notification(
+                            title="🎉 Rendez-vous disponible!",
+                            body=f"{name} — Touchez pour réserver"
+                        ),
+                        data={"url": clinic['url'], "postal_code": test_codes[0]},
+                        token=token,
+                    ))
+                    print(f"   📱 Notif {i+1}: {name}")
+                    time.sleep(1)
+                except Exception as e:
+                    print(f"   ❌ Error: {e}")
+            print(f"\n✅ {count} notification(s) sent")
         
         save_availability(test_codes[0], all_clinics)
+    
+    print(f"\n📦 Clinic database size: {len(all_clinics)} entries saved to Firestore")
