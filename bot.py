@@ -147,10 +147,10 @@ def launch_stealth_browser(p):
             "--disable-infobars",
         ]
     )
-    
+
     viewport = random.choice(VIEWPORT_SIZES)
     user_agent = random.choice(USER_AGENTS)
-    
+
     context = browser.new_context(
         viewport=viewport,
         user_agent=user_agent,
@@ -160,14 +160,15 @@ def launch_stealth_browser(p):
             "Accept-Language": "fr-CA,fr;q=0.9,en-CA;q=0.8,en;q=0.7",
         }
     )
-    
+
     context.add_init_script(CANVAS_EVASION_SCRIPT)
-    
+
     return browser, context
 
 # === 5. NOTIFICATION ===
 
-def send_notifications(user_postal: str, clinics: list):
+def send_single_notification(user_postal: str, clinics: list):
+    """Send ONE notification. User opens app to see results."""
     token = get_user_token()
     if not token:
         print("⚠️ No FCM token")
@@ -176,29 +177,22 @@ def send_notifications(user_postal: str, clinics: list):
         print("⚠️ No clinics to notify")
         return
 
-    count = min(3, len(clinics))
-    sent = 0
-    
-    for i in range(count):
-        clinic = clinics[i]
-        name = clinic.get('name', 'Clinic')[:50]
-        
-        try:
-            messaging.send(messaging.Message(
-                notification=messaging.Notification(
-                    title="🎉 Rendez-vous disponible!",
-                    body=f"{name} — Touchez pour réserver"
-                ),
-                data={"url": clinic['url'], "postal_code": user_postal},
-                token=token,
-            ))
-            sent += 1
-            print(f"   📱 Notif {i+1}: {name}")
-            time.sleep(random.uniform(0.8, 1.5))
-        except Exception as e:
-            print(f"   ❌ FCM Error for {name}: {e}")
-    
-    print(f"✅ {sent} notification(s) sent for {user_postal}")
+    body = f"MyVita a trouvé des résultats près de {user_postal} — Ouvrez l'application pour voir"
+    if len(body) > 250:
+        body = body[:247] + "..."
+
+    try:
+        messaging.send(messaging.Message(
+            notification=messaging.Notification(
+                title="🎉 Résultats disponibles!",
+                body=body
+            ),
+            data={"url": clinics[0]['url'], "postal_code": user_postal},
+            token=token,
+        ))
+        print(f"✅ 1 notification sent: {len(clinics)} clinics near {user_postal}")
+    except Exception as e:
+        print(f"❌ FCM Error: {e}")
 
 def save_availability(user_postal, clinics):
     if db is None: return
@@ -251,7 +245,7 @@ def search_single_code(postal_code: str, browser_context) -> list:
 
     try:
         human_delay(1.0, 3.5)
-        
+
         page.goto("https://portal3.clicsante.ca/services/blood-test", 
                  wait_until="networkidle", timeout=45000)
         human_delay(1.5, 4)
@@ -311,18 +305,18 @@ def search_single_code(postal_code: str, browser_context) -> list:
                 for item in items:
                     if not isinstance(item, dict):
                         continue
-                    
+
                     name = item.get('name', '')
                     if not name:
                         continue
-                    
+
                     est_id = str(item.get('id', ''))
                     if not est_id or len(est_id) < 3:
                         continue
-                    
+
                     if est_id in seen_ids:
                         continue
-                    
+
                     seen_ids.add(est_id)
 
                     address = item.get('address', '')
@@ -344,7 +338,7 @@ def search_single_code(postal_code: str, browser_context) -> list:
                         'type': str(establishment_type) if establishment_type else '',
                         'source': 'api_intercept'
                     }
-                    
+
                     clinics.append(clinic)
                     save_clinic_to_database(clinic)
 
@@ -398,44 +392,23 @@ def check_availability(postal_code_override=None):
 # === 8. MAIN ENTRY POINT ===
 
 if __name__ == "__main__":
-    # If triggered with a specific postal code (from phone), use only that
     requested_code = os.getenv("POSTAL_CODE", "").strip()
-    
+
     if requested_code:
+        # ★ ON-DEMAND: Triggered by user from the app
         print(f"📱 On-demand search for: {requested_code}")
         clinics = check_availability(requested_code)
         if clinics:
             for i, c in enumerate(clinics[:5]):
                 extra = f" — {c['address'][:60]}" if c.get('address') else ""
                 print(f"      {i+1}. {c['name'][:60]}{extra}")
-            
-            token = get_user_token()
-            if token:
-                count = min(3, len(clinics))
-                for i in range(count):
-                    clinic = clinics[i]
-                    name = clinic.get('name', 'Clinic')[:50]
-                    try:
-                        messaging.send(messaging.Message(
-                            notification=messaging.Notification(
-                                title="🎉 Rendez-vous disponible!",
-                                body=f"{name} — Touchez pour réserver"
-                            ),
-                            data={"url": clinic['url'], "postal_code": requested_code},
-                            token=token,
-                        ))
-                        print(f"   📱 Notif {i+1}: {name}")
-                        time.sleep(random.uniform(0.8, 1.5))
-                    except Exception as e:
-                        print(f"   ❌ Error: {e}")
-                print(f"\n✅ {count} notification(s) sent")
-            
+            send_single_notification(requested_code, clinics)
             save_availability(requested_code, clinics)
     else:
-        # Scheduled run — search all 5 zones
+        # ★ SCHEDULED: Runs all 5 zones
         test_codes = ["H1Y3H1", "H4L2B5", "H2X1Y7", "G1R2A3", "J8Y3H1"]
-        
         all_results = {}
+
         for code in test_codes:
             clinics = check_availability(code)
             all_results[code] = clinics
@@ -444,7 +417,7 @@ if __name__ == "__main__":
                     extra = f" — {c['address'][:60]}" if c.get('address') else ""
                     print(f"      {i+1}. {c['name'][:60]}{extra}")
             time.sleep(5)
-        
+
         all_clinics = []
         seen_all = set()
         for code, clinics in all_results.items():
@@ -452,36 +425,15 @@ if __name__ == "__main__":
                 if clinic['id'] not in seen_all:
                     seen_all.add(clinic['id'])
                     all_clinics.append(clinic)
-        
+
         print(f"\n{'='*60}")
         print(f"🏁 FINAL: {len(all_clinics)} unique clinics across all codes")
-        
+
         if all_clinics:
             for i, c in enumerate(all_clinics[:5]):
                 extra = f" — {c['address'][:60]}" if c.get('address') else ""
                 print(f"   {i+1}. {c['name'][:60]}{extra}")
-            
-            token = get_user_token()
-            if token:
-                count = min(3, len(all_clinics))
-                for i in range(count):
-                    clinic = all_clinics[i]
-                    name = clinic.get('name', 'Clinic')[:50]
-                    try:
-                        messaging.send(messaging.Message(
-                            notification=messaging.Notification(
-                                title="🎉 Rendez-vous disponible!",
-                                body=f"{name} — Touchez pour réserver"
-                            ),
-                            data={"url": clinic['url'], "postal_code": test_codes[0]},
-                            token=token,
-                        ))
-                        print(f"   📱 Notif {i+1}: {name}")
-                        time.sleep(random.uniform(0.8, 1.5))
-                    except Exception as e:
-                        print(f"   ❌ Error: {e}")
-                print(f"\n✅ {count} notification(s) sent")
-            
+            send_single_notification(test_codes[0], all_clinics)
             save_availability(test_codes[0], all_clinics)
-        
+
         print(f"\n📦 Clinic database size: {len(all_clinics)} entries saved to Firestore")
