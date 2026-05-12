@@ -54,10 +54,10 @@ for zone, fsas in ZONE_GROUPS.items():
 # === GEMI PROTOCOL CONSTANTS ===
 MYVITA_BOT_CONTACT = "legal@myvita.app"
 MYVITA_BOT_PURPOSE = "Public health appointment availability lookup — Accessibility Layer"
-PEAK_HOURS_START = 8   # 8:00 AM ET
-PEAK_HOURS_END = 10    # 10:00 AM ET
-RATE_LIMIT_SECONDS = 2.0  # Minimum seconds between requests
-MAX_DATA_AGE_HOURS = 2    # TTL for Firestore availability data
+PEAK_HOURS_START = 8
+PEAK_HOURS_END = 10
+RATE_LIMIT_SECONDS = 2.0
+MAX_DATA_AGE_HOURS = 2
 CLICSANTE_DOMAIN = "clicsante.ca"
 CLICSANTE_ROBOTS_URL = f"https://www.{CLICSANTE_DOMAIN}/robots.txt"
 
@@ -69,14 +69,17 @@ def get_zone_group(postal_code: str) -> list:
     return [fsa]
 
 def generate_search_codes(postal_code: str) -> list:
+    """Generate up to 6 search codes covering ~30km radius."""
     fsas = get_zone_group(postal_code)
     suffix = postal_code[3:]
     codes = [postal_code.upper().replace(" ", "")]
-    for fsa in fsas[:3]:
+    
+    # Use up to 5 neighboring FSAs (6 total) for wider ~30km coverage
+    for fsa in fsas[:5]:
         candidate = f"{fsa}{suffix}"
         if candidate.upper() not in [c.upper() for c in codes]:
             codes.append(candidate)
-    return codes[:4]
+    return codes[:6]
 
 # === 2. FIREBASE SETUP ===
 db = None
@@ -324,7 +327,7 @@ def send_single_notification(user_postal: str, clinics: list):
         print(f"❌ FCM Error: {e}")
 
 def save_availability(user_postal, clinics):
-    """GEMI PROTOCOL: Save with 2-hour TTL."""
+    """GEMI PROTOCOL: Save with 2-hour TTL. Includes status flag for app listener."""
     if db is None: return
     zone = user_postal[:3].upper()
     now = datetime.now()
@@ -342,6 +345,7 @@ def save_availability(user_postal, clinics):
             "last_checked": now.isoformat(),
             "expires_at": expires_at.isoformat(),
             "gemi_protocol": True,
+            "status": "completed",  # ★ Signal to app that bot finished
         })
         print(f"💾 Saved: {len(clinics)} clinics for {user_postal} (expires: {expires_at.strftime('%H:%M')})")
     except Exception as e:
@@ -439,7 +443,12 @@ def search_single_code(postal_code: str, browser_context) -> list:
             except:
                 continue
 
-        human_delay(8, 14)
+        # ★ SMART WAIT: Check for results, fallback to hard delay
+        try:
+            page.wait_for_selector("text=Disponible", timeout=8000)
+            human_delay(0.5, 1.5)
+        except:
+            human_delay(8, 14)
 
         try:
             el = page.locator("text=~").first
@@ -512,7 +521,7 @@ def check_availability(postal_code_override=None):
     print(f"🚀 ClicSanté Search: {user_postal}")
     print(f"   🤖 MyVita-Bot/1.0 — Health Access Concierge (Gemi Protocol)")
     print(f"   📜 robots.txt respected | ⏱️ Rate: {RATE_LIMIT_SECONDS}s | 🕐 TTL: {MAX_DATA_AGE_HOURS}h")
-    print(f"   Searching {len(search_codes)} codes: {search_codes}")
+    print(f"   📍 30km radius | Searching {len(search_codes)} codes: {search_codes}")
     print(f"{'='*60}")
 
     all_clinics = []
@@ -544,6 +553,20 @@ def check_availability(postal_code_override=None):
             browser.close()
 
     print(f"   📊 {user_postal}: {len(all_clinics)} unique clinics")
+    
+    # ★ Mark lab_requests as completed so the app knows
+    if db and postal_code_override:
+        try:
+            pending_docs = db.collection("lab_requests").where("postal_code", "==", user_postal).where("status", "==", "pending").stream()
+            for doc in pending_docs:
+                doc.reference.update({
+                    "status": "completed",
+                    "completed_at": datetime.now().isoformat(),
+                    "clinic_count": len(all_clinics)
+                })
+        except:
+            pass
+    
     return all_clinics
 
 
@@ -582,7 +605,6 @@ if __name__ == "__main__":
 
     if requested_code:
         # ★ ON-DEMAND: Triggered by user from the app
-        # GEMI PROTOCOL: Peak hours check
         if is_peak_hours():
             print(f"\n⏰ PEAK HOURS (8am-10am ET) — Queueing request for {requested_code}")
             queue_for_later(requested_code)
