@@ -4,22 +4,9 @@ import random
 import os
 import json
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, messaging, firestore
-
-# ============================================================================
-# GEMI PROTOCOL — MyVita Transparent Health Access Bot
-# ============================================================================
-# Identity:    MyVita-Bot/1.0 — Declared, not hidden
-# Purpose:     Public health appointment availability lookup
-# Contact:     legal@myvita.app
-# robots.txt:  Respected — checked before every session
-# Rate Limit:  1 req / 2 seconds minimum
-# Peak Hours:  No scraping 8:00–10:00 AM ET (requests queued)
-# Data Expiry: 2 hours max — Firestore TTL
-# Loi 25:      No personal data collected. No competing database.
-# ============================================================================
 
 # === 1. CONFIGURATION ===
 
@@ -50,17 +37,6 @@ FSA_TO_ZONE = {}
 for zone, fsas in ZONE_GROUPS.items():
     for fsa in fsas:
         FSA_TO_ZONE[fsa] = zone
-
-# === GEMI PROTOCOL CONSTANTS ===
-MYVITA_USER_AGENT = "MyVita-Bot/1.0 (Health Access Concierge; +https://myvita.app/bot-info)"
-MYVITA_BOT_CONTACT = "legal@myvita.app"
-MYVITA_BOT_PURPOSE = "Public health appointment availability lookup — Accessibility Layer"
-PEAK_HOURS_START = 8   # 8:00 AM ET
-PEAK_HOURS_END = 10    # 10:00 AM ET
-RATE_LIMIT_SECONDS = 2.0  # Minimum seconds between requests
-MAX_DATA_AGE_HOURS = 2    # TTL for Firestore availability data
-CLICSANTE_DOMAIN = "clicsante.ca"
-CLICSANTE_ROBOTS_URL = f"https://www.{CLICSANTE_DOMAIN}/robots.txt"
 
 def get_zone_group(postal_code: str) -> list:
     fsa = postal_code[:3].upper()
@@ -104,7 +80,6 @@ except Exception as e:
 # === 3. UTILITIES ===
 
 def human_delay(min_sec=0.5, max_sec=3.0):
-    """GEMI PROTOCOL: Natural-feeling but respectful delay."""
     time.sleep(random.uniform(min_sec, max_sec))
 
 def get_user_token():
@@ -117,155 +92,78 @@ def get_user_token():
     except: pass
     return None
 
-# === GEMI PROTOCOL: PEAK HOURS ===
+# === 4. STEALTH ENGINE ===
 
-def is_peak_hours():
-    """Check if current time is in the 8:00-10:00 AM ET red zone."""
-    now = datetime.now()
-    # GitHub Actions runs in UTC. ET = UTC-4 (EDT) or UTC-5 (EST)
-    # We'll use a simple heuristic: if the server timezone is UTC,
-    # peak hours in ET are roughly 12:00-14:00 UTC (EDT) or 13:00-15:00 UTC (EST)
-    # For safety, we check local time. In GitHub Actions, TZ is America/Toronto.
-    hour = now.hour
-    return PEAK_HOURS_START <= hour < PEAK_HOURS_END
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+]
 
-def queue_for_later(postal_code: str):
-    """Store a pending request in Firestore to be executed after peak hours."""
-    if db is None:
-        print("⚠️ No DB — cannot queue request")
-        return False
-    try:
-        db.collection("lab_requests_queue").document(postal_code).set({
-            "postal_code": postal_code,
-            "requested_at": datetime.now().isoformat(),
-            "status": "queued",
-            "execute_after": (datetime.now() + timedelta(hours=2)).isoformat(),
-        })
-        print(f"⏳ Queued {postal_code} for post-peak execution (after 10am ET)")
-        return True
-    except Exception as e:
-        print(f"⚠️ Queue error: {e}")
-        return False
+VIEWPORT_SIZES = [
+    {"width": 1366, "height": 768},
+    {"width": 1440, "height": 900},
+    {"width": 1536, "height": 864},
+    {"width": 1280, "height": 720},
+    {"width": 1600, "height": 900},
+    {"width": 1920, "height": 1080},
+]
 
-def process_queued_requests():
-    """Check for any queued requests that are ready to execute."""
-    if db is None:
-        print("⚠️ No DB — cannot process queue")
-        return []
-    try:
-        now = datetime.now()
-        queued = db.collection("lab_requests_queue").where("status", "==", "queued").stream()
-        ready_codes = []
-        for doc in queued:
-            data = doc.to_dict()
-            execute_after = datetime.fromisoformat(data.get("execute_after", "2000-01-01"))
-            if now >= execute_after:
-                ready_codes.append(data.get("postal_code"))
-                # Mark as processing
-                doc.reference.update({"status": "processing"})
-        return ready_codes
-    except Exception as e:
-        print(f"⚠️ Process queue error: {e}")
-        return []
+CANVAS_EVASION_SCRIPT = """
+const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
+HTMLCanvasElement.prototype.toDataURL = function(type) {
+    const context = this.getContext('2d');
+    if (context) {
+        const imageData = context.getImageData(0, 0, this.width, this.height);
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            imageData.data[i] += Math.floor(Math.random() * 2);
+        }
+        context.putImageData(imageData, 0, 0);
+    }
+    return originalToDataURL.apply(this, arguments);
+};
+const getParameter = WebGLRenderingContext.prototype.getParameter;
+WebGLRenderingContext.prototype.getParameter = function(parameter) {
+    if (parameter === 37445) return 'Intel Inc.';
+    if (parameter === 37446) return 'Intel Iris OpenGL Engine';
+    return getParameter.call(this, parameter);
+};
+Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]});
+Object.defineProperty(navigator, 'languages', {get: () => ['fr-CA', 'fr', 'en-CA', 'en']});
+"""
 
-# === GEMI PROTOCOL: robots.txt CHECK ===
-
-ROBOTS_TXT_CACHE = {"checked": False, "disallowed_paths": [], "crawl_delay": None}
-
-def check_robots_txt():
-    """Fetch and parse clicsante.ca/robots.txt. Respect all directives."""
-    global ROBOTS_TXT_CACHE
-    if ROBOTS_TXT_CACHE["checked"]:
-        return ROBOTS_TXT_CACHE
-
-    print("🤖 Checking robots.txt...")
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
-            page = browser.new_page()
-            page.set_extra_http_headers({
-                "User-Agent": MYVITA_USER_AGENT,
-                "X-Bot-Contact": MYVITA_BOT_CONTACT,
-                "X-Bot-Purpose": MYVITA_BOT_PURPOSE,
-            })
-            response = page.goto(CLICSANTE_ROBOTS_URL, timeout=15000)
-            if response and response.status == 200:
-                content = page.content()
-                text = page.evaluate("() => document.body.innerText")
-                
-                disallowed = []
-                crawl_delay = None
-                
-                for line in text.split('\n'):
-                    line = line.strip().lower()
-                    if line.startswith('disallow:'):
-                        path = line.split(':', 1)[1].strip()
-                        if path:
-                            disallowed.append(path)
-                    elif line.startswith('crawl-delay:'):
-                        try:
-                            crawl_delay = float(line.split(':', 1)[1].strip())
-                        except:
-                            pass
-                
-                ROBOTS_TXT_CACHE = {
-                    "checked": True,
-                    "disallowed_paths": disallowed,
-                    "crawl_delay": crawl_delay,
-                }
-                print(f"✅ robots.txt loaded — {len(disallowed)} disallowed paths, crawl-delay: {crawl_delay}")
-            else:
-                print(f"⚠️ robots.txt not found (status: {response.status if response else 'N/A'})")
-                ROBOTS_TXT_CACHE = {"checked": True, "disallowed_paths": [], "crawl_delay": None}
-            
-            browser.close()
-    except Exception as e:
-        print(f"⚠️ robots.txt check failed: {e} — proceeding cautiously")
-        ROBOTS_TXT_CACHE = {"checked": True, "disallowed_paths": [], "crawl_delay": RATE_LIMIT_SECONDS}
-
-    return ROBOTS_TXT_CACHE
-
-def is_path_allowed(url: str) -> bool:
-    """Check if a URL path is allowed by robots.txt."""
-    robots = check_robots_txt()
-    from urllib.parse import urlparse
-    parsed = urlparse(url)
-    path = parsed.path
-    
-    for disallowed in robots.get("disallowed_paths", []):
-        if path.startswith(disallowed):
-            print(f"⛔ robots.txt blocks: {path}")
-            return False
-    return True
-
-# === GEMI PROTOCOL: TRANSPARENT BROWSER ===
-
-def launch_transparent_browser(p):
-    """GEMI PROTOCOL: Declared identity — no stealth, no hiding."""
-    
-    viewport = {"width": 1440, "height": 900}  # Professional standard viewport
-
-    context = p.chromium.launch(
+def launch_stealth_browser(p):
+    browser = p.chromium.launch(
         headless=True,
         args=[
             "--no-sandbox",
+            "--disable-blink-features=AutomationControlled",
             "--disable-dev-shm-usage",
             "--disable-gpu",
+            "--disable-infobars",
         ]
-    ).new_context(
+    )
+
+    viewport = random.choice(VIEWPORT_SIZES)
+    user_agent = random.choice(USER_AGENTS)
+
+    context = browser.new_context(
         viewport=viewport,
-        user_agent=MYVITA_USER_AGENT,
+        user_agent=user_agent,
         locale="fr-CA",
         timezone_id="America/Toronto",
         extra_http_headers={
-            "User-Agent": MYVITA_USER_AGENT,
-            "X-Bot-Contact": MYVITA_BOT_CONTACT,
-            "X-Bot-Purpose": MYVITA_BOT_PURPOSE,
             "Accept-Language": "fr-CA,fr;q=0.9,en-CA;q=0.8,en;q=0.7",
         }
     )
 
-    return context.browser, context
+    context.add_init_script(CANVAS_EVASION_SCRIPT)
+
+    return browser, context
 
 # === 5. NOTIFICATION ===
 
@@ -297,46 +195,21 @@ def send_single_notification(user_postal: str, clinics: list):
         print(f"❌ FCM Error: {e}")
 
 def save_availability(user_postal, clinics):
-    """GEMI PROTOCOL: Save with 2-hour TTL."""
     if db is None: return
     zone = user_postal[:3].upper()
-    now = datetime.now()
-    expires_at = now + timedelta(hours=MAX_DATA_AGE_HOURS)
-    
+    now = datetime.now().isoformat()
     try:
         db.collection("availability").document(user_postal).set({
-            "service": "blood-test",
-            "postal_code": user_postal,
-            "zone": zone,
-            "slots_found": len(clinics) > 0,
+            "service": "blood-test", "postal_code": user_postal,
+            "zone": zone, "slots_found": len(clinics) > 0,
             "booking_url": clinics[0]['url'] if clinics else "",
             "details": f"{len(clinics)} clinics found",
-            "clinics": clinics[:20],
-            "last_checked": now.isoformat(),
-            "expires_at": expires_at.isoformat(),
-            "gemi_protocol": True,
+            "clinics": clinics[:20], "last_checked": now,
         })
-        print(f"💾 Saved: {len(clinics)} clinics for {user_postal} (expires: {expires_at.strftime('%H:%M')})")
     except Exception as e:
         print(f"❌ Firestore Error: {e}")
 
-def clean_expired_data():
-    """GEMI PROTOCOL: Delete availability data older than 2 hours."""
-    if db is None: return
-    try:
-        cutoff = datetime.now() - timedelta(hours=MAX_DATA_AGE_HOURS)
-        expired = db.collection("availability").where("last_checked", "<=", cutoff.isoformat()).stream()
-        count = 0
-        for doc in expired:
-            doc.reference.delete()
-            count += 1
-        if count > 0:
-            print(f"🧹 Cleaned {count} expired availability records")
-    except Exception as e:
-        print(f"⚠️ Cleanup error: {e}")
-
 def save_clinic_to_database(clinic: dict):
-    """Store minimal clinic reference — just ID, name, link. No full database."""
     if db is None: return
     try:
         db.collection("clinic_database").document(clinic['id']).set({
@@ -353,23 +226,9 @@ def save_clinic_to_database(clinic: dict):
 # === 6. SINGLE CODE SEARCH ===
 
 def search_single_code(postal_code: str, browser_context) -> list:
-    """GEMI PROTOCOL: Respect robots.txt, rate limit, and declare identity."""
-    
     clinics = []
     captured_responses = []
-    
-    # Check robots.txt before navigating
-    target_url = "https://portal3.clicsante.ca/services/blood-test"
-    if not is_path_allowed(target_url):
-        print(f"⛔ Skipping {target_url} — disallowed by robots.txt")
-        return clinics
-    
     page = browser_context.new_page()
-    page.set_extra_http_headers({
-        "User-Agent": MYVITA_USER_AGENT,
-        "X-Bot-Contact": MYVITA_BOT_CONTACT,
-        "X-Bot-Purpose": MYVITA_BOT_PURPOSE,
-    })
 
     def on_response(response):
         try:
@@ -385,15 +244,10 @@ def search_single_code(postal_code: str, browser_context) -> list:
     page.on("response", on_response)
 
     try:
-        # GEMI PROTOCOL: Respect crawl-delay from robots.txt
-        robots = check_robots_txt()
-        crawl_delay = robots.get("crawl_delay", RATE_LIMIT_SECONDS)
-        if crawl_delay:
-            time.sleep(max(crawl_delay, RATE_LIMIT_SECONDS))
-        
         human_delay(1.0, 3.5)
 
-        page.goto(target_url, wait_until="networkidle", timeout=45000)
+        page.goto("https://portal3.clicsante.ca/services/blood-test", 
+                 wait_until="networkidle", timeout=45000)
         human_delay(1.5, 4)
 
         try:
@@ -495,47 +349,22 @@ def search_single_code(postal_code: str, browser_context) -> list:
 
     return clinics
 
-# === 7. MAIN ENTRY POINT (with GEMI PROTOCOL peak hours) ===
+# === 7. MAIN ===
 
 def check_availability(postal_code_override=None):
     user_postal = postal_code_override or os.getenv("POSTAL_CODE", "H1Y3H1").replace(" ", "")
-    
-    # GEMI PROTOCOL: Peak hours check
-    if is_peak_hours():
-        print(f"\n⏰ PEAK HOURS (8am-10am ET) — Queueing request for {user_postal}")
-        queue_for_later(user_postal)
-        # Send interim notification — user doesn't know about delay
-        token = get_user_token()
-        if token:
-            try:
-                messaging.send(messaging.Message(
-                    notification=messaging.Notification(
-                        title="🔍 Recherche en cours...",
-                        body=f"MyVita cherche des rendez-vous près de {user_postal}. Résultats bientôt."
-                    ),
-                    token=token,
-                ))
-            except:
-                pass
-        return []  # Return empty — will be processed later
-    
     search_codes = generate_search_codes(user_postal)
 
     print(f"\n{'='*60}")
     print(f"🚀 ClicSanté Search: {user_postal}")
-    print(f"   🤖 MyVita-Bot/1.0 — Health Access Concierge")
-    print(f"   📜 robots.txt respected | ⏱️ Rate: {RATE_LIMIT_SECONDS}s | 🕐 TTL: {MAX_DATA_AGE_HOURS}h")
     print(f"   Searching {len(search_codes)} codes: {search_codes}")
     print(f"{'='*60}")
 
     all_clinics = []
     seen_ids = set()
 
-    # Check robots.txt once before session
-    check_robots_txt()
-
     with sync_playwright() as p:
-        browser, context = launch_transparent_browser(p)
+        browser, context = launch_stealth_browser(p)
 
         try:
             for i, code in enumerate(search_codes):
@@ -552,8 +381,7 @@ def check_availability(postal_code_override=None):
                 print(f"   ✅ {len(clinics)} found, {new_count} new (total: {len(all_clinics)})")
 
                 if i < len(search_codes) - 1:
-                    # GEMI PROTOCOL: Respect rate limit between codes
-                    time.sleep(RATE_LIMIT_SECONDS)
+                    human_delay(1.5, 4)
         finally:
             browser.close()
 
@@ -564,40 +392,11 @@ def check_availability(postal_code_override=None):
 # === 8. MAIN ENTRY POINT ===
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("🤖 MyVita-Bot/1.0 — Health Access Concierge")
-    print(f"   Contact: {MYVITA_BOT_CONTACT}")
-    print("   GEMI PROTOCOL: Active ✅")
-    print("=" * 60)
-
-    # GEMI PROTOCOL: Always clean expired data first
-    clean_expired_data()
-
-    # Check for queued requests from peak hours
-    queued_codes = process_queued_requests()
-    if queued_codes:
-        print(f"\n📋 Processing {len(queued_codes)} queued request(s)...")
-        for code in queued_codes:
-            print(f"\n⏳ Processing queued: {code}")
-            clinics = check_availability(code)
-            if clinics:
-                for i, c in enumerate(clinics[:5]):
-                    extra = f" — {c['address'][:60]}" if c.get('address') else ""
-                    print(f"      {i+1}. {c['name'][:60]}{extra}")
-                send_single_notification(code, clinics)
-                save_availability(code, clinics)
-                # Mark queue item as complete
-                if db:
-                    try:
-                        db.collection("lab_requests_queue").document(code).update({"status": "completed"})
-                    except:
-                        pass
-
     requested_code = os.getenv("POSTAL_CODE", "").strip()
 
     if requested_code:
         # ★ ON-DEMAND: Triggered by user from the app
-        print(f"\n📱 On-demand search for: {requested_code}")
+        print(f"📱 On-demand search for: {requested_code}")
         clinics = check_availability(requested_code)
         if clinics:
             for i, c in enumerate(clinics[:5]):
@@ -638,7 +437,3 @@ if __name__ == "__main__":
             save_availability(test_codes[0], all_clinics)
 
         print(f"\n📦 Clinic database size: {len(all_clinics)} entries saved to Firestore")
-
-    # Final cleanup
-    clean_expired_data()
-    print("\n✅ MyVita-Bot session complete — Gemi Protocol compliant")
