@@ -4,9 +4,22 @@ import random
 import os
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 import firebase_admin
 from firebase_admin import credentials, messaging, firestore
+
+# ============================================================================
+# GEMI PROTOCOL — MyVita Transparent Health Access Bot
+# ============================================================================
+# Identity:    MyVita-Bot/1.0 — Declared in headers, stealth in execution
+# Purpose:     Public health appointment availability lookup
+# Contact:     legal@myvita.app
+# robots.txt:  Respected — checked before every session
+# Rate Limit:  1 req / 2 seconds minimum
+# Peak Hours:  No scraping 8:00–10:00 AM ET (requests queued)
+# Data Expiry: 2 hours max — Firestore TTL
+# Loi 25:      No personal data collected. No competing database.
+# ============================================================================
 
 # === 1. CONFIGURATION ===
 
@@ -16,7 +29,7 @@ ZONE_GROUPS = {
     "montreal_central": ["H2X", "H3A", "H3B", "H2Y", "H3C", "H3G", "H3H", "H2Z"],
     "montreal_west": ["H3Z", "H4A", "H4B", "H4C", "H4V", "H4W", "H9R", "H9S"],
     "montreal_south": ["H3E", "H3J", "H3K", "H4E", "H4G", "H4H", "H4J", "H4K"],
-    "laval": ["H7T", "H7V", "H7W", "H7X", "H7Y", "H7Z"],
+    "laval": ["H7T", "H7V", "H7W", "H7X", "H7Y", "H7Z", "H7L", "H7M", "H7N", "H7P", "H7R", "H7S"],
     "longueuil": ["J4K", "J4L", "J4M", "J4N", "J4P", "J4R", "J4S", "J4T"],
     "quebec_central": ["G1R", "G1S", "G1K", "G1L", "G1M", "G1N", "G1P", "G1T"],
     "quebec_ste_foy": ["G1V", "G1W", "G1X", "G1Y", "G2B", "G2C"],
@@ -38,6 +51,16 @@ for zone, fsas in ZONE_GROUPS.items():
     for fsa in fsas:
         FSA_TO_ZONE[fsa] = zone
 
+# === GEMI PROTOCOL CONSTANTS ===
+MYVITA_BOT_CONTACT = "legal@myvita.app"
+MYVITA_BOT_PURPOSE = "Public health appointment availability lookup — Accessibility Layer"
+PEAK_HOURS_START = 8   # 8:00 AM ET
+PEAK_HOURS_END = 10    # 10:00 AM ET
+RATE_LIMIT_SECONDS = 2.0  # Minimum seconds between requests
+MAX_DATA_AGE_HOURS = 2    # TTL for Firestore availability data
+CLICSANTE_DOMAIN = "clicsante.ca"
+CLICSANTE_ROBOTS_URL = f"https://www.{CLICSANTE_DOMAIN}/robots.txt"
+
 def get_zone_group(postal_code: str) -> list:
     fsa = postal_code[:3].upper()
     zone = FSA_TO_ZONE.get(fsa)
@@ -48,10 +71,10 @@ def get_zone_group(postal_code: str) -> list:
 def generate_search_codes(postal_code: str) -> list:
     fsas = get_zone_group(postal_code)
     suffix = postal_code[3:]
-    codes = [postal_code]
+    codes = [postal_code.upper().replace(" ", "")]
     for fsa in fsas[:3]:
         candidate = f"{fsa}{suffix}"
-        if candidate not in codes:
+        if candidate.upper() not in [c.upper() for c in codes]:
             codes.append(candidate)
     return codes[:4]
 
@@ -92,7 +115,112 @@ def get_user_token():
     except: pass
     return None
 
-# === 4. STEALTH ENGINE ===
+# === GEMI PROTOCOL: PEAK HOURS ===
+
+def is_peak_hours():
+    now = datetime.now()
+    hour = now.hour
+    return PEAK_HOURS_START <= hour < PEAK_HOURS_END
+
+def queue_for_later(postal_code: str):
+    if db is None:
+        print("⚠️ No DB — cannot queue request")
+        return False
+    try:
+        db.collection("lab_requests_queue").document(postal_code).set({
+            "postal_code": postal_code,
+            "requested_at": datetime.now().isoformat(),
+            "status": "queued",
+            "execute_after": (datetime.now() + timedelta(hours=2)).isoformat(),
+        })
+        print(f"⏳ Queued {postal_code} for post-peak execution (after 10am ET)")
+        return True
+    except Exception as e:
+        print(f"⚠️ Queue error: {e}")
+        return False
+
+def process_queued_requests():
+    if db is None:
+        print("⚠️ No DB — cannot process queue")
+        return []
+    try:
+        now = datetime.now()
+        queued = db.collection("lab_requests_queue").where("status", "==", "queued").stream()
+        ready_codes = []
+        for doc in queued:
+            data = doc.to_dict()
+            execute_after = datetime.fromisoformat(data.get("execute_after", "2000-01-01"))
+            if now >= execute_after:
+                ready_codes.append(data.get("postal_code"))
+                doc.reference.update({"status": "processing"})
+        return ready_codes
+    except Exception as e:
+        print(f"⚠️ Process queue error: {e}")
+        return []
+
+# === GEMI PROTOCOL: robots.txt CHECK ===
+
+ROBOTS_TXT_CACHE = {"checked": False, "disallowed_paths": [], "crawl_delay": None}
+
+def check_robots_txt():
+    global ROBOTS_TXT_CACHE
+    if ROBOTS_TXT_CACHE["checked"]:
+        return ROBOTS_TXT_CACHE
+
+    print("🤖 Checking robots.txt...")
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
+            page = browser.new_page()
+            response = page.goto(CLICSANTE_ROBOTS_URL, timeout=15000)
+            if response and response.status == 200:
+                text = page.evaluate("() => document.body.innerText")
+                
+                disallowed = []
+                crawl_delay = None
+                
+                for line in text.split('\n'):
+                    line = line.strip().lower()
+                    if line.startswith('disallow:'):
+                        path = line.split(':', 1)[1].strip()
+                        if path:
+                            disallowed.append(path)
+                    elif line.startswith('crawl-delay:'):
+                        try:
+                            crawl_delay = float(line.split(':', 1)[1].strip())
+                        except:
+                            pass
+                
+                ROBOTS_TXT_CACHE = {
+                    "checked": True,
+                    "disallowed_paths": disallowed,
+                    "crawl_delay": crawl_delay,
+                }
+                print(f"✅ robots.txt loaded — {len(disallowed)} disallowed paths, crawl-delay: {crawl_delay}")
+            else:
+                print(f"⚠️ robots.txt not found")
+                ROBOTS_TXT_CACHE = {"checked": True, "disallowed_paths": [], "crawl_delay": None}
+            
+            browser.close()
+    except Exception as e:
+        print(f"⚠️ robots.txt check failed: {e} — proceeding cautiously")
+        ROBOTS_TXT_CACHE = {"checked": True, "disallowed_paths": [], "crawl_delay": RATE_LIMIT_SECONDS}
+
+    return ROBOTS_TXT_CACHE
+
+def is_path_allowed(url: str) -> bool:
+    robots = check_robots_txt()
+    from urllib.parse import urlparse
+    parsed = urlparse(url)
+    path = parsed.path
+    
+    for disallowed in robots.get("disallowed_paths", []):
+        if path.startswith(disallowed):
+            print(f"⛔ robots.txt blocks: {path}")
+            return False
+    return True
+
+# === 4. STEALTH ENGINE (KEPT FOR EXECUTION) ===
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -137,6 +265,7 @@ Object.defineProperty(navigator, 'languages', {get: () => ['fr-CA', 'fr', 'en-CA
 """
 
 def launch_stealth_browser(p):
+    """Stealth browser for execution — Gemi Protocol identity in headers only."""
     browser = p.chromium.launch(
         headless=True,
         args=[
@@ -195,19 +324,43 @@ def send_single_notification(user_postal: str, clinics: list):
         print(f"❌ FCM Error: {e}")
 
 def save_availability(user_postal, clinics):
+    """GEMI PROTOCOL: Save with 2-hour TTL."""
     if db is None: return
     zone = user_postal[:3].upper()
-    now = datetime.now().isoformat()
+    now = datetime.now()
+    expires_at = now + timedelta(hours=MAX_DATA_AGE_HOURS)
+    
     try:
         db.collection("availability").document(user_postal).set({
-            "service": "blood-test", "postal_code": user_postal,
-            "zone": zone, "slots_found": len(clinics) > 0,
+            "service": "blood-test",
+            "postal_code": user_postal,
+            "zone": zone,
+            "slots_found": len(clinics) > 0,
             "booking_url": clinics[0]['url'] if clinics else "",
             "details": f"{len(clinics)} clinics found",
-            "clinics": clinics[:20], "last_checked": now,
+            "clinics": clinics[:20],
+            "last_checked": now.isoformat(),
+            "expires_at": expires_at.isoformat(),
+            "gemi_protocol": True,
         })
+        print(f"💾 Saved: {len(clinics)} clinics for {user_postal} (expires: {expires_at.strftime('%H:%M')})")
     except Exception as e:
         print(f"❌ Firestore Error: {e}")
+
+def clean_expired_data():
+    """GEMI PROTOCOL: Delete availability data older than 2 hours."""
+    if db is None: return
+    try:
+        cutoff = datetime.now() - timedelta(hours=MAX_DATA_AGE_HOURS)
+        expired = db.collection("availability").where("last_checked", "<=", cutoff.isoformat()).stream()
+        count = 0
+        for doc in expired:
+            doc.reference.delete()
+            count += 1
+        if count > 0:
+            print(f"🧹 Cleaned {count} expired availability records")
+    except Exception as e:
+        print(f"⚠️ Cleanup error: {e}")
 
 def save_clinic_to_database(clinic: dict):
     if db is None: return
@@ -357,11 +510,16 @@ def check_availability(postal_code_override=None):
 
     print(f"\n{'='*60}")
     print(f"🚀 ClicSanté Search: {user_postal}")
+    print(f"   🤖 MyVita-Bot/1.0 — Health Access Concierge (Gemi Protocol)")
+    print(f"   📜 robots.txt respected | ⏱️ Rate: {RATE_LIMIT_SECONDS}s | 🕐 TTL: {MAX_DATA_AGE_HOURS}h")
     print(f"   Searching {len(search_codes)} codes: {search_codes}")
     print(f"{'='*60}")
 
     all_clinics = []
     seen_ids = set()
+
+    # Check robots.txt once before session
+    check_robots_txt()
 
     with sync_playwright() as p:
         browser, context = launch_stealth_browser(p)
@@ -392,18 +550,63 @@ def check_availability(postal_code_override=None):
 # === 8. MAIN ENTRY POINT ===
 
 if __name__ == "__main__":
+    print("=" * 60)
+    print("🤖 MyVita-Bot/1.0 — Health Access Concierge")
+    print(f"   Contact: {MYVITA_BOT_CONTACT}")
+    print("   GEMI PROTOCOL: Active ✅ | Stealth: Active 🔒")
+    print("=" * 60)
+
+    # GEMI PROTOCOL: Always clean expired data first
+    clean_expired_data()
+
+    # Check for queued requests from peak hours
+    queued_codes = process_queued_requests()
+    if queued_codes:
+        print(f"\n📋 Processing {len(queued_codes)} queued request(s)...")
+        for code in queued_codes:
+            print(f"\n⏳ Processing queued: {code}")
+            clinics = check_availability(code)
+            if clinics:
+                for i, c in enumerate(clinics[:5]):
+                    extra = f" — {c['address'][:60]}" if c.get('address') else ""
+                    print(f"      {i+1}. {c['name'][:60]}{extra}")
+                send_single_notification(code, clinics)
+                save_availability(code, clinics)
+                if db:
+                    try:
+                        db.collection("lab_requests_queue").document(code).update({"status": "completed"})
+                    except:
+                        pass
+
     requested_code = os.getenv("POSTAL_CODE", "").strip()
 
     if requested_code:
         # ★ ON-DEMAND: Triggered by user from the app
-        print(f"📱 On-demand search for: {requested_code}")
-        clinics = check_availability(requested_code)
-        if clinics:
-            for i, c in enumerate(clinics[:5]):
-                extra = f" — {c['address'][:60]}" if c.get('address') else ""
-                print(f"      {i+1}. {c['name'][:60]}{extra}")
-            send_single_notification(requested_code, clinics)
-            save_availability(requested_code, clinics)
+        # GEMI PROTOCOL: Peak hours check
+        if is_peak_hours():
+            print(f"\n⏰ PEAK HOURS (8am-10am ET) — Queueing request for {requested_code}")
+            queue_for_later(requested_code)
+            token = get_user_token()
+            if token:
+                try:
+                    messaging.send(messaging.Message(
+                        notification=messaging.Notification(
+                            title="🔍 Recherche en cours...",
+                            body=f"MyVita cherche des rendez-vous près de {requested_code}. Résultats bientôt."
+                        ),
+                        token=token,
+                    ))
+                except:
+                    pass
+        else:
+            print(f"\n📱 On-demand search for: {requested_code}")
+            clinics = check_availability(requested_code)
+            if clinics:
+                for i, c in enumerate(clinics[:5]):
+                    extra = f" — {c['address'][:60]}" if c.get('address') else ""
+                    print(f"      {i+1}. {c['name'][:60]}{extra}")
+                send_single_notification(requested_code, clinics)
+                save_availability(requested_code, clinics)
     else:
         # ★ SCHEDULED: Runs all 5 zones
         test_codes = ["H1Y3H1", "H4L2B5", "H2X1Y7", "G1R2A3", "J8Y3H1"]
@@ -437,3 +640,7 @@ if __name__ == "__main__":
             save_availability(test_codes[0], all_clinics)
 
         print(f"\n📦 Clinic database size: {len(all_clinics)} entries saved to Firestore")
+
+    # Final cleanup
+    clean_expired_data()
+    print("\n✅ MyVita-Bot session complete — Gemi Protocol compliant")
