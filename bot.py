@@ -319,7 +319,10 @@ def send_single_notification(user_postal: str, clinics: list):
                 title="🎉 Résultats disponibles!",
                 body=body
             ),
-            data={"url": clinics[0]['url'], "postal_code": user_postal},
+            data={
+                "postal_code": user_postal,
+                "type": "lab_results",
+            },
             token=token,
         ))
         print(f"✅ 1 notification sent: {len(clinics)} clinics near {user_postal}")
@@ -345,7 +348,7 @@ def save_availability(user_postal, clinics):
             "last_checked": now.isoformat(),
             "expires_at": expires_at.isoformat(),
             "gemi_protocol": True,
-            "status": "completed",  # ★ Signal to app that bot finished
+            "status": "completed",
         })
         print(f"💾 Saved: {len(clinics)} clinics for {user_postal} (expires: {expires_at.strftime('%H:%M')})")
     except Exception as e:
@@ -443,7 +446,7 @@ def search_single_code(postal_code: str, browser_context) -> list:
             except:
                 continue
 
-        # ★ SMART WAIT: Check for results, fallback to hard delay
+        # ★ SMART WAIT
         try:
             page.wait_for_selector("text=Disponible", timeout=8000)
             human_delay(0.5, 1.5)
@@ -582,7 +585,7 @@ if __name__ == "__main__":
     # GEMI PROTOCOL: Always clean expired data first
     clean_expired_data()
 
-    # Check for queued requests from peak hours
+    # ★ Always process queued requests first (from peak hours)
     queued_codes = process_queued_requests()
     if queued_codes:
         print(f"\n📋 Processing {len(queued_codes)} queued request(s)...")
@@ -614,7 +617,7 @@ if __name__ == "__main__":
                     messaging.send(messaging.Message(
                         notification=messaging.Notification(
                             title="🔍 Recherche en cours...",
-                            body=f"MyVita cherche des rendez-vous près de {requested_code}. Résultats bientôt."
+                            body=f"MyVita cherche des rendez-vous près de {requested_code}. Résultats après 10h."
                         ),
                         token=token,
                     ))
