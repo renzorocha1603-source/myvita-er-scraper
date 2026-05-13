@@ -74,7 +74,6 @@ def generate_search_codes(postal_code: str) -> list:
     suffix = postal_code[3:]
     codes = [postal_code.upper().replace(" ", "")]
     
-    # Use up to 5 neighboring FSAs (6 total) for wider ~30km coverage
     for fsa in fsas[:5]:
         candidate = f"{fsa}{suffix}"
         if candidate.upper() not in [c.upper() for c in codes]:
@@ -117,6 +116,22 @@ def get_user_token():
             if token: return token
     except: pass
     return None
+
+# ★ CANCELLATION CHECK — prevents notification for cancelled requests
+def is_request_cancelled(postal_code: str) -> bool:
+    """Check if any lab_request for this postal code was cancelled."""
+    if db is None:
+        return False
+    try:
+        cancelled = db.collection("lab_requests") \
+            .where("postal_code", "==", postal_code) \
+            .where("status", "==", "cancelled") \
+            .limit(1).stream()
+        for _ in cancelled:
+            return True
+        return False
+    except:
+        return False
 
 # === GEMI PROTOCOL: PEAK HOURS ===
 
@@ -446,7 +461,6 @@ def search_single_code(postal_code: str, browser_context) -> list:
             except:
                 continue
 
-        # ★ SMART WAIT
         try:
             page.wait_for_selector("text=Disponible", timeout=8000)
             human_delay(0.5, 1.5)
@@ -530,7 +544,6 @@ def check_availability(postal_code_override=None):
     all_clinics = []
     seen_ids = set()
 
-    # Check robots.txt once before session
     check_robots_txt()
 
     with sync_playwright() as p:
@@ -557,7 +570,6 @@ def check_availability(postal_code_override=None):
 
     print(f"   📊 {user_postal}: {len(all_clinics)} unique clinics")
     
-    # ★ Mark lab_requests as completed so the app knows
     if db and postal_code_override:
         try:
             pending_docs = db.collection("lab_requests").where("postal_code", "==", user_postal).where("status", "==", "pending").stream()
@@ -582,10 +594,8 @@ if __name__ == "__main__":
     print("   GEMI PROTOCOL: Active ✅ | Stealth: Active 🔒")
     print("=" * 60)
 
-    # GEMI PROTOCOL: Always clean expired data first
     clean_expired_data()
 
-    # ★ Always process queued requests first (from peak hours)
     queued_codes = process_queued_requests()
     if queued_codes:
         print(f"\n📋 Processing {len(queued_codes)} queued request(s)...")
@@ -607,8 +617,10 @@ if __name__ == "__main__":
     requested_code = os.getenv("POSTAL_CODE", "").strip()
 
     if requested_code:
-        # ★ ON-DEMAND: Triggered by user from the app
-        if is_peak_hours():
+        # ★ ON-DEMAND: Check if cancelled before doing anything
+        if is_request_cancelled(requested_code):
+            print(f"\n⛔ Request for {requested_code} was CANCELLED — skipping notification and save")
+        elif is_peak_hours():
             print(f"\n⏰ PEAK HOURS (8am-10am ET) — Queueing request for {requested_code}")
             queue_for_later(requested_code)
             token = get_user_token()
@@ -630,10 +642,13 @@ if __name__ == "__main__":
                 for i, c in enumerate(clinics[:5]):
                     extra = f" — {c['address'][:60]}" if c.get('address') else ""
                     print(f"      {i+1}. {c['name'][:60]}{extra}")
-                send_single_notification(requested_code, clinics)
-                save_availability(requested_code, clinics)
+                # ★ Only notify if not cancelled
+                if not is_request_cancelled(requested_code):
+                    send_single_notification(requested_code, clinics)
+                    save_availability(requested_code, clinics)
+                else:
+                    print(f"⛔ Skipping notification — request was cancelled")
     else:
-        # ★ SCHEDULED: Runs all 5 zones
         test_codes = ["H1Y3H1", "H4L2B5", "H2X1Y7", "G1R2A3", "J8Y3H1"]
         all_results = {}
 
@@ -666,6 +681,5 @@ if __name__ == "__main__":
 
         print(f"\n📦 Clinic database size: {len(all_clinics)} entries saved to Firestore")
 
-    # Final cleanup
     clean_expired_data()
     print("\n✅ MyVita-Bot session complete — Gemi Protocol compliant")
