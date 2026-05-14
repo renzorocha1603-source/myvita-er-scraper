@@ -73,7 +73,6 @@ def generate_search_codes(postal_code: str) -> list:
     fsas = get_zone_group(postal_code)
     suffix = postal_code[3:]
     codes = [postal_code.upper().replace(" ", "")]
-    
     for fsa in fsas[:5]:
         candidate = f"{fsa}{suffix}"
         if candidate.upper() not in [c.upper() for c in codes]:
@@ -117,15 +116,18 @@ def get_user_token():
     except: pass
     return None
 
-# ★ CANCELLATION CHECK — prevents notification for cancelled requests
+# ★ FIXED: Only checks recent pending requests — ignores old cancelled ones
 def is_request_cancelled(postal_code: str) -> bool:
-    """Check if any lab_request for this postal code was cancelled."""
+    """Check if the CURRENT pending request was cancelled by the user."""
     if db is None:
         return False
     try:
+        # Only check requests from the last hour — ignore old cancelled ones
+        one_hour_ago = datetime.now() - timedelta(hours=1)
         cancelled = db.collection("lab_requests") \
             .where("postal_code", "==", postal_code) \
             .where("status", "==", "cancelled") \
+            .where("requested_at", ">=", one_hour_ago) \
             .limit(1).stream()
         for _ in cancelled:
             return True
@@ -184,7 +186,6 @@ def check_robots_txt():
     global ROBOTS_TXT_CACHE
     if ROBOTS_TXT_CACHE["checked"]:
         return ROBOTS_TXT_CACHE
-
     print("🤖 Checking robots.txt...")
     try:
         with sync_playwright() as p:
@@ -193,52 +194,37 @@ def check_robots_txt():
             response = page.goto(CLICSANTE_ROBOTS_URL, timeout=15000)
             if response and response.status == 200:
                 text = page.evaluate("() => document.body.innerText")
-                
                 disallowed = []
                 crawl_delay = None
-                
                 for line in text.split('\n'):
                     line = line.strip().lower()
                     if line.startswith('disallow:'):
                         path = line.split(':', 1)[1].strip()
-                        if path:
-                            disallowed.append(path)
+                        if path: disallowed.append(path)
                     elif line.startswith('crawl-delay:'):
-                        try:
-                            crawl_delay = float(line.split(':', 1)[1].strip())
-                        except:
-                            pass
-                
-                ROBOTS_TXT_CACHE = {
-                    "checked": True,
-                    "disallowed_paths": disallowed,
-                    "crawl_delay": crawl_delay,
-                }
+                        try: crawl_delay = float(line.split(':', 1)[1].strip())
+                        except: pass
+                ROBOTS_TXT_CACHE = {"checked": True, "disallowed_paths": disallowed, "crawl_delay": crawl_delay}
                 print(f"✅ robots.txt loaded — {len(disallowed)} disallowed paths, crawl-delay: {crawl_delay}")
             else:
-                print(f"⚠️ robots.txt not found")
                 ROBOTS_TXT_CACHE = {"checked": True, "disallowed_paths": [], "crawl_delay": None}
-            
             browser.close()
     except Exception as e:
         print(f"⚠️ robots.txt check failed: {e} — proceeding cautiously")
         ROBOTS_TXT_CACHE = {"checked": True, "disallowed_paths": [], "crawl_delay": RATE_LIMIT_SECONDS}
-
     return ROBOTS_TXT_CACHE
 
 def is_path_allowed(url: str) -> bool:
     robots = check_robots_txt()
     from urllib.parse import urlparse
-    parsed = urlparse(url)
-    path = parsed.path
-    
+    path = urlparse(url).path
     for disallowed in robots.get("disallowed_paths", []):
         if path.startswith(disallowed):
             print(f"⛔ robots.txt blocks: {path}")
             return False
     return True
 
-# === 4. STEALTH ENGINE (KEPT FOR EXECUTION) ===
+# === 4. STEALTH ENGINE ===
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -250,12 +236,9 @@ USER_AGENTS = [
 ]
 
 VIEWPORT_SIZES = [
-    {"width": 1366, "height": 768},
-    {"width": 1440, "height": 900},
-    {"width": 1536, "height": 864},
-    {"width": 1280, "height": 720},
-    {"width": 1600, "height": 900},
-    {"width": 1920, "height": 1080},
+    {"width": 1366, "height": 768}, {"width": 1440, "height": 900},
+    {"width": 1536, "height": 864}, {"width": 1280, "height": 720},
+    {"width": 1600, "height": 900}, {"width": 1920, "height": 1080},
 ]
 
 CANVAS_EVASION_SCRIPT = """
@@ -264,9 +247,7 @@ HTMLCanvasElement.prototype.toDataURL = function(type) {
     const context = this.getContext('2d');
     if (context) {
         const imageData = context.getImageData(0, 0, this.width, this.height);
-        for (let i = 0; i < imageData.data.length; i += 4) {
-            imageData.data[i] += Math.floor(Math.random() * 2);
-        }
+        for (let i = 0; i < imageData.data.length; i += 4) { imageData.data[i] += Math.floor(Math.random() * 2); }
         context.putImageData(imageData, 0, 0);
     }
     return originalToDataURL.apply(this, arguments);
@@ -283,79 +264,36 @@ Object.defineProperty(navigator, 'languages', {get: () => ['fr-CA', 'fr', 'en-CA
 """
 
 def launch_stealth_browser(p):
-    """Stealth browser for execution — Gemi Protocol identity in headers only."""
-    browser = p.chromium.launch(
-        headless=True,
-        args=[
-            "--no-sandbox",
-            "--disable-blink-features=AutomationControlled",
-            "--disable-dev-shm-usage",
-            "--disable-gpu",
-            "--disable-infobars",
-        ]
-    )
-
+    browser = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-blink-features=AutomationControlled", "--disable-dev-shm-usage", "--disable-gpu", "--disable-infobars"])
     viewport = random.choice(VIEWPORT_SIZES)
     user_agent = random.choice(USER_AGENTS)
-
-    context = browser.new_context(
-        viewport=viewport,
-        user_agent=user_agent,
-        locale="fr-CA",
-        timezone_id="America/Toronto",
-        extra_http_headers={
-            "Accept-Language": "fr-CA,fr;q=0.9,en-CA;q=0.8,en;q=0.7",
-        }
-    )
-
+    context = browser.new_context(viewport=viewport, user_agent=user_agent, locale="fr-CA", timezone_id="America/Toronto",
+        extra_http_headers={"Accept-Language": "fr-CA,fr;q=0.9,en-CA;q=0.8,en;q=0.7"})
     context.add_init_script(CANVAS_EVASION_SCRIPT)
-
     return browser, context
 
 # === 5. NOTIFICATION ===
 
 def send_single_notification(user_postal: str, clinics: list):
-    """Send ONE notification. User opens app to see results."""
     token = get_user_token()
-    if not token:
-        print("⚠️ No FCM token")
-        return
-    if not clinics:
-        print("⚠️ No clinics to notify")
-        return
-
+    if not token or not clinics: return
     body = f"MyVita a trouvé des résultats près de {user_postal} — Ouvrez l'application pour voir"
-    if len(body) > 250:
-        body = body[:247] + "..."
-
+    if len(body) > 250: body = body[:247] + "..."
     try:
         messaging.send(messaging.Message(
-            notification=messaging.Notification(
-                title="🎉 Résultats disponibles!",
-                body=body
-            ),
-            data={
-                "postal_code": user_postal,
-                "type": "lab_results",
-            },
-            token=token,
-        ))
+            notification=messaging.Notification(title="🎉 Résultats disponibles!", body=body),
+            data={"postal_code": user_postal, "type": "lab_results"}, token=token))
         print(f"✅ 1 notification sent: {len(clinics)} clinics near {user_postal}")
-    except Exception as e:
-        print(f"❌ FCM Error: {e}")
+    except Exception as e: print(f"❌ FCM Error: {e}")
 
 def save_availability(user_postal, clinics):
-    """GEMI PROTOCOL: Save with 2-hour TTL. Includes status flag for app listener."""
     if db is None: return
     zone = user_postal[:3].upper()
     now = datetime.now()
     expires_at = now + timedelta(hours=MAX_DATA_AGE_HOURS)
-    
     try:
         db.collection("availability").document(user_postal).set({
-            "service": "blood-test",
-            "postal_code": user_postal,
-            "zone": zone,
+            "service": "blood-test", "postal_code": user_postal, "zone": zone,
             "slots_found": len(clinics) > 0,
             "booking_url": clinics[0]['url'] if clinics else "",
             "details": f"{len(clinics)} clinics found",
@@ -366,37 +304,27 @@ def save_availability(user_postal, clinics):
             "status": "completed",
         })
         print(f"💾 Saved: {len(clinics)} clinics for {user_postal} (expires: {expires_at.strftime('%H:%M')})")
-    except Exception as e:
-        print(f"❌ Firestore Error: {e}")
+    except Exception as e: print(f"❌ Firestore Error: {e}")
 
 def clean_expired_data():
-    """GEMI PROTOCOL: Delete availability data older than 2 hours."""
     if db is None: return
     try:
         cutoff = datetime.now() - timedelta(hours=MAX_DATA_AGE_HOURS)
         expired = db.collection("availability").where("last_checked", "<=", cutoff.isoformat()).stream()
         count = 0
-        for doc in expired:
-            doc.reference.delete()
-            count += 1
-        if count > 0:
-            print(f"🧹 Cleaned {count} expired availability records")
-    except Exception as e:
-        print(f"⚠️ Cleanup error: {e}")
+        for doc in expired: doc.reference.delete(); count += 1
+        if count > 0: print(f"🧹 Cleaned {count} expired availability records")
+    except Exception as e: print(f"⚠️ Cleanup error: {e}")
 
 def save_clinic_to_database(clinic: dict):
     if db is None: return
     try:
         db.collection("clinic_database").document(clinic['id']).set({
-            'name': clinic.get('name', ''),
-            'address': clinic.get('address', ''),
-            'phone': clinic.get('phone', ''),
-            'url': clinic.get('url', ''),
-            'type': clinic.get('type', ''),
-            'last_seen': datetime.now().isoformat(),
+            'name': clinic.get('name', ''), 'address': clinic.get('address', ''),
+            'phone': clinic.get('phone', ''), 'url': clinic.get('url', ''),
+            'type': clinic.get('type', ''), 'last_seen': datetime.now().isoformat(),
         }, merge=True)
-    except:
-        pass
+    except: pass
 
 # === 6. SINGLE CODE SEARCH ===
 
@@ -404,7 +332,6 @@ def search_single_code(postal_code: str, browser_context) -> list:
     clinics = []
     captured_responses = []
     page = browser_context.new_page()
-
     def on_response(response):
         try:
             url = response.url
@@ -413,119 +340,61 @@ def search_single_code(postal_code: str, browser_context) -> list:
                 if 'json' in ct:
                     body = response.json()
                     captured_responses.append({'url': url, 'data': body})
-        except:
-            pass
-
+        except: pass
     page.on("response", on_response)
-
     try:
         human_delay(1.0, 3.5)
-
-        page.goto("https://portal3.clicsante.ca/services/blood-test", 
-                 wait_until="networkidle", timeout=45000)
+        page.goto("https://portal3.clicsante.ca/services/blood-test", wait_until="networkidle", timeout=45000)
         human_delay(1.5, 4)
-
-        try:
-            page.keyboard.press("Escape")
-            time.sleep(random.uniform(0.2, 0.5))
-        except:
-            pass
-
+        try: page.keyboard.press("Escape"); time.sleep(random.uniform(0.2, 0.5))
+        except: pass
         for txt in ["No fees", "Sans frais"]:
-            try:
-                page.get_by_text(txt, exact=True).click(timeout=5000)
-                break
-            except:
-                continue
+            try: page.get_by_text(txt, exact=True).click(timeout=5000); break
+            except: continue
         human_delay(0.4, 1.2)
-
         try:
-            field = page.get_by_placeholder("ex. A1A 1A1")
-            field.click()
-            human_delay(0.1, 0.3)
-            field.fill(postal_code)
+            field = page.get_by_placeholder("ex. A1A 1A1"); field.click()
+            human_delay(0.1, 0.3); field.fill(postal_code)
         except:
             try:
-                field = page.locator("input[type='text']").first
-                field.click()
-                human_delay(0.1, 0.3)
-                field.fill(postal_code)
-            except:
-                pass
+                field = page.locator("input[type='text']").first; field.click()
+                human_delay(0.1, 0.3); field.fill(postal_code)
+            except: pass
         human_delay(0.4, 1.2)
-
         for btn_text in ["Search", "Rechercher", "Chercher"]:
-            try:
-                page.get_by_role("button", name=re.compile(btn_text, re.I)).first.click(timeout=5000)
-                break
-            except:
-                continue
-
-        try:
-            page.wait_for_selector("text=Disponible", timeout=8000)
-            human_delay(0.5, 1.5)
-        except:
-            human_delay(8, 14)
-
+            try: page.get_by_role("button", name=re.compile(btn_text, re.I)).first.click(timeout=5000); break
+            except: continue
+        try: page.wait_for_selector("text=Disponible", timeout=8000); human_delay(0.5, 1.5)
+        except: human_delay(8, 14)
         try:
             el = page.locator("text=~").first
-            if el.count() > 0 and el.is_visible():
-                el.click(timeout=3000)
-                human_delay(1.5, 4)
-        except:
-            pass
-
+            if el.count() > 0 and el.is_visible(): el.click(timeout=3000); human_delay(1.5, 4)
+        except: pass
         seen_ids = set()
         for resp in captured_responses:
             data = resp.get('data', {})
             items = data if isinstance(data, list) else data.get('establishments', data.get('data', data.get('results', [])))
-
             if isinstance(items, list):
                 for item in items:
-                    if not isinstance(item, dict):
-                        continue
-
+                    if not isinstance(item, dict): continue
                     name = item.get('name', '')
-                    if not name:
-                        continue
-
+                    if not name: continue
                     est_id = str(item.get('id', ''))
-                    if not est_id or len(est_id) < 3:
-                        continue
-
-                    if est_id in seen_ids:
-                        continue
-
+                    if not est_id or len(est_id) < 3: continue
+                    if est_id in seen_ids: continue
                     seen_ids.add(est_id)
-
                     address = item.get('address', '')
                     public_url = item.get('public_url', '')
                     phone = item.get('phone', '')
                     establishment_type = item.get('establishment_type', '')
-
-                    if public_url:
-                        deep_link = public_url
-                    else:
-                        deep_link = f"https://clients3.clicsante.ca/65252/take-appt?portalEst={est_id}&portalPostalCode={postal_code}&lang=fr"
-
-                    clinic = {
-                        'id': est_id,
-                        'name': str(name)[:80],
-                        'address': str(address)[:120] if address else '',
-                        'phone': str(phone) if phone else '',
-                        'url': deep_link,
-                        'type': str(establishment_type) if establishment_type else '',
-                        'source': 'api_intercept'
-                    }
-
+                    deep_link = public_url if public_url else f"https://clients3.clicsante.ca/65252/take-appt?portalEst={est_id}&portalPostalCode={postal_code}&lang=fr"
+                    clinic = {'id': est_id, 'name': str(name)[:80], 'address': str(address)[:120] if address else '',
+                              'phone': str(phone) if phone else '', 'url': deep_link,
+                              'type': str(establishment_type) if establishment_type else '', 'source': 'api_intercept'}
                     clinics.append(clinic)
                     save_clinic_to_database(clinic)
-
-    except Exception as e:
-        print(f"   ⚠️ Error: {e}")
-    finally:
-        page.close()
-
+    except Exception as e: print(f"   ⚠️ Error: {e}")
+    finally: page.close()
     return clinics
 
 # === 7. MAIN ===
@@ -533,57 +402,36 @@ def search_single_code(postal_code: str, browser_context) -> list:
 def check_availability(postal_code_override=None):
     user_postal = postal_code_override or os.getenv("POSTAL_CODE", "H1Y3H1").replace(" ", "")
     search_codes = generate_search_codes(user_postal)
-
     print(f"\n{'='*60}")
     print(f"🚀 ClicSanté Search: {user_postal}")
     print(f"   🤖 MyVita-Bot/1.0 — Health Access Concierge (Gemi Protocol)")
     print(f"   📜 robots.txt respected | ⏱️ Rate: {RATE_LIMIT_SECONDS}s | 🕐 TTL: {MAX_DATA_AGE_HOURS}h")
     print(f"   📍 30km radius | Searching {len(search_codes)} codes: {search_codes}")
     print(f"{'='*60}")
-
     all_clinics = []
     seen_ids = set()
-
     check_robots_txt()
-
     with sync_playwright() as p:
         browser, context = launch_stealth_browser(p)
-
         try:
             for i, code in enumerate(search_codes):
                 print(f"\n🔍 [{i+1}/{len(search_codes)}] {code}")
                 clinics = search_single_code(code, context)
-
                 new_count = 0
                 for clinic in clinics:
                     if clinic['id'] not in seen_ids:
-                        seen_ids.add(clinic['id'])
-                        all_clinics.append(clinic)
-                        new_count += 1
-
+                        seen_ids.add(clinic['id']); all_clinics.append(clinic); new_count += 1
                 print(f"   ✅ {len(clinics)} found, {new_count} new (total: {len(all_clinics)})")
-
-                if i < len(search_codes) - 1:
-                    human_delay(1.5, 4)
-        finally:
-            browser.close()
-
+                if i < len(search_codes) - 1: human_delay(1.5, 4)
+        finally: browser.close()
     print(f"   📊 {user_postal}: {len(all_clinics)} unique clinics")
-    
     if db and postal_code_override:
         try:
             pending_docs = db.collection("lab_requests").where("postal_code", "==", user_postal).where("status", "==", "pending").stream()
             for doc in pending_docs:
-                doc.reference.update({
-                    "status": "completed",
-                    "completed_at": datetime.now().isoformat(),
-                    "clinic_count": len(all_clinics)
-                })
-        except:
-            pass
-    
+                doc.reference.update({"status": "completed", "completed_at": datetime.now().isoformat(), "clinic_count": len(all_clinics)})
+        except: pass
     return all_clinics
-
 
 # === 8. MAIN ENTRY POINT ===
 
@@ -609,17 +457,26 @@ if __name__ == "__main__":
                 send_single_notification(code, clinics)
                 save_availability(code, clinics)
                 if db:
-                    try:
-                        db.collection("lab_requests_queue").document(code).update({"status": "completed"})
-                    except:
-                        pass
+                    try: db.collection("lab_requests_queue").document(code).update({"status": "completed"})
+                    except: pass
 
     requested_code = os.getenv("POSTAL_CODE", "").strip()
 
     if requested_code:
-        # ★ ON-DEMAND: Check if cancelled before doing anything
+        # ★ Check if the CURRENT pending request was cancelled
         if is_request_cancelled(requested_code):
-            print(f"\n⛔ Request for {requested_code} was CANCELLED — skipping notification and save")
+            print(f"\n⛔ Request for {requested_code} was CANCELLED — writing empty result to stop loading")
+            # ★ FIX: Write empty completed result so app stops loading
+            save_availability(requested_code, [])
+            # Update pending lab_request to completed
+            if db:
+                try:
+                    pending = db.collection("lab_requests") \
+                        .where("postal_code", "==", requested_code) \
+                        .where("status", "==", "pending").stream()
+                    for doc in pending:
+                        doc.reference.update({"status": "completed", "clinic_count": 0})
+                except: pass
         elif is_peak_hours():
             print(f"\n⏰ PEAK HOURS (8am-10am ET) — Queueing request for {requested_code}")
             queue_for_later(requested_code)
@@ -630,11 +487,8 @@ if __name__ == "__main__":
                         notification=messaging.Notification(
                             title="🔍 Recherche en cours...",
                             body=f"MyVita cherche des rendez-vous près de {requested_code}. Résultats après 10h."
-                        ),
-                        token=token,
-                    ))
-                except:
-                    pass
+                        ), token=token))
+                except: pass
         else:
             print(f"\n📱 On-demand search for: {requested_code}")
             clinics = check_availability(requested_code)
@@ -642,16 +496,15 @@ if __name__ == "__main__":
                 for i, c in enumerate(clinics[:5]):
                     extra = f" — {c['address'][:60]}" if c.get('address') else ""
                     print(f"      {i+1}. {c['name'][:60]}{extra}")
-                # ★ Only notify if not cancelled
-                if not is_request_cancelled(requested_code):
-                    send_single_notification(requested_code, clinics)
-                    save_availability(requested_code, clinics)
-                else:
-                    print(f"⛔ Skipping notification — request was cancelled")
+                send_single_notification(requested_code, clinics)
+                save_availability(requested_code, clinics)
+            else:
+                # ★ No clinics found — still save empty result so app stops loading
+                print(f"   ⚠️ No clinics found for {requested_code}")
+                save_availability(requested_code, [])
     else:
         test_codes = ["H1Y3H1", "H4L2B5", "H2X1Y7", "G1R2A3", "J8Y3H1"]
         all_results = {}
-
         for code in test_codes:
             clinics = check_availability(code)
             all_results[code] = clinics
@@ -660,25 +513,20 @@ if __name__ == "__main__":
                     extra = f" — {c['address'][:60]}" if c.get('address') else ""
                     print(f"      {i+1}. {c['name'][:60]}{extra}")
             time.sleep(5)
-
         all_clinics = []
         seen_all = set()
         for code, clinics in all_results.items():
             for clinic in clinics:
                 if clinic['id'] not in seen_all:
-                    seen_all.add(clinic['id'])
-                    all_clinics.append(clinic)
-
+                    seen_all.add(clinic['id']); all_clinics.append(clinic)
         print(f"\n{'='*60}")
         print(f"🏁 FINAL: {len(all_clinics)} unique clinics across all codes")
-
         if all_clinics:
             for i, c in enumerate(all_clinics[:5]):
                 extra = f" — {c['address'][:60]}" if c.get('address') else ""
                 print(f"   {i+1}. {c['name'][:60]}{extra}")
             send_single_notification(test_codes[0], all_clinics)
             save_availability(test_codes[0], all_clinics)
-
         print(f"\n📦 Clinic database size: {len(all_clinics)} entries saved to Firestore")
 
     clean_expired_data()
