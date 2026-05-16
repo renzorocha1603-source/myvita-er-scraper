@@ -5,6 +5,7 @@ import os
 import json
 import re
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 import firebase_admin
 from firebase_admin import credentials, messaging, firestore
 
@@ -16,10 +17,17 @@ from firebase_admin import credentials, messaging, firestore
 # Contact:     legal@myvita.app
 # robots.txt:  Respected — checked before every session
 # Rate Limit:  1 req / 2 seconds minimum
-# Peak Hours:  No scraping 8:00–10:00 AM ET (requests queued)
+# Peak Hours:  No scraping 8:00–10:00 AM ET (requests queued silently)
 # Data Expiry: 2 hours max — Firestore TTL
 # Loi 25:      No personal data collected. No competing database.
 # ============================================================================
+
+# ★ TIMEZONE: Eastern Time (America/Toronto) for Quebec
+EASTERN_TZ = ZoneInfo("America/Toronto")
+
+def now_et():
+    """Return current datetime in Eastern Time."""
+    return datetime.now(EASTERN_TZ)
 
 # === 1. CONFIGURATION ===
 
@@ -123,7 +131,7 @@ def is_request_cancelled(postal_code: str) -> bool:
         return False
     try:
         # Only check requests from the last hour — ignore old cancelled ones
-        one_hour_ago = datetime.now() - timedelta(hours=1)
+        one_hour_ago = now_et() - timedelta(hours=1)
         cancelled = db.collection("lab_requests") \
             .where("postal_code", "==", postal_code) \
             .where("status", "==", "cancelled") \
@@ -135,25 +143,27 @@ def is_request_cancelled(postal_code: str) -> bool:
     except:
         return False
 
-# === GEMI PROTOCOL: PEAK HOURS ===
+# === GEMI PROTOCOL: PEAK HOURS (Eastern Time) ===
 
 def is_peak_hours():
-    now = datetime.now()
+    """Check if current time is within peak hours (8am-10am ET)."""
+    now = now_et()
     hour = now.hour
     return PEAK_HOURS_START <= hour < PEAK_HOURS_END
 
 def queue_for_later(postal_code: str):
+    """Queue request for post-peak execution — SILENT, no notification."""
     if db is None:
         print("⚠️ No DB — cannot queue request")
         return False
     try:
         db.collection("lab_requests_queue").document(postal_code).set({
             "postal_code": postal_code,
-            "requested_at": datetime.now().isoformat(),
+            "requested_at": now_et().isoformat(),
             "status": "queued",
-            "execute_after": (datetime.now() + timedelta(hours=2)).isoformat(),
+            "execute_after": (now_et() + timedelta(hours=2)).isoformat(),
         })
-        print(f"⏳ Queued {postal_code} for post-peak execution (after 10am ET)")
+        print(f"⏳ Queued {postal_code} for post-peak execution (after 10am ET) — silent, no notification sent")
         return True
     except Exception as e:
         print(f"⚠️ Queue error: {e}")
@@ -164,12 +174,16 @@ def process_queued_requests():
         print("⚠️ No DB — cannot process queue")
         return []
     try:
-        now = datetime.now()
+        now = now_et()
         queued = db.collection("lab_requests_queue").where("status", "==", "queued").stream()
         ready_codes = []
         for doc in queued:
             data = doc.to_dict()
-            execute_after = datetime.fromisoformat(data.get("execute_after", "2000-01-01"))
+            execute_after_str = data.get("execute_after", "2000-01-01T00:00:00")
+            execute_after = datetime.fromisoformat(execute_after_str)
+            # If execute_after is timezone-naive, make it ET-aware for comparison
+            if execute_after.tzinfo is None:
+                execute_after = execute_after.replace(tzinfo=EASTERN_TZ)
             if now >= execute_after:
                 ready_codes.append(data.get("postal_code"))
                 doc.reference.update({"status": "processing"})
@@ -275,6 +289,7 @@ def launch_stealth_browser(p):
 # === 5. NOTIFICATION ===
 
 def send_single_notification(user_postal: str, clinics: list):
+    """Send notification ONLY when results are found — not for queuing."""
     token = get_user_token()
     if not token or not clinics: return
     body = f"MyVita a trouvé des résultats près de {user_postal} — Ouvrez l'application pour voir"
@@ -289,7 +304,7 @@ def send_single_notification(user_postal: str, clinics: list):
 def save_availability(user_postal, clinics):
     if db is None: return
     zone = user_postal[:3].upper()
-    now = datetime.now()
+    now = now_et()
     expires_at = now + timedelta(hours=MAX_DATA_AGE_HOURS)
     try:
         db.collection("availability").document(user_postal).set({
@@ -309,7 +324,7 @@ def save_availability(user_postal, clinics):
 def clean_expired_data():
     if db is None: return
     try:
-        cutoff = datetime.now() - timedelta(hours=MAX_DATA_AGE_HOURS)
+        cutoff = now_et() - timedelta(hours=MAX_DATA_AGE_HOURS)
         expired = db.collection("availability").where("last_checked", "<=", cutoff.isoformat()).stream()
         count = 0
         for doc in expired: doc.reference.delete(); count += 1
@@ -322,7 +337,7 @@ def save_clinic_to_database(clinic: dict):
         db.collection("clinic_database").document(clinic['id']).set({
             'name': clinic.get('name', ''), 'address': clinic.get('address', ''),
             'phone': clinic.get('phone', ''), 'url': clinic.get('url', ''),
-            'type': clinic.get('type', ''), 'last_seen': datetime.now().isoformat(),
+            'type': clinic.get('type', ''), 'last_seen': now_et().isoformat(),
         }, merge=True)
     except: pass
 
@@ -407,6 +422,7 @@ def check_availability(postal_code_override=None):
     print(f"   🤖 MyVita-Bot/1.0 — Health Access Concierge (Gemi Protocol)")
     print(f"   📜 robots.txt respected | ⏱️ Rate: {RATE_LIMIT_SECONDS}s | 🕐 TTL: {MAX_DATA_AGE_HOURS}h")
     print(f"   📍 30km radius | Searching {len(search_codes)} codes: {search_codes}")
+    print(f"   🕐 Current ET time: {now_et().strftime('%H:%M')}")
     print(f"{'='*60}")
     all_clinics = []
     seen_ids = set()
@@ -429,7 +445,7 @@ def check_availability(postal_code_override=None):
         try:
             pending_docs = db.collection("lab_requests").where("postal_code", "==", user_postal).where("status", "==", "pending").stream()
             for doc in pending_docs:
-                doc.reference.update({"status": "completed", "completed_at": datetime.now().isoformat(), "clinic_count": len(all_clinics)})
+                doc.reference.update({"status": "completed", "completed_at": now_et().isoformat(), "clinic_count": len(all_clinics)})
         except: pass
     return all_clinics
 
@@ -439,6 +455,7 @@ if __name__ == "__main__":
     print("=" * 60)
     print("🤖 MyVita-Bot/1.0 — Health Access Concierge")
     print(f"   Contact: {MYVITA_BOT_CONTACT}")
+    print(f"   🕐 Current ET time: {now_et().strftime('%H:%M')}")
     print("   GEMI PROTOCOL: Active ✅ | Stealth: Active 🔒")
     print("=" * 60)
 
@@ -478,17 +495,12 @@ if __name__ == "__main__":
                         doc.reference.update({"status": "completed", "clinic_count": 0})
                 except: pass
         elif is_peak_hours():
-            print(f"\n⏰ PEAK HOURS (8am-10am ET) — Queueing request for {requested_code}")
+            # ★ FIX: Silent queuing — NO notification during peak hours
+            print(f"\n⏰ PEAK HOURS (8am-10am ET) — Silently queueing request for {requested_code}")
+            print(f"   🔇 No notification sent — user will be notified when results are found after 10am")
             queue_for_later(requested_code)
-            token = get_user_token()
-            if token:
-                try:
-                    messaging.send(messaging.Message(
-                        notification=messaging.Notification(
-                            title="🔍 Recherche en cours...",
-                            body=f"MyVita cherche des rendez-vous près de {requested_code}. Résultats après 10h."
-                        ), token=token))
-                except: pass
+            # ★ REMOVED: No notification sent during peak hours
+            # The user will get a notification when results are actually found (after 10am)
         else:
             print(f"\n📱 On-demand search for: {requested_code}")
             clinics = check_availability(requested_code)
