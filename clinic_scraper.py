@@ -43,9 +43,6 @@ GOOGLE_MAPS_PROXY = "https://us-central1-myvita-app-c5ecd.cloudfunctions.net/goo
 # Search radius tiers (km)
 RADIUS_TIERS = [15, 30]
 
-# Cooldown between full search cycles (minutes)
-COOLDOWN_MINUTES = 45
-
 # Max days ahead to search for appointments
 MAX_DAYS_AHEAD = 10
 
@@ -484,7 +481,7 @@ def discover_clinics_near(postal_code: str, radius_km: int = 15) -> list:
             unique_clinics.append(clinic)
 
     print(f"\n✅ Discovered {len(unique_clinics)} unique free clinics")
-    
+
     if unique_clinics:
         save_clinic_cache(postal_code, unique_clinics)
 
@@ -530,7 +527,7 @@ def detect_platform_from_url(url: str) -> str:
     ClicSanté/RVSQ is skipped.
     """
     url_lower = url.lower()
-    
+
     if "pomelo.health" in url_lower or "telus" in url_lower:
         return "pomelo"
     elif "bonjour-sante.ca" in url_lower:
@@ -547,29 +544,29 @@ def find_booking_link(page, clinic_name: str) -> dict:
     Returns {"platform": str, "booking_url": str}
     """
     print(f"   🔗 Searching booking link on {clinic_name}...")
-    
+
     for selector in BOOKING_LINK_SELECTORS:
         if KillSwitch.is_active():
             return {"platform": "kill_switch", "booking_url": ""}
-        
+
         try:
             element = page.locator(selector).first
             if element.count() == 0 or not element.is_visible():
                 continue
-            
+
             href = element.get_attribute("href") or ""
             print(f"      Trying: {selector[:60]}... → href={href[:80]}")
-            
+
             # Direct platform URL in href
             if any(p in href.lower() for p in ["pomelo.health", "bonjour-sante.ca", "clicsante.ca", "rvsq"]):
                 platform = detect_platform_from_url(href)
                 print(f"      🎯 Direct platform link found: {platform}")
                 return {"platform": platform, "booking_url": href}
-            
+
             # Click and check redirect
             element.click(timeout=5000)
             human_delay(2000, 4000)
-            
+
             # Check if new tab opened
             if len(page.context.pages) > 1:
                 new_page = page.context.pages[-1]
@@ -579,21 +576,21 @@ def find_booking_link(page, clinic_name: str) -> dict:
                 booking_url = new_page.url
                 new_page.close()
                 return {"platform": platform, "booking_url": booking_url}
-            
+
             # Check current page URL
             platform = detect_platform_from_url(page.url)
             if platform != "unknown":
                 return {"platform": platform, "booking_url": page.url}
-            
+
             try:
                 page.go_back()
                 human_delay(500, 1000)
             except:
                 pass
-                
+
         except:
             continue
-    
+
     # Fallback: Check Contact page
     print(f"      ⚠️ No booking link found. Trying Contact page...")
     try:
@@ -614,7 +611,7 @@ def find_booking_link(page, clinic_name: str) -> dict:
                     continue
     except:
         pass
-    
+
     print(f"      ❌ No booking link found")
     return {"platform": "unknown", "booking_url": ""}
 
@@ -625,40 +622,40 @@ def visit_clinic_and_detect_platform(clinic: dict) -> dict:
     Returns clinic dict with platform and booking_url added.
     """
     headless = os.getenv("HEADLESS", "true").lower() != "false"
-    
+
     if KillSwitch.is_active():
         return {**clinic, "platform": "kill_switch", "booking_url": ""}
-    
+
     website = clinic.get("website")
     if not website:
         print(f"   ⛔ {clinic['name']}: No website — skipping")
         return {**clinic, "platform": "no_website", "booking_url": ""}
-    
+
     print(f"\n   🏥 Visiting: {clinic['name']}")
     print(f"      🌐 {website}")
-    
+
     with sync_playwright() as p:
         browser, context = launch_stealth_browser(p, headless=headless)
         page = context.new_page()
-        
+
         try:
             page.goto(website, wait_until="domcontentloaded", timeout=30000)
             human_delay(2000, 3000)
-            
+
             try:
                 page.keyboard.press("Escape")
                 human_delay(300, 500)
             except:
                 pass
-            
+
             result = find_booking_link(page, clinic["name"])
-            
+
             return {
                 **clinic,
                 "platform": result["platform"],
                 "booking_url": result["booking_url"],
             }
-            
+
         except Exception as e:
             print(f"      🚨 Error visiting {clinic['name']}: {e}")
             return {**clinic, "platform": "error", "booking_url": ""}
@@ -823,7 +820,7 @@ def verify_pomelo_calendar(page, clinic_name: str) -> tuple:
     print("      📅 Checking Pomelo calendar...")
     if KillSwitch.is_active():
         return False, "Kill switch"
-    
+
     human_delay(2000, 3000)
     body_text = page.inner_text("body").lower()
 
@@ -858,9 +855,9 @@ def scrape_pomelo_clinic(clinic: dict, user: dict) -> dict:
     """Complete Pomelo 4-step scrape. Returns {"found": bool, "details": str, "booking_url": str}"""
     headless = os.getenv("HEADLESS", "true").lower() != "false"
     booking_url = clinic.get("booking_url", "")
-    
+
     print(f"\n   🔴 POMELO HANDLER: {clinic['name']}")
-    
+
     if KillSwitch.is_active():
         return {"found": False, "details": "Kill switch active", "booking_url": ""}
 
@@ -980,7 +977,7 @@ def verify_bonjoursante_results(page, clinic_name: str) -> tuple:
     print("      📅 Checking Bonjour Santé results...")
     if KillSwitch.is_active():
         return False, "Kill switch"
-    
+
     human_delay(2000, 3000)
     body_text = page.inner_text("body").lower()
 
@@ -1003,9 +1000,9 @@ def scrape_bonjoursante_clinic(clinic: dict, user: dict) -> dict:
     """Complete Bonjour Santé 3-step scrape."""
     headless = os.getenv("HEADLESS", "true").lower() != "false"
     booking_url = clinic.get("booking_url", "")
-    
+
     print(f"\n   🟠 BONJOUR SANTÉ HANDLER: {clinic['name']}")
-    
+
     if KillSwitch.is_active():
         return {"found": False, "details": "Kill switch active", "booking_url": ""}
 
@@ -1055,10 +1052,10 @@ def route_and_scrape_clinic(clinic: dict, user: dict) -> dict:
     ClicSanté/RVSQ is skipped.
     """
     platform = clinic.get("platform", "unknown")
-    
+
     if platform == "kill_switch":
         return {"found": False, "details": "Kill switch", "booking_url": ""}
-    
+
     if platform == "pomelo":
         return scrape_pomelo_clinic(clinic, user)
     elif platform == "bonjour_sante":
@@ -1075,7 +1072,7 @@ def route_and_scrape_clinic(clinic: dict, user: dict) -> dict:
 
 
 # ══════════════════════════════════════════════════════════════
-# 13. MAIN SEARCH ORCHESTRATOR
+# 13. MAIN SEARCH ORCHESTRATOR — SINGLE RUN, NO LOOP
 # ══════════════════════════════════════════════════════════════
 
 def search_clinics_in_zone(user: dict, radius_km: int) -> bool:
@@ -1084,27 +1081,27 @@ def search_clinics_in_zone(user: dict, radius_km: int) -> bool:
     and scrape each one. Returns True if appointment found.
     """
     postal = user["postal_code"]
-    
+
     clinics = discover_clinics_near(postal, radius_km)
-    
+
     if not clinics:
         print(f"   No clinics found in {radius_km}km radius")
         return False
-    
+
     detected_clinics = []
     for clinic in clinics:
         if KillSwitch.is_active():
             return True
-        
+
         result = visit_clinic_and_detect_platform(clinic)
         detected_clinics.append(result)
-    
+
     for clinic in detected_clinics:
         if KillSwitch.is_active():
             return True
-        
+
         result = route_and_scrape_clinic(clinic, user)
-        
+
         if result["found"]:
             KillSwitch.activate({
                 "clinic_name": clinic["name"],
@@ -1130,73 +1127,67 @@ def search_clinics_in_zone(user: dict, radius_km: int) -> bool:
                 clinic.get("platform", "unknown"),
                 False, "", result["details"]
             )
-    
+
     return False
 
 
-def run_full_search(user_postal: str = None):
+def run_single_search(user_postal: str = None):
     """
-    Full tiered search: 15km → 30km → cooldown → repeat.
-    Only targets Pomelo and Bonjour Santé (free tier clinics).
+    ★ MANUAL MODE — Runs ONE search cycle (15km + 30km), then stops.
+    Triggered by user request, not automatic loop.
+    Does NOT loop. Does NOT cooldown. Runs once and exits.
     """
     if user_postal is None:
         user_postal = os.getenv("POSTAL_CODE", "H1Y3H1")
-    
+
     user = get_user_data()
     user["postal_code"] = user_postal
-    
+
     KillSwitch.reset()
     max_date = (datetime.now() + timedelta(days=MAX_DAYS_AHEAD)).strftime("%Y-%m-%d")
-    
+
     print(f"\n{'='*60}")
-    print(f"🚀 MYVITA CLINIC SCRAPER — Free Tier")
+    print(f"🚀 MYVITA CLINIC SCRAPER — Manual Search (User Triggered)")
     print(f"   Postal Code: {user_postal}")
     print(f"   Max Date: {max_date} (under {MAX_DAYS_AHEAD} days)")
     print(f"   Tiers: {RADIUS_TIERS} km")
-    print(f"   Cooldown: {COOLDOWN_MINUTES} min between cycles")
     print(f"   Platforms: Pomelo by Telus + Bonjour Santé ONLY")
     print(f"   ClicSanté/RVSQ: SKIPPED")
+    print(f"   Mode: SINGLE RUN — no loop, no cooldown")
     print(f"{'='*60}\n")
-    
-    cycle = 0
-    
-    while not KillSwitch.is_active():
-        cycle += 1
-        print(f"\n🔄 CYCLE {cycle} — {'='*40}")
-        
-        for radius in RADIUS_TIERS:
-            if KillSwitch.is_active():
-                break
-            print(f"\n🔵 TIER: {radius}km radius")
-            
-            found = search_clinics_in_zone(user, radius)
-            
-            if found:
-                print(f"\n{'='*60}")
-                print(f"🎉 APPOINTMENT FOUND!")
-                print(f"   Clinic: {KillSwitch._found_appointment.get('clinic_name')}")
-                print(f"   Platform: {KillSwitch._found_appointment.get('platform')}")
-                print(f"   URL: {KillSwitch._found_appointment.get('booking_url')}")
-                print(f"{'='*60}")
-                return KillSwitch._found_appointment
-        
-        if not KillSwitch.is_active():
-            print(f"\n😴 No appointments found in cycle {cycle}.")
-            print(f"   Cooling down for {COOLDOWN_MINUTES} minutes...")
-            print(f"   Next cycle at: {(datetime.now() + timedelta(minutes=COOLDOWN_MINUTES)).strftime('%H:%M:%S')}")
-            time.sleep(COOLDOWN_MINUTES * 60)
-    
+
+    for radius in RADIUS_TIERS:
+        if KillSwitch.is_active():
+            break
+        print(f"\n🔵 TIER: {radius}km radius")
+
+        found = search_clinics_in_zone(user, radius)
+
+        if found:
+            print(f"\n{'='*60}")
+            print(f"🎉 APPOINTMENT FOUND!")
+            print(f"   Clinic: {KillSwitch._found_appointment.get('clinic_name')}")
+            print(f"   Platform: {KillSwitch._found_appointment.get('platform')}")
+            print(f"   URL: {KillSwitch._found_appointment.get('booking_url')}")
+            print(f"{'='*60}")
+            return KillSwitch._found_appointment
+
+    if not KillSwitch.is_active():
+        print(f"\n😴 No appointments found.")
+        print(f"   Search complete — waiting for next user trigger.")
+
     return None
 
 
 # ══════════════════════════════════════════════════════════════
-# 14. MAIN ENTRY POINT
+# 14. MAIN ENTRY POINT — MANUAL TRIGGER ONLY
 # ══════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
     print("╔══════════════════════════════════════════════════════╗")
     print("║        MYVITA CLINIC APPOINTMENT SCRAPER            ║")
     print("║        Free Tier — Pomelo + Bonjour Santé           ║")
+    print("║        MODE: Manual Trigger (User Request)          ║")
     print("╚══════════════════════════════════════════════════════╝")
     print()
     print("📋 To insert your info, set these environment variables:")
@@ -1205,6 +1196,10 @@ if __name__ == "__main__":
     print("   USER_EMAIL        USER_PHONE       POSTAL_CODE")
     print("   USER_LANGUAGE")
     print()
-    
+    print("🔔 This bot runs ONCE per trigger — no automatic loops.")
+    print()
+
     postal = os.getenv("POSTAL_CODE", "H1Y3H1")
-    run_full_search(user_postal=postal)
+    run_single_search(user_postal=postal)
+
+    print("\n✅ MyVita Clinic Scraper session complete — waiting for next trigger")
