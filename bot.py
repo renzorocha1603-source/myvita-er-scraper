@@ -289,16 +289,19 @@ def launch_stealth_browser(p):
 # === 5. NOTIFICATION ===
 
 def send_single_notification(user_postal: str, clinics: list):
-    """Send notification ONLY when results are found — not for queuing."""
+    """Send ONE notification — no postal code in message, just 'Results ready'."""
     token = get_user_token()
     if not token or not clinics: return
-    body = f"MyVita a trouvé des résultats près de {user_postal} — Ouvrez l'application pour voir"
+    body = "Vos resultats sont arrives. Ouvrez MyVita pour les voir."
     if len(body) > 250: body = body[:247] + "..."
     try:
         messaging.send(messaging.Message(
-            notification=messaging.Notification(title="🎉 Résultats disponibles!", body=body),
-            data={"postal_code": user_postal, "type": "lab_results"}, token=token))
-        print(f"✅ 1 notification sent: {len(clinics)} clinics near {user_postal}")
+            notification=messaging.Notification(
+                title="Resultats disponibles",
+                body=body),
+            data={"postal_code": user_postal, "type": "lab_results"},
+            token=token))
+        print(f"✅ Notification sent: {len(clinics)} clinics found")
     except Exception as e: print(f"❌ FCM Error: {e}")
 
 def save_availability(user_postal, clinics):
@@ -461,6 +464,9 @@ if __name__ == "__main__":
 
     clean_expired_data()
 
+    # ★ Track which postal codes already got a notification this session
+    notified_codes = set()
+
     queued_codes = process_queued_requests()
     if queued_codes:
         print(f"\n📋 Processing {len(queued_codes)} queued request(s)...")
@@ -471,7 +477,10 @@ if __name__ == "__main__":
                 for i, c in enumerate(clinics[:5]):
                     extra = f" — {c['address'][:60]}" if c.get('address') else ""
                     print(f"      {i+1}. {c['name'][:60]}{extra}")
-                send_single_notification(code, clinics)
+                # ★ Only send if not already notified for this code
+                if code not in notified_codes:
+                    send_single_notification(code, clinics)
+                    notified_codes.add(code)
                 save_availability(code, clinics)
                 if db:
                     try: db.collection("lab_requests_queue").document(code).update({"status": "completed"})
@@ -508,7 +517,10 @@ if __name__ == "__main__":
                 for i, c in enumerate(clinics[:5]):
                     extra = f" — {c['address'][:60]}" if c.get('address') else ""
                     print(f"      {i+1}. {c['name'][:60]}{extra}")
-                send_single_notification(requested_code, clinics)
+                # ★ Only send if not already notified for this code
+                if requested_code not in notified_codes:
+                    send_single_notification(requested_code, clinics)
+                    notified_codes.add(requested_code)
                 save_availability(requested_code, clinics)
             else:
                 # ★ No clinics found — still save empty result so app stops loading
@@ -537,7 +549,10 @@ if __name__ == "__main__":
             for i, c in enumerate(all_clinics[:5]):
                 extra = f" — {c['address'][:60]}" if c.get('address') else ""
                 print(f"   {i+1}. {c['name'][:60]}{extra}")
-            send_single_notification(test_codes[0], all_clinics)
+            # ★ Test mode: only notify once
+            if test_codes[0] not in notified_codes:
+                send_single_notification(test_codes[0], all_clinics)
+                notified_codes.add(test_codes[0])
             save_availability(test_codes[0], all_clinics)
         print(f"\n📦 Clinic database size: {len(all_clinics)} entries saved to Firestore")
 
