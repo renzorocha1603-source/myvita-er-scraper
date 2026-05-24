@@ -34,6 +34,10 @@ on:
         description: 'Date of birth (YYYY-MM-DD)'
         required: false
         default: ''
+      gender:
+        description: 'Gender (M/F)'
+        required: false
+        default: ''
 
 jobs:
   scrape:
@@ -72,4 +76,5 @@ jobs:
           USER_RAMQ_SEQ: ${{ github.event.inputs.ramq_seq }}
           USER_EMAIL: ${{ github.event.inputs.email }}
           USER_BIRTH_DATE: ${{ github.event.inputs.birth_date }}
+          USER_SEX: ${{ github.event.inputs.gender }}
         run: python clinic_scraper.py
