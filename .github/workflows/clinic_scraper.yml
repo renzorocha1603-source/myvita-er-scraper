@@ -45,6 +45,12 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-chromium
+
       - name: Install dependencies
         run: |
           pip install playwright firebase-admin requests
@@ -61,5 +67,4 @@ jobs:
           USER_RAMQ: ${{ github.event.inputs.ramq }}
           USER_RAMQ_SEQ: ${{ github.event.inputs.ramq_seq }}
           USER_EMAIL: ${{ github.event.inputs.email }}
-        
         run: python clinic_scraper.py
