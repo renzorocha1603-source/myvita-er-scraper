@@ -1,21 +1,40 @@
 name: MyVita Clinic Scraper
 
 on:
-  schedule:
-    # Run every 45 minutes during Quebec waking hours (8am-8pm EST)
-    # EST = UTC-5, so 12:00 UTC = 7:00am EST, 01:00 UTC = 8:00pm EST
-    - cron: '*/45 12-23,0-1 * * *'
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch:
     inputs:
       postal_code:
-        description: 'Postal code to search'
+        description: 'Postal code'
+        required: true
+      first_name:
+        description: 'First name'
         required: false
-        default: 'H1Y3H1'
+        default: ''
+      last_name:
+        description: 'Last name'
+        required: false
+        default: ''
+      phone:
+        description: 'Phone'
+        required: false
+        default: ''
+      ramq:
+        description: 'RAMQ number'
+        required: false
+        default: ''
+      ramq_seq:
+        description: 'RAMQ sequence'
+        required: false
+        default: '01'
+      email:
+        description: 'Email'
+        required: false
+        default: ''
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 50  # Max 50 min (45min cooldown handled in Python)
+    timeout-minutes: 50
 
     steps:
       - name: Checkout code
@@ -35,5 +54,11 @@ jobs:
       - name: Run clinic scraper
         env:
           FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
-          POSTAL_CODE: ${{ github.event.inputs.postal_code || 'H1Y3H1' }}
+          POSTAL_CODE: ${{ github.event.inputs.postal_code }}
+          USER_FIRST_NAME: ${{ github.event.inputs.first_name }}
+          USER_LAST_NAME: ${{ github.event.inputs.last_name }}
+          USER_PHONE: ${{ github.event.inputs.phone }}
+          USER_RAMQ: ${{ github.event.inputs.ramq }}
+          USER_RAMQ_SEQ: ${{ github.event.inputs.ramq_seq }}
+          USER_EMAIL: ${{ github.event.inputs.email }}
         run: python scrapper/clinic_scraper.py
