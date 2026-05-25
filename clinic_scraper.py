@@ -38,7 +38,6 @@ POSTAL_CODES = {
 }
 
 # ★ CLINIC BOOKING MAP — Primary lookup (Gemini-verified, 78 clinics)
-# Skips website scraping entirely for mapped clinics.
 CLINIC_BOOKING_MAP = {
     # ── Montreal East ──
     "GMF-R Cité Médicale Villeray": {
@@ -399,16 +398,10 @@ CLINIC_BOOKING_MAP = {
     },
 }
 
-# Google Maps Proxy (same as Flutter app uses)
 GOOGLE_MAPS_PROXY = "https://us-central1-myvita-app-c5ecd.cloudfunctions.net/googleMapsProxy"
-
-# Search radius tiers (km)
 RADIUS_TIERS = [15, 30, 50]
-
-# Max days ahead to search for appointments
 MAX_DAYS_AHEAD = 10
 
-# Cardinal directions with lat/lng offsets
 CARDINAL_DIRECTIONS = {
     "N":  {"offset": (0.135, 0),      "label": "North"},
     "S":  {"offset": (-0.135, 0),     "label": "South"},
@@ -843,7 +836,7 @@ def detect_platform_from_url(url: str) -> str:
     elif "bonjour-sante.ca" in url_lower:
         return "bonjour_sante"
     elif "clicsante.ca" in url_lower or "rvsq.gouv.qc.ca" in url_lower:
-        return "clicsante_skip"
+        return "clicsante"
     else:
         return "unknown"
 
@@ -909,10 +902,6 @@ def find_booking_link(page, clinic_name: str) -> dict:
 
 
 def visit_clinic_and_detect_platform(clinic: dict) -> dict:
-    """
-    ★ MAP-FIRST: Check CLINIC_BOOKING_MAP before visiting website.
-    Only falls back to Playwright scraping if clinic is not in the map.
-    """
     clinic_name = clinic.get("name", "")
 
     if KillSwitch.is_active():
@@ -1261,7 +1250,7 @@ def route_and_scrape_clinic(clinic: dict, user: dict) -> dict:
         return scrape_pomelo_clinic(clinic, user)
     elif platform == "bonjour_sante":
         return scrape_bonjoursante_clinic(clinic, user)
-    elif platform == "clicsante_skip":
+    elif platform == "clicsante":
         print(f"   ⏭️ {clinic['name']}: ClicSanté/RVSQ — skipped (free tier)")
         return {"found": False, "details": "clicsante_skipped", "booking_url": ""}
     elif platform in ("unknown", "error", "no_website", "other", "no_online_booking"):
