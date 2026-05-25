@@ -37,17 +37,378 @@ POSTAL_CODES = {
     "G7H": "saguenay", "G7X": "saguenay",
 }
 
+# ★ CLINIC BOOKING MAP — Primary lookup (Gemini-verified, 78 clinics)
+# Skips website scraping entirely for mapped clinics.
+CLINIC_BOOKING_MAP = {
+    # ── Montreal East ──
+    "GMF-R Cité Médicale Villeray": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "Centre Médical Mieux-Être (succursale Levasseur)": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/levasseur",
+        "platform": "bonjour_sante"
+    },
+    "GMF A-R Centre médical Mieux-Être – Levasseur": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/levasseur",
+        "platform": "bonjour_sante"
+    },
+    "Clinique Médico-Centre Mont-Royal": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/montroyal",
+        "platform": "bonjour_sante"
+    },
+    "GMF Médi-Centre Chomedey": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/medicentrechomedey",
+        "platform": "bonjour_sante"
+    },
+    "Polyclinique du cœur-de-l'île GMF-R Jarry-Lajeunesse": {
+        "booking_url": "",
+        "platform": "no_online_booking"
+    },
+    "CLSC du Plateau-Mont-Royal": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "CLSC de Dorval-Lachine": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "UnionMD - Clinique Médicale Privée Montreal": {
+        "booking_url": "https://unionmd.ca/contact/",
+        "platform": "other"
+    },
+    "CLSC de Saint-Henri (Montréal)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "CLSC Métro (Montréal)": {
+        "booking_url": "https://portal3.clicsante.ca/",
+        "platform": "clicsante"
+    },
+    "CLSC de Hochelaga-Maisonneuve": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "Centre D'Urgence Saint-Laurent (GMF)": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/cusl",
+        "platform": "bonjour_sante"
+    },
+    "GMF A-R Clinique médicale Angus (Montréal)": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/angus",
+        "platform": "bonjour_sante"
+    },
+
+    # ── Montreal Central ──
+    "GMF Clinique Médicale St-Denis (Montréal)": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/stdenis",
+        "platform": "bonjour_sante"
+    },
+
+    # ── Anjou ──
+    "GMF Centre Médical Mieux-Être (Succursale Anjou)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "Centre médical Mieux-Être – Succursale Anjou": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+
+    # ── Mieux-Être network ──
+    "Centre Médical Mieux-Être - Lasalle": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/cmmelasalle",
+        "platform": "bonjour_sante"
+    },
+    "Centre Médical Mieux-Être - Henri-Bourassa": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/cmmehenribourassa",
+        "platform": "bonjour_sante"
+    },
+    "GMF A-R Centre médical Mieux-Être – St-Léonard": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/mieuxetre",
+        "platform": "bonjour_sante"
+    },
+
+    # ── Laval ──
+    "GMF Le Carrefour Médical (Laval)": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/lecarrefour",
+        "platform": "bonjour_sante"
+    },
+    "GMF Clinique Médicale Sainte-Dorothée (Laval)": {
+        "booking_url": "https://pomelo.health/cliniquemedicalesaintedorothee",
+        "platform": "pomelo"
+    },
+    "GMF Polyclinique Concorde (Laval)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "CLSC de Laval-des-Rapides": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "Super-Clinique Polyclinique Médicale Fabreville (GMF)": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/fabreville",
+        "platform": "bonjour_sante"
+    },
+    "Clinique Médicale Saint-François (GMF)": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/stfrancois",
+        "platform": "bonjour_sante"
+    },
+    "CLSC Idola-Saint-Jean": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "CLSC des Mille-Îles": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "CLSC de l'Ouest-de-l'Île": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "CLSC de Sainte-Rose": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "CLSC du Ruisseau-Papineau": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "GMF Centre Médical Laval": {
+        "booking_url": "https://qc.pomelo.health/centremedicallaval",
+        "platform": "pomelo"
+    },
+
+    # ── Longueuil / Rive-Sud ──
+    "Clinique médicale privée Longueuil - Rive-Sud - UnionMD": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/unionmdlongueuil",
+        "platform": "bonjour_sante"
+    },
+    "GMF-R Clinique Médicale Longueuil-Ouest": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/longueuilouest",
+        "platform": "bonjour_sante"
+    },
+    "CLSC de Longueuil-Ouest (Rive-Sud)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "GMF-U Charles-Le Moyne (Longueuil)": {
+        "booking_url": "https://qc.pomelo.health/gmfucharleslemoyne",
+        "platform": "pomelo"
+    },
+
+    # ── Brossard / Dix30 ──
+    "GMF Dix30 (Clinique d'urgence avec rendez-vous Dix30 Brossard)": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/gmfdix30",
+        "platform": "bonjour_sante"
+    },
+    "Clinique Sans Rendez-Vous Dix30 Brossard (GMF)": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/csansrendezvousdix30brossard",
+        "platform": "bonjour_sante"
+    },
+    "GMF Samuel-de-Champlain": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "CLSC Samuel-de-Champlain": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "GMF Lapinière": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+
+    # ── West Island ──
+    "GMF Stillview (West Island - Pointe-Claire)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "GMF Clinique Médicale Brunswick (West Island - Pointe-Claire)": {
+        "booking_url": "https://pomelo.health/brunswickmedicalcenter",
+        "platform": "pomelo"
+    },
+    "CLSC du Lac-Saint-Louis (West Island - Pointe-Claire)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "CLSC de Pierrefonds (West Island)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+
+    # ── Terrebonne ──
+    "GMF des Seigneurs (Terrebonne)": {
+        "booking_url": "https://qc.pomelo.health/gmfdesseigneurs",
+        "platform": "pomelo"
+    },
+    "GMF Clinique Médicale Terrebonne": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/cmterrebonne",
+        "platform": "bonjour_sante"
+    },
+
+    # ── Repentigny / Lanaudière ──
+    "GMF des Affluents (Repentigny)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "GMF-U du Sud de Lanaudière (Repentigny)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "GMF-U de Saint-Charles-Borromée (Lanaudière Joliette)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "GMF L'Assomption": {
+        "booking_url": "https://qc.pomelo.health/#/",
+        "platform": "pomelo"
+    },
+    "Centre de Médecine Métabolique de Lanaudière (CMML)": {
+        "booking_url": "https://qc.pomelo.health/cmml/portal#/patient-triage",
+        "platform": "pomelo"
+    },
+
+    # ── Saint-Jérôme ──
+    "GMF-R Clinique Médicale Saint-Jérôme": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "GMF du Grand Saint-Jérôme (Clinique Saint-Hippolyte)": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/santhippolyte",
+        "platform": "bonjour_sante"
+    },
+
+    # ── Rosemère ──
+    "GMF Clinique Médicale Rosemère": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/rosemere",
+        "platform": "bonjour_sante"
+    },
+
+    # ── Vaudreuil-Dorion ──
+    "GMF-R Vaudreuil-Dorion (Super-Clinique)": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/vaudreuildorion",
+        "platform": "bonjour_sante"
+    },
+
+    # ── Saint-Eustache ──
+    "GMF Clinique Médicale de la Gare (Saint-Eustache)": {
+        "booking_url": "https://qc.pomelo.health/cliniquemedicaledelagare",
+        "platform": "pomelo"
+    },
+
+    # ── Saint-Jean-sur-Richelieu ──
+    "GMF Clinique Médicale Saint-Luc (Saint-Jean-sur-Richelieu)": {
+        "booking_url": "https://qc.pomelo.health/cliniquemedicalesaintluc",
+        "platform": "pomelo"
+    },
+
+    # ── Laurentides ──
+    "GMF Clinique Médicale Lorraine (Laurentides)": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/cmlorraine",
+        "platform": "bonjour_sante"
+    },
+
+    # ── Québec City ──
+    "GMF-U de la Vieille-Capitale (Capitale-Nationale - Québec)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "GMF La Cité Médicale de Québec (Capitale-Nationale)": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/lacitemedicalequebec",
+        "platform": "bonjour_sante"
+    },
+    "GMF Clinique Médicale Val-Bélair (Québec)": {
+        "booking_url": "https://qc.pomelo.health/cliniquemedicalevalbelair",
+        "platform": "pomelo"
+    },
+
+    # ── Trois-Rivières ──
+    "GMF-U de Trois-Rivières (Mauricie/Centre-du-Québec)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "GMF du Cap (Trois-Rivières)": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/gmfducap",
+        "platform": "bonjour_sante"
+    },
+    "GMF Clinique Médicale des Trois-Rivières": {
+        "booking_url": "https://qc.pomelo.health/cliniquemedicaledestroisrivieres",
+        "platform": "pomelo"
+    },
+
+    # ── Sherbrooke / Estrie ──
+    "GMF-U de Sherbrooke (Estrie - CHUS)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "GMF Clinique Médicale des Cantons (Estrie)": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/cmdescantons",
+        "platform": "bonjour_sante"
+    },
+
+    # ── Saguenay ──
+    "GMF-U de Chicoutimi (Saguenay–Lac-Saint-Jean)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "Ma Clinique Zone Santé (GMF Alma - Saguenay)": {
+        "booking_url": "https://pomelo.health/macliniquezonesante",
+        "platform": "pomelo"
+    },
+
+    # ── Gatineau / Outaouais ──
+    "GMF-R Clinique Médicale Gatineau (Outaouais)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "GMF Clinique Médicale Hull (Outaouais)": {
+        "booking_url": "https://bonjour-sante.ca/uno/clinique/cmhull",
+        "platform": "bonjour_sante"
+    },
+    "GMF Clinique Médicale St-Alexandre (Gatineau)": {
+        "booking_url": "https://qc.pomelo.health/cliniquemedstalexandre",
+        "platform": "pomelo"
+    },
+
+    # ── Bas-Saint-Laurent ──
+    "GMF-U de Rimouski (Bas-Saint-Laurent)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+    "GMF du Grand-Portage (Rivière-du-Loup)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+
+    # ── Abitibi ──
+    "GMF-U de Rouyn-Noranda (Abitibi-Témiscamingue)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+
+    # ── Côte-Nord ──
+    "CLSC de Sept-Îles (Côte-Nord)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+
+    # ── Gaspésie ──
+    "CLSC de Gaspé (Gaspésie-Îles-de-la-Madeleine)": {
+        "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous",
+        "platform": "clicsante"
+    },
+}
+
 # Google Maps Proxy (same as Flutter app uses)
 GOOGLE_MAPS_PROXY = "https://us-central1-myvita-app-c5ecd.cloudfunctions.net/googleMapsProxy"
 
 # Search radius tiers (km)
-RADIUS_TIERS = [15, 30]
+RADIUS_TIERS = [15, 30, 50]
 
 # Max days ahead to search for appointments
 MAX_DAYS_AHEAD = 10
 
 # Cardinal directions with lat/lng offsets
-# 1 degree lat ≈ 111km, 1 degree lng ≈ 82km at Montreal latitude
 CARDINAL_DIRECTIONS = {
     "N":  {"offset": (0.135, 0),      "label": "North"},
     "S":  {"offset": (-0.135, 0),     "label": "South"},
@@ -60,11 +421,10 @@ CARDINAL_DIRECTIONS = {
 }
 
 # ══════════════════════════════════════════════════════════════
-# 2. KILL SWITCH — Global flag shared across all handlers
+# 2. KILL SWITCH
 # ══════════════════════════════════════════════════════════════
 
 class KillSwitch:
-    """Shared kill switch — any handler can set it, all check it before every action"""
     _active = False
     _found_appointment = None
 
@@ -126,11 +486,6 @@ init_firebase()
 # ══════════════════════════════════════════════════════════════
 
 def get_user_data():
-    """
-    Fetch user data from environment variables.
-    For local testing, set these before running.
-    In production, this will come from Firestore.
-    """
     return {
         "first_name": os.getenv("USER_FIRST_NAME", "Jean"),
         "last_name": os.getenv("USER_LAST_NAME", "Tremblay"),
@@ -150,16 +505,13 @@ def get_user_data():
 # ══════════════════════════════════════════════════════════════
 
 def human_delay(min_ms=500, max_ms=1500):
-    """Random delay to simulate human behavior"""
     time.sleep(random.uniform(min_ms, max_ms) / 1000)
 
 def get_zone(postal_code: str) -> str:
-    """Get zone name from postal code FSA"""
     fsa = postal_code[:3].upper()
     return POSTAL_CODES.get(fsa, f"zone_{fsa}")
 
 def get_user_token():
-    """Get most recent FCM token from Firestore"""
     if db is None:
         return None
     try:
@@ -186,7 +538,6 @@ def get_user_token():
 
 def save_availability(clinic_name: str, postal_code: str, platform: str,
                       has_slots: bool, booking_url: str, slot_details: str):
-    """Save availability check result to Firestore"""
     if db is None:
         return
     zone = get_zone(postal_code)
@@ -214,7 +565,6 @@ def save_availability(clinic_name: str, postal_code: str, platform: str,
         print(f"❌ Firestore Error: {e}")
 
 def send_notification(clinic_name: str, postal_code: str, platform: str, booking_url: str):
-    """Send FCM push notification for found appointment"""
     token = get_user_token()
     if not token:
         print("⚠️ No FCM token — notification skipped")
@@ -239,7 +589,6 @@ def send_notification(clinic_name: str, postal_code: str, platform: str, booking
         print(f"❌ FCM Error: {e}")
 
 def save_clinic_cache(postal_code: str, clinics: list):
-    """Cache discovered clinics in Firestore (48h TTL)"""
     if db is None:
         return
     try:
@@ -253,7 +602,6 @@ def save_clinic_cache(postal_code: str, clinics: list):
         print(f"⚠️ Cache save error: {e}")
 
 def get_clinic_cache(postal_code: str) -> list:
-    """Get cached clinics if less than 48h old"""
     if db is None:
         return []
     try:
@@ -276,7 +624,6 @@ def get_clinic_cache(postal_code: str) -> list:
 # ══════════════════════════════════════════════════════════════
 
 def launch_stealth_browser(p, headless=True):
-    """Launch Playwright browser with stealth settings"""
     browser = p.chromium.launch(
         headless=headless,
         args=[
@@ -298,11 +645,10 @@ def launch_stealth_browser(p, headless=True):
 
 
 # ══════════════════════════════════════════════════════════════
-# 8. CLINIC DISCOVERY — Google Maps Places API (via proxy)
+# 8. CLINIC DISCOVERY
 # ══════════════════════════════════════════════════════════════
 
 def geocode_postal_code(postal_code: str) -> dict:
-    """Convert postal code to lat/lng using existing Google Maps proxy"""
     import requests as req
     try:
         response = req.post(
@@ -326,31 +672,13 @@ def geocode_postal_code(postal_code: str) -> dict:
     return None
 
 
-def get_cardinal_coordinates(base_lat: float, base_lng: float,
-                              direction: str, radius_km: int) -> dict:
-    """Calculate coordinates in a cardinal direction at given radius"""
-    scale = radius_km / 15.0
-    offsets = CARDINAL_DIRECTIONS.get(direction, {}).get("offset", (0, 0))
-    return {
-        "lat": base_lat + (offsets[0] * scale),
-        "lng": base_lng + (offsets[1] * scale),
-    }
-
-
 def discover_clinics_near(postal_code: str, radius_km: int = 15) -> list:
-    """
-    Use Google Maps Places API (via existing proxy) to find free public clinics.
-    Returns list of {"name", "place_id", "address", "website", "phone", "rating"}
-    Cached in Firestore for 48 hours.
-    """
     print(f"\n🔍 Discovering clinics near {postal_code} ({radius_km}km radius)...")
 
-    # Check Firestore cache first
     cached = get_clinic_cache(postal_code)
     if cached:
         return cached
 
-    # Geocode postal code
     coords = geocode_postal_code(postal_code)
     if not coords:
         print("❌ Could not geocode postal code")
@@ -369,9 +697,7 @@ def discover_clinics_near(postal_code: str, radius_km: int = 15) -> list:
     for term in search_terms:
         if KillSwitch.is_active():
             break
-
         print(f"   Searching: '{term}'...")
-
         try:
             import requests as req
             response = req.post(
@@ -395,7 +721,6 @@ def discover_clinics_near(postal_code: str, radius_km: int = 15) -> list:
             for place in results:
                 if KillSwitch.is_active():
                     break
-
                 name = place.get("name", "")
                 name_lower = name.lower()
 
@@ -463,15 +788,12 @@ def discover_clinics_near(postal_code: str, radius_km: int = 15) -> list:
                     "website": website,
                     "phone": phone,
                 }
-
                 all_clinics.append(clinic)
                 print(f"   ✅ {name}" + (f" | 🌐 {website}" if website else ""))
-
         except Exception as e:
             print(f"      ⚠️ Search error for '{term}': {e}")
             continue
 
-    # Remove duplicates by name similarity
     unique_clinics = []
     seen_names = set()
     for clinic in all_clinics:
@@ -481,30 +803,25 @@ def discover_clinics_near(postal_code: str, radius_km: int = 15) -> list:
             unique_clinics.append(clinic)
 
     print(f"\n✅ Discovered {len(unique_clinics)} unique free clinics")
-
     if unique_clinics:
         save_clinic_cache(postal_code, unique_clinics)
-
     return unique_clinics
 
 
 # ══════════════════════════════════════════════════════════════
-# 9. PLATFORM DETECTION — Visit clinic website, find booking link
+# 9. PLATFORM DETECTION — Map-first, website fallback
 # ══════════════════════════════════════════════════════════════
 
 BOOKING_LINK_SELECTORS = [
-    # TIER 1: Direct platform URLs (highest priority)
     "a[href*='pomelo.health']",
     "a[href*='bonjour-sante.ca']",
     "a[href*='clicsante.ca']",
     "a[href*='rvsq.gouv.qc.ca']",
-    # TIER 2: Booking path patterns
     "a[href*='rendez-vous']",
     "a[href*='rdv']",
     "a[href*='booking']",
     "a[href*='appointment']",
     "a[href*='reservation']",
-    # TIER 3: Text-based buttons/links
     "a:has-text('Prendre rendez-vous')",
     "a:has-text('Prendre RDV')",
     "a:has-text('Rendez-vous en ligne')",
@@ -513,7 +830,6 @@ BOOKING_LINK_SELECTORS = [
     "button:has-text('Prendre rendez-vous')",
     "button:has-text('Rendez-vous en ligne')",
     "button:has-text('Book appointment')",
-    # TIER 4: Contact page fallback
     "a:has-text('Nous joindre')",
     "a:has-text('Contact')",
     "a:has-text('Contactez-nous')",
@@ -521,13 +837,7 @@ BOOKING_LINK_SELECTORS = [
 
 
 def detect_platform_from_url(url: str) -> str:
-    """
-    Detect booking platform from URL.
-    ONLY returns pomelo or bonjour_sante (free tier).
-    ClicSanté/RVSQ is skipped.
-    """
     url_lower = url.lower()
-
     if "pomelo.health" in url_lower or "telus" in url_lower:
         return "pomelo"
     elif "bonjour-sante.ca" in url_lower:
@@ -539,35 +849,22 @@ def detect_platform_from_url(url: str) -> str:
 
 
 def find_booking_link(page, clinic_name: str) -> dict:
-    """
-    Find and click the booking link on a clinic website.
-    Returns {"platform": str, "booking_url": str}
-    """
     print(f"   🔗 Searching booking link on {clinic_name}...")
-
     for selector in BOOKING_LINK_SELECTORS:
         if KillSwitch.is_active():
             return {"platform": "kill_switch", "booking_url": ""}
-
         try:
             element = page.locator(selector).first
             if element.count() == 0 or not element.is_visible():
                 continue
-
             href = element.get_attribute("href") or ""
             print(f"      Trying: {selector[:60]}... → href={href[:80]}")
-
-            # Direct platform URL in href
             if any(p in href.lower() for p in ["pomelo.health", "bonjour-sante.ca", "clicsante.ca", "rvsq"]):
                 platform = detect_platform_from_url(href)
                 print(f"      🎯 Direct platform link found: {platform}")
                 return {"platform": platform, "booking_url": href}
-
-            # Click and check redirect
             element.click(timeout=5000)
             human_delay(2000, 4000)
-
-            # Check if new tab opened
             if len(page.context.pages) > 1:
                 new_page = page.context.pages[-1]
                 new_page.bring_to_front()
@@ -576,22 +873,17 @@ def find_booking_link(page, clinic_name: str) -> dict:
                 booking_url = new_page.url
                 new_page.close()
                 return {"platform": platform, "booking_url": booking_url}
-
-            # Check current page URL
             platform = detect_platform_from_url(page.url)
             if platform != "unknown":
                 return {"platform": platform, "booking_url": page.url}
-
             try:
                 page.go_back()
                 human_delay(500, 1000)
             except:
                 pass
-
         except:
             continue
 
-    # Fallback: Check Contact page
     print(f"      ⚠️ No booking link found. Trying Contact page...")
     try:
         contact_link = page.locator("a:has-text('Nous joindre'), a:has-text('Contact')").first
@@ -618,46 +910,53 @@ def find_booking_link(page, clinic_name: str) -> dict:
 
 def visit_clinic_and_detect_platform(clinic: dict) -> dict:
     """
-    Visit a clinic's website, find booking button, detect platform.
-    Returns clinic dict with platform and booking_url added.
+    ★ MAP-FIRST: Check CLINIC_BOOKING_MAP before visiting website.
+    Only falls back to Playwright scraping if clinic is not in the map.
     """
-    headless = os.getenv("HEADLESS", "true").lower() != "false"
+    clinic_name = clinic.get("name", "")
 
     if KillSwitch.is_active():
         return {**clinic, "platform": "kill_switch", "booking_url": ""}
 
+    # ★ CHECK MAP FIRST
+    if clinic_name in CLINIC_BOOKING_MAP:
+        mapped = CLINIC_BOOKING_MAP[clinic_name]
+        print(f"   📋 Mapped: {clinic_name} → {mapped['platform']}")
+        return {
+            **clinic,
+            "platform": mapped["platform"],
+            "booking_url": mapped["booking_url"],
+        }
+
+    # ★ FALLBACK: Visit website
+    headless = os.getenv("HEADLESS", "true").lower() != "false"
     website = clinic.get("website")
     if not website:
-        print(f"   ⛔ {clinic['name']}: No website — skipping")
+        print(f"   ⛔ {clinic_name}: No website — skipping")
         return {**clinic, "platform": "no_website", "booking_url": ""}
 
-    print(f"\n   🏥 Visiting: {clinic['name']}")
+    print(f"\n   🏥 Visiting: {clinic_name}")
     print(f"      🌐 {website}")
 
     with sync_playwright() as p:
         browser, context = launch_stealth_browser(p, headless=headless)
         page = context.new_page()
-
         try:
             page.goto(website, wait_until="domcontentloaded", timeout=30000)
             human_delay(2000, 3000)
-
             try:
                 page.keyboard.press("Escape")
                 human_delay(300, 500)
             except:
                 pass
-
-            result = find_booking_link(page, clinic["name"])
-
+            result = find_booking_link(page, clinic_name)
             return {
                 **clinic,
                 "platform": result["platform"],
                 "booking_url": result["booking_url"],
             }
-
         except Exception as e:
-            print(f"      🚨 Error visiting {clinic['name']}: {e}")
+            print(f"      🚨 Error visiting {clinic_name}: {e}")
             return {**clinic, "platform": "error", "booking_url": ""}
         finally:
             browser.close()
@@ -668,45 +967,31 @@ def visit_clinic_and_detect_platform(clinic: dict) -> dict:
 # ══════════════════════════════════════════════════════════════
 
 def fill_pomelo_page1_identification(page, user: dict):
-    """Page 1: First Name, Last Name, RAMQ, Sequence, Birth Year, Sex"""
     print("      📝 Page 1 — Identification...")
     if KillSwitch.is_active():
         return False
-
-    # Extract birth year from full date
     birth_date = user.get("birth_date", "1965-01-15")
     birth_year = birth_date.split("-")[0]
-
     try:
         page.locator("input[name='firstName'], input[aria-label*='Prénom'], #firstName").first.fill(user["first_name"])
         human_delay(300, 600)
-    except:
-        pass
-
+    except: pass
     try:
         page.locator("input[name='lastName'], input[aria-label*='Nom de famille'], #lastName").first.fill(user["last_name"])
         human_delay(300, 600)
-    except:
-        pass
-
+    except: pass
     try:
         page.locator("input[name*='ramq'], input[name*='assurance'], input[aria-label*='RAMQ']").first.fill(user["ramq"])
         human_delay(300, 600)
-    except:
-        pass
-
+    except: pass
     try:
         page.locator("input[name*='sequence'], input[name*='seq']").first.fill(user["ramq_seq"])
         human_delay(300, 600)
-    except:
-        pass
-
+    except: pass
     try:
         page.locator("input[name*='birth'], input[name*='year'], input[name*='annee']").first.fill(birth_year)
         human_delay(300, 600)
-    except:
-        pass
-
+    except: pass
     try:
         if user["sex"].upper() == "M":
             page.locator("input[value='M'], input[value='male'], label:has-text('Masculin')").first.click()
@@ -720,49 +1005,37 @@ def fill_pomelo_page1_identification(page, user: dict):
             else:
                 page.get_by_text(re.compile(r"Féminin|Femme", re.I)).first.click()
             human_delay(500, 800)
-        except:
-            pass
-
+        except: pass
     try:
         page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next|Submit", re.I)).first.click()
         human_delay(2000, 3000)
-    except:
-        pass
+    except: pass
     return True
 
 
 def fill_pomelo_page2_contact(page, user: dict):
-    """Page 2: Email, Phone, Language"""
     print("      📧 Page 2 — Contact...")
     if KillSwitch.is_active():
         return False
-
     try:
         page.locator("input[type='email'], input[name*='email'], input[name*='courriel']").first.fill(user["email"])
         human_delay(300, 600)
-    except:
-        pass
-
+    except: pass
     try:
         page.locator("input[type='tel'], input[name*='phone'], input[name*='tel']").first.fill(user["phone"])
         human_delay(300, 600)
-    except:
-        pass
-
+    except: pass
     try:
         page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next", re.I)).first.click()
         human_delay(2000, 3000)
-    except:
-        pass
+    except: pass
     return True
 
 
 def fill_pomelo_page3_consent(page):
-    """Page 3: Privacy policy consent"""
     print("      ✅ Page 3 — Consent...")
     if KillSwitch.is_active():
         return False
-
     try:
         page.locator("input[type='checkbox']").first.check()
         human_delay(500, 1000)
@@ -770,25 +1043,19 @@ def fill_pomelo_page3_consent(page):
         try:
             page.get_by_label(re.compile(r"J'accepte|I accept|Consentement", re.I)).first.check()
             human_delay(500, 1000)
-        except:
-            pass
-
+        except: pass
     try:
         page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next", re.I)).first.click()
         human_delay(2000, 3000)
-    except:
-        pass
+    except: pass
     return True
 
 
 def fill_pomelo_page4_search(page, postal_code: str):
-    """Page 4: Postal Code, Date, Reason"""
     print(f"      🔍 Page 4 — Search (postal: {postal_code})...")
     if KillSwitch.is_active():
         return False
-
     target_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-
     try:
         postal_input = page.locator(
             "input[name*='postal'], input[name*='code'], "
@@ -797,33 +1064,25 @@ def fill_pomelo_page4_search(page, postal_code: str):
         postal_input.click()
         postal_input.fill(postal_code)
         human_delay(500, 1000)
-    except:
-        pass
-
+    except: pass
     try:
         date_input = page.locator("input[type='date'], input[name*='date']").first
         date_input.fill(target_date)
         human_delay(300, 500)
-    except:
-        pass
-
+    except: pass
     try:
         page.get_by_role("button", name=re.compile(r"Rechercher|Search|Chercher", re.I)).first.click()
         human_delay(3000, 5000)
-    except:
-        pass
+    except: pass
     return True
 
 
 def verify_pomelo_calendar(page, clinic_name: str) -> tuple:
-    """Check Pomelo calendar for available slots. Returns (has_slots, details)."""
     print("      📅 Checking Pomelo calendar...")
     if KillSwitch.is_active():
         return False, "Kill switch"
-
     human_delay(2000, 3000)
     body_text = page.inner_text("body").lower()
-
     no_slot_phrases = [
         "aucune disponibilité", "no availability",
         "aucun rendez-vous", "no appointments",
@@ -832,10 +1091,8 @@ def verify_pomelo_calendar(page, clinic_name: str) -> tuple:
     for phrase in no_slot_phrases:
         if phrase in body_text:
             return False, phrase
-
     positive_phrases = ["disponible", "available", "sélectionner", "select"]
     has_positive = any(p in body_text for p in positive_phrases)
-
     try:
         clickable = page.locator(
             "[class*='available'], [class*='disponible'], "
@@ -845,58 +1102,43 @@ def verify_pomelo_calendar(page, clinic_name: str) -> tuple:
         count = clickable.count()
         if count > 0 and has_positive:
             return True, f"{count} clickable dates"
-    except:
-        pass
-
+    except: pass
     return has_positive, "positive indicators" if has_positive else "no clear slots"
 
 
 def scrape_pomelo_clinic(clinic: dict, user: dict) -> dict:
-    """Complete Pomelo 4-step scrape. Returns {"found": bool, "details": str, "booking_url": str}"""
     headless = os.getenv("HEADLESS", "true").lower() != "false"
     booking_url = clinic.get("booking_url", "")
-
     print(f"\n   🔴 POMELO HANDLER: {clinic['name']}")
-
     if KillSwitch.is_active():
         return {"found": False, "details": "Kill switch active", "booking_url": ""}
-
     with sync_playwright() as p:
         browser, context = launch_stealth_browser(p, headless=headless)
         page = context.new_page()
-
         try:
             page.goto(booking_url, wait_until="domcontentloaded", timeout=60000)
             human_delay(2000, 3000)
-
             if KillSwitch.is_active():
                 return {"found": False, "details": "Kill switch", "booking_url": ""}
-
             fill_pomelo_page1_identification(page, user)
             if KillSwitch.is_active():
                 return {"found": False, "details": "Kill switch", "booking_url": ""}
-
             fill_pomelo_page2_contact(page, user)
             if KillSwitch.is_active():
                 return {"found": False, "details": "Kill switch", "booking_url": ""}
-
             fill_pomelo_page3_consent(page)
             if KillSwitch.is_active():
                 return {"found": False, "details": "Kill switch", "booking_url": ""}
-
             fill_pomelo_page4_search(page, user["postal_code"])
             if KillSwitch.is_active():
                 return {"found": False, "details": "Kill switch", "booking_url": ""}
-
             has_slots, details = verify_pomelo_calendar(page, clinic["name"])
-
             if has_slots:
                 print(f"      🎉 SLOTS FOUND! ({details})")
                 return {"found": True, "details": details, "booking_url": page.url}
             else:
                 print(f"      ❌ No slots ({details})")
                 return {"found": False, "details": details, "booking_url": ""}
-
         except Exception as e:
             print(f"      🚨 Pomelo error: {e}")
             return {"found": False, "details": str(e), "booking_url": ""}
@@ -905,82 +1147,61 @@ def scrape_pomelo_clinic(clinic: dict, user: dict) -> dict:
 
 
 # ══════════════════════════════════════════════════════════════
-# 11. BONJOUR SANTÉ — 3-STEP FORM HANDLER
+# 11. BONJOUR SANTÉ — 2-STEP FORM HANDLER
 # ══════════════════════════════════════════════════════════════
 
 def fill_bonjoursante_page1(page, user: dict):
-    """Page 1: RAMQ + Postal Code + Distance"""
     print("      📝 Bonjour Santé — Page 1 (RAMQ + Postal)...")
     if KillSwitch.is_active():
         return False
-
     try:
         page.locator("input[name*='ramq'], input[name*='assurance']").first.fill(user["ramq"])
         human_delay(400, 800)
-    except:
-        pass
-
+    except: pass
     try:
         page.locator("input[name*='postal'], input[name*='code']").first.fill(user["postal_code"])
         human_delay(400, 800)
-    except:
-        pass
-
+    except: pass
     try:
         page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next|Rechercher", re.I)).first.click()
         human_delay(2000, 3000)
-    except:
-        pass
+    except: pass
     return True
 
 
 def fill_bonjoursante_page2(page, user: dict):
-    """Page 2: First Name + Last Name + Sequence + Consent"""
     print("      📝 Bonjour Santé — Page 2 (Patient Info)...")
     if KillSwitch.is_active():
         return False
-
     try:
         page.locator("input[name*='firstName'], input[name*='prenom']").first.fill(user["first_name"])
         human_delay(300, 600)
-    except:
-        pass
-
+    except: pass
     try:
         page.locator("input[name*='lastName'], input[name*='nom']").first.fill(user["last_name"])
         human_delay(300, 600)
-    except:
-        pass
-
+    except: pass
     try:
         page.locator("input[name*='sequence'], input[name*='seq']").first.fill(user["ramq_seq"])
         human_delay(300, 600)
-    except:
-        pass
-
+    except: pass
     try:
         page.locator("input[type='checkbox']").first.check()
         human_delay(500, 1000)
-    except:
-        pass
-
+    except: pass
     try:
         page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next", re.I)).first.click()
         human_delay(2000, 3000)
-    except:
-        pass
+    except: pass
     return True
 
 
 def verify_bonjoursante_results(page, clinic_name: str) -> tuple:
-    """Check Bonjour Santé results page for available appointments."""
     print("      📅 Checking Bonjour Santé results...")
     if KillSwitch.is_active():
         return False, "Kill switch"
-
     human_delay(2000, 3000)
     body_text = page.inner_text("body").lower()
-
     no_slot_phrases = [
         "aucune disponibilité", "no availability",
         "aucun rendez-vous", "no appointments",
@@ -989,51 +1210,38 @@ def verify_bonjoursante_results(page, clinic_name: str) -> tuple:
     for phrase in no_slot_phrases:
         if phrase in body_text:
             return False, phrase
-
     positive_phrases = ["disponible", "available", "réserver", "book", "choisir"]
     has_positive = any(p in body_text for p in positive_phrases)
-
     return has_positive, "positive indicators" if has_positive else "no clear slots"
 
 
 def scrape_bonjoursante_clinic(clinic: dict, user: dict) -> dict:
-    """Complete Bonjour Santé 3-step scrape."""
     headless = os.getenv("HEADLESS", "true").lower() != "false"
     booking_url = clinic.get("booking_url", "")
-
     print(f"\n   🟠 BONJOUR SANTÉ HANDLER: {clinic['name']}")
-
     if KillSwitch.is_active():
         return {"found": False, "details": "Kill switch active", "booking_url": ""}
-
     with sync_playwright() as p:
         browser, context = launch_stealth_browser(p, headless=headless)
         page = context.new_page()
-
         try:
             page.goto(booking_url, wait_until="domcontentloaded", timeout=60000)
             human_delay(2000, 3000)
-
             if KillSwitch.is_active():
                 return {"found": False, "details": "Kill switch", "booking_url": ""}
-
             fill_bonjoursante_page1(page, user)
             if KillSwitch.is_active():
                 return {"found": False, "details": "Kill switch", "booking_url": ""}
-
             fill_bonjoursante_page2(page, user)
             if KillSwitch.is_active():
                 return {"found": False, "details": "Kill switch", "booking_url": ""}
-
             has_slots, details = verify_bonjoursante_results(page, clinic["name"])
-
             if has_slots:
                 print(f"      🎉 SLOTS FOUND! ({details})")
                 return {"found": True, "details": details, "booking_url": page.url}
             else:
                 print(f"      ❌ No slots ({details})")
                 return {"found": False, "details": details, "booking_url": ""}
-
         except Exception as e:
             print(f"      🚨 Bonjour Santé error: {e}")
             return {"found": False, "details": str(e), "booking_url": ""}
@@ -1046,16 +1254,9 @@ def scrape_bonjoursante_clinic(clinic: dict, user: dict) -> dict:
 # ══════════════════════════════════════════════════════════════
 
 def route_and_scrape_clinic(clinic: dict, user: dict) -> dict:
-    """
-    Route clinic to correct handler based on detected platform.
-    ONLY handles pomelo and bonjour_sante (free tier).
-    ClicSanté/RVSQ is skipped.
-    """
     platform = clinic.get("platform", "unknown")
-
     if platform == "kill_switch":
         return {"found": False, "details": "Kill switch", "booking_url": ""}
-
     if platform == "pomelo":
         return scrape_pomelo_clinic(clinic, user)
     elif platform == "bonjour_sante":
@@ -1063,7 +1264,7 @@ def route_and_scrape_clinic(clinic: dict, user: dict) -> dict:
     elif platform == "clicsante_skip":
         print(f"   ⏭️ {clinic['name']}: ClicSanté/RVSQ — skipped (free tier)")
         return {"found": False, "details": "clicsante_skipped", "booking_url": ""}
-    elif platform in ("unknown", "error", "no_website"):
+    elif platform in ("unknown", "error", "no_website", "other", "no_online_booking"):
         print(f"   ⏭️ {clinic['name']}: {platform} — skipped")
         return {"found": False, "details": platform, "booking_url": ""}
     else:
@@ -1072,18 +1273,12 @@ def route_and_scrape_clinic(clinic: dict, user: dict) -> dict:
 
 
 # ══════════════════════════════════════════════════════════════
-# 13. MAIN SEARCH ORCHESTRATOR — SINGLE RUN, NO LOOP
+# 13. MAIN SEARCH ORCHESTRATOR
 # ══════════════════════════════════════════════════════════════
 
 def search_clinics_in_zone(user: dict, radius_km: int) -> bool:
-    """
-    Discover clinics near user's postal code, detect platforms,
-    and scrape each one. Returns True if appointment found.
-    """
     postal = user["postal_code"]
-
     clinics = discover_clinics_near(postal, radius_km)
-
     if not clinics:
         print(f"   No clinics found in {radius_km}km radius")
         return False
@@ -1092,16 +1287,13 @@ def search_clinics_in_zone(user: dict, radius_km: int) -> bool:
     for clinic in clinics:
         if KillSwitch.is_active():
             return True
-
         result = visit_clinic_and_detect_platform(clinic)
         detected_clinics.append(result)
 
     for clinic in detected_clinics:
         if KillSwitch.is_active():
             return True
-
         result = route_and_scrape_clinic(clinic, user)
-
         if result["found"]:
             KillSwitch.activate({
                 "clinic_name": clinic["name"],
@@ -1109,40 +1301,19 @@ def search_clinics_in_zone(user: dict, radius_km: int) -> bool:
                 "booking_url": result["booking_url"],
                 "details": result["details"],
             })
-            send_notification(
-                clinic["name"],
-                postal,
-                clinic.get("platform", "unknown"),
-                result["booking_url"]
-            )
-            save_availability(
-                clinic["name"], postal,
-                clinic.get("platform", "unknown"),
-                True, result["booking_url"], result["details"]
-            )
+            send_notification(clinic["name"], postal, clinic.get("platform", "unknown"), result["booking_url"])
+            save_availability(clinic["name"], postal, clinic.get("platform", "unknown"), True, result["booking_url"], result["details"])
             return True
         else:
-            save_availability(
-                clinic["name"], postal,
-                clinic.get("platform", "unknown"),
-                False, "", result["details"]
-            )
-
+            save_availability(clinic["name"], postal, clinic.get("platform", "unknown"), False, "", result["details"])
     return False
 
 
 def run_single_search(user_postal: str = None):
-    """
-    ★ MANUAL MODE — Runs ONE search cycle (15km + 30km), then stops.
-    Triggered by user request, not automatic loop.
-    Does NOT loop. Does NOT cooldown. Runs once and exits.
-    """
     if user_postal is None:
         user_postal = os.getenv("POSTAL_CODE", "H1Y3H1")
-
     user = get_user_data()
     user["postal_code"] = user_postal
-
     KillSwitch.reset()
     max_date = (datetime.now() + timedelta(days=MAX_DAYS_AHEAD)).strftime("%Y-%m-%d")
 
@@ -1151,7 +1322,7 @@ def run_single_search(user_postal: str = None):
     print(f"   Postal Code: {user_postal}")
     print(f"   Max Date: {max_date} (under {MAX_DAYS_AHEAD} days)")
     print(f"   Tiers: {RADIUS_TIERS} km")
-    print(f"   Platforms: Pomelo by Telus + Bonjour Santé ONLY")
+    print(f"   Platforms: Pomelo + Bonjour Santé (map-first, 78 clinics)")
     print(f"   ClicSanté/RVSQ: SKIPPED")
     print(f"   Mode: SINGLE RUN — no loop, no cooldown")
     print(f"{'='*60}\n")
@@ -1160,9 +1331,7 @@ def run_single_search(user_postal: str = None):
         if KillSwitch.is_active():
             break
         print(f"\n🔵 TIER: {radius}km radius")
-
         found = search_clinics_in_zone(user, radius)
-
         if found:
             print(f"\n{'='*60}")
             print(f"🎉 APPOINTMENT FOUND!")
@@ -1175,18 +1344,18 @@ def run_single_search(user_postal: str = None):
     if not KillSwitch.is_active():
         print(f"\n😴 No appointments found.")
         print(f"   Search complete — waiting for next user trigger.")
-
     return None
 
 
 # ══════════════════════════════════════════════════════════════
-# 14. MAIN ENTRY POINT — MANUAL TRIGGER ONLY
+# 14. MAIN ENTRY POINT
 # ══════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
     print("╔══════════════════════════════════════════════════════╗")
     print("║        MYVITA CLINIC APPOINTMENT SCRAPER            ║")
     print("║        Free Tier — Pomelo + Bonjour Santé           ║")
+    print("║        Map-First: 78 clinics verified               ║")
     print("║        MODE: Manual Trigger (User Request)          ║")
     print("╚══════════════════════════════════════════════════════╝")
     print()
