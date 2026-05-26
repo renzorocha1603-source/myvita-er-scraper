@@ -38,6 +38,10 @@ on:
         description: 'Gender (M/F)'
         required: false
         default: ''
+      time_slot:
+        description: 'Preferred time (Matin/Après-midi/Soir)'
+        required: false
+        default: 'Matin'
 
 jobs:
   scrape:
@@ -77,4 +81,6 @@ jobs:
           USER_EMAIL: ${{ github.event.inputs.email }}
           USER_BIRTH_DATE: ${{ github.event.inputs.birth_date }}
           USER_SEX: ${{ github.event.inputs.gender }}
+          TIME_SLOT: ${{ github.event.inputs.time_slot }}
+          SCRAPER_MODE: user_single
         run: python clinic_scraper.py
