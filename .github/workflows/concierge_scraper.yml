@@ -1,0 +1,108 @@
+name: MyVita Concierge Scraper
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: 'Firestore request ID'
+        required: true
+      first_name:
+        description: 'First name'
+        required: true
+      last_name:
+        description: 'Last name'
+        required: true
+      birth_date:
+        description: 'Date of birth (YYYY-MM-DD)'
+        required: true
+      gender:
+        description: 'Gender (M/F)'
+        required: true
+      phone:
+        description: 'Phone'
+        required: true
+      ramq:
+        description: 'RAMQ number'
+        required: true
+      ramq_seq:
+        description: 'RAMQ sequence'
+        required: true
+        default: '01'
+      ramq_expiry:
+        description: 'RAMQ expiry (YYYY-MM-DD)'
+        required: true
+      email:
+        description: 'Email'
+        required: true
+      postal_code:
+        description: 'Postal code'
+        required: true
+      lat:
+        description: 'Latitude'
+        required: true
+      lng:
+        description: 'Longitude'
+        required: true
+      days:
+        description: 'Preferred days (comma-separated)'
+        required: true
+      time_slots:
+        description: 'Time slots (comma-separated)'
+        required: true
+      radius:
+        description: 'Search radius in km (15/30/50)'
+        required: true
+        default: '30'
+      motif:
+        description: 'Reason for visit'
+        required: false
+        default: ''
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-concierge-${{ runner.os }}-chromium
+
+      - name: Install dependencies
+        run: |
+          pip install playwright firebase-admin requests
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Run concierge scraper
+        env:
+          FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
+          REQUEST_ID: ${{ github.event.inputs.request_id }}
+          USER_FIRST_NAME: ${{ github.event.inputs.first_name }}
+          USER_LAST_NAME: ${{ github.event.inputs.last_name }}
+          USER_BIRTH_DATE: ${{ github.event.inputs.birth_date }}
+          USER_SEX: ${{ github.event.inputs.gender }}
+          USER_PHONE: ${{ github.event.inputs.phone }}
+          USER_RAMQ: ${{ github.event.inputs.ramq }}
+          USER_RAMQ_SEQ: ${{ github.event.inputs.ramq_seq }}
+          USER_RAMQ_EXPIRY: ${{ github.event.inputs.ramq_expiry }}
+          USER_EMAIL: ${{ github.event.inputs.email }}
+          POSTAL_CODE: ${{ github.event.inputs.postal_code }}
+          USER_LAT: ${{ github.event.inputs.lat }}
+          USER_LNG: ${{ github.event.inputs.lng }}
+          PREFERRED_DAYS: ${{ github.event.inputs.days }}
+          PREFERRED_TIMES: ${{ github.event.inputs.time_slots }}
+          SEARCH_RADIUS: ${{ github.event.inputs.radius }}
+          MOTIF: ${{ github.event.inputs.motif }}
+          SCRAPER_MODE: concierge_single
+        run: python concierge_scraper.py
