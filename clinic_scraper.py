@@ -463,7 +463,7 @@ def scrape_pomelo_clinic(clinic: dict, user: dict) -> dict:
 
 
 # ══════════════════════════════════════════════════════════════
-# 11. BONJOUR SANTÉ HANDLER — ★ DEBUG MODE
+# 11. BONJOUR SANTÉ HANDLER — ★ FULL DEBUG MODE
 # ══════════════════════════════════════════════════════════════
 
 def fill_bonjoursante_page1(page, user: dict):
@@ -496,84 +496,112 @@ def verify_bonjoursante_results(page, clinic_name: str) -> tuple:
     print("      📅 Checking Bonjour Santé results...")
     if KillSwitch.is_active(): return False, "Kill switch", ""
 
-    human_delay(2000, 3000)
+    human_delay(3000, 5000)
 
-    # ★ DEBUG: Save page HTML snapshot
-    try:
-        html_snippet = page.content()
-        # Save first 3000 chars to avoid log overflow
-        print(f"      📄 Page HTML (first 3000 chars): {html_snippet[:3000]}")
-    except Exception as e:
-        print(f"      ⚠️ HTML capture error: {e}")
-
-    # ★ DEBUG: Capture all links on the page
-    try:
-        all_links = page.locator('a').all()
-        print(f"      🔗 Total links found: {len(all_links)}")
-        for link in all_links[:20]:
-            try:
-                href = link.get_attribute('href')
-                text = link.inner_text().strip()[:80]
-                if href and ('book' in href.lower() or 'reserv' in href.lower() or 'rendez-vous' in href.lower() or 'appointment' in href.lower() or 'slot' in href.lower() or 'creneau' in href.lower()):
-                    print(f"      🔗 BOOKING LINK: {text} → {href}")
-            except:
-                pass
-    except Exception as e:
-        print(f"      ⚠️ Link capture error: {e}")
-
-    # ★ DEBUG: Look for data attributes with slot info
-    try:
-        slot_elements = page.locator('[data-slot], [data-appointment], [data-creneau], [data-rendezvous], [data-id]').all()
-        print(f"      📊 Slot elements found: {len(slot_elements)}")
-        for el in slot_elements[:5]:
-            try:
-                dataset = el.evaluate('el => JSON.stringify(el.dataset)')
-                print(f"      📊 Slot data: {dataset[:200]}")
-            except:
-                pass
-    except Exception as e:
-        print(f"      ⚠️ Slot data error: {e}")
-
-    # ★ DEBUG: Look for JSON data in script tags
-    try:
-        script_tags = page.locator('script').all()
-        print(f"      📜 Script tags found: {len(script_tags)}")
-        for script in script_tags[:10]:
-            try:
-                content = script.inner_text()
-                if 'slot' in content.lower() or 'appointment' in content.lower() or 'booking' in content.lower() or 'rendez-vous' in content.lower() or 'creneau' in content.lower():
-                    print(f"      📜 Script with slot data (first 500 chars): {content[:500]}")
-            except:
-                pass
-    except Exception as e:
-        print(f"      ⚠️ Script tag error: {e}")
-
-    # ★ DEBUG: Look for buttons with booking-related text
-    try:
-        booking_buttons = page.locator('button:has-text("Réserver"), button:has-text("Book"), button:has-text("Choisir"), button:has-text("Select"), button:has-text("Prendre")').all()
-        print(f"      🔘 Booking buttons found: {len(booking_buttons)}")
-        for btn in booking_buttons[:5]:
-            try:
-                text = btn.inner_text().strip()[:80]
-                parent_html = btn.evaluate('el => el.parentElement.outerHTML')
-                print(f"      🔘 Button: {text}")
-                print(f"      🔘 Parent HTML (first 300 chars): {parent_html[:300]}")
-            except:
-                pass
-    except Exception as e:
-        print(f"      ⚠️ Button error: {e}")
-
-    # ★ DEBUG: Capture current page URL
     current_url = page.url
     print(f"      🌐 Current page URL: {current_url}")
 
-    # Original check
-    body_text = page.inner_text("body").lower()
+    body_text = page.inner_text("body")
+    body_lower = body_text.lower()
+
+    print(f"      📄 Page text length: {len(body_text)} chars")
+
+    # Check for no-availability phrases
     for phrase in ["aucune disponibilité", "no availability", "aucun rendez-vous", "complet", "full", "désolé"]:
-        if phrase in body_text:
+        if phrase in body_lower:
+            print(f"      ❌ Found negative phrase: '{phrase}'")
             return False, phrase, current_url
 
-    has_positive = any(p in body_text for p in ["disponible", "available", "réserver", "book", "choisir"])
+    # ★ Look for slot/availability containers
+    try:
+        slot_selectors = [
+            '.slot', '.appointment-slot', '.availability-slot',
+            '.time-slot', '.creneau', '[class*="slot"]', '[class*="Slot"]',
+            '[class*="appointment"]', '[class*="Appointment"]',
+            '.result-item', '.search-result', '.clinic-result'
+        ]
+        for selector in slot_selectors:
+            try:
+                elements = page.locator(selector).all()
+                if len(elements) > 0:
+                    print(f"      🎯 Found {len(elements)} elements matching '{selector}'")
+                    for el in elements[:5]:
+                        try:
+                            text = el.inner_text().strip()[:200]
+                            html = el.evaluate('el => el.outerHTML')[:300]
+                            print(f"      🎯 Element text: {text}")
+                            print(f"      🎯 Element HTML: {html}")
+                        except:
+                            pass
+            except:
+                pass
+    except Exception as e:
+        print(f"      ⚠️ Slot selector error: {e}")
+
+    # ★ Try to find booking links in the rendered slot area
+    try:
+        all_links = page.locator('a[href]').all()
+        print(f"      🔗 Total links on page: {len(all_links)}")
+        for link in all_links:
+            try:
+                href = link.get_attribute('href') or ''
+                text = link.inner_text().strip()[:100]
+                if href and len(href) > 20 and href != current_url:
+                    if any(kw in href.lower() for kw in ['book', 'reserv', 'appointment', 'rendez', 'slot', 'creneau', 'confirm', 'take', 'prendre']):
+                        print(f"      🔗 POTENTIAL BOOKING: {text} → {href}")
+                    elif any(kw in text.lower() for kw in ['réserver', 'book', 'prendre', 'choisir', 'disponible', 'available']):
+                        print(f"      🔗 SLOT LINK: {text} → {href}")
+            except:
+                pass
+    except Exception as e:
+        print(f"      ⚠️ Link scan error: {e}")
+
+    # ★ Capture the HTML around where "disponible" appears
+    try:
+        if 'disponible' in body_lower or 'available' in body_lower:
+            idx = body_lower.find('disponible') if 'disponible' in body_lower else body_lower.find('available')
+            start = max(0, idx - 200)
+            end = min(len(body_text), idx + 500)
+            print(f"      📍 Context around 'disponible/available': ...{body_text[start:end]}...")
+
+            try:
+                disponible_el = page.locator('text=Disponible').first
+                if disponible_el.count() > 0:
+                    parent = disponible_el.evaluate('el => el.closest("div, li, tr, article")?.outerHTML')
+                    if parent:
+                        print(f"      📦 Parent container HTML (first 800 chars): {parent[:800]}")
+            except:
+                pass
+    except Exception as e:
+        print(f"      ⚠️ Context error: {e}")
+
+    # ★ Also capture a bigger chunk of the body HTML to find the slot section
+    try:
+        # Get the main content area HTML
+        main_content = page.locator('main, [role="main"], .content, #content, .main-content').first
+        if main_content.count() > 0:
+            main_html = main_content.evaluate('el => el.outerHTML')
+            print(f"      📦 Main content HTML (first 1500 chars): {main_html[:1500]}")
+        else:
+            # Fallback: get body HTML around the middle where slots usually appear
+            body_html = page.evaluate('() => document.body.innerHTML')
+            print(f"      📦 Body HTML length: {len(body_html)} chars")
+            # Look for the section after the form
+            form_idx = body_html.lower().find('</form>')
+            if form_idx > 0:
+                after_form = body_html[form_idx:form_idx+2000]
+                print(f"      📦 HTML after form (first 2000 chars): {after_form[:2000]}")
+    except Exception as e:
+        print(f"      ⚠️ Main content error: {e}")
+
+    # Original check
+    has_positive = any(p in body_lower for p in ["disponible", "available", "réserver", "book", "choisir", "prendre rendez-vous", "créneau disponible"])
+
+    if has_positive:
+        print(f"      ✅ POSITIVE INDICATORS FOUND")
+    else:
+        print(f"      ❓ No clear indicators found in page text")
+
     return has_positive, "positive indicators" if has_positive else "no clear slots", current_url
 
 
@@ -583,27 +611,27 @@ def scrape_bonjoursante_clinic(clinic: dict, user: dict) -> dict:
     print(f"\n   🟠 BONJOUR SANTÉ: {clinic['name']} ({clinic.get('distance_km', '?')}km)")
     if KillSwitch.is_active(): return {"found": False, "details": "Kill switch", "booking_url": ""}
 
-    # ★ API response interceptor — capture booking data
     captured_api_data = []
 
     with sync_playwright() as p:
         browser, context = launch_stealth_browser(p, headless=headless)
         page = context.new_page()
 
-        # ★ Intercept API responses (like ClicSanté backdoor)
+        # ★ Intercept ALL responses (not just JSON)
         def on_response(response):
             try:
                 url = response.url
                 if response.status == 200:
                     ct = response.headers.get('content-type', '')
+                    print(f"      📡 Response: {response.status} {url[:120]} [{ct[:30]}]")
                     if 'json' in ct:
                         try:
                             body = response.json()
-                            # Look for slot/booking data in JSON responses
                             body_str = json.dumps(body).lower()
-                            if any(kw in body_str for kw in ['slot', 'creneau', 'appointment', 'booking', 'rendez-vous', 'disponibilite', 'availability', 'plage']):
+                            if any(kw in body_str for kw in ['slot', 'creneau', 'appointment', 'booking', 'rendez-vous', 'disponibilite', 'availability', 'plage', 'horaire']):
                                 captured_api_data.append({'url': url, 'data': body})
-                                print(f"      📡 API Intercepted: {url[:100]}")
+                                print(f"      📡 API SLOT DATA: {url[:100]}")
+                                print(f"      📡 Body: {json.dumps(body)[:1000]}")
                         except:
                             pass
             except:
@@ -619,7 +647,6 @@ def scrape_bonjoursante_clinic(clinic: dict, user: dict) -> dict:
             fill_bonjoursante_page2(page, user)
             has_slots, details, result_url = verify_bonjoursante_results(page, clinic["name"])
 
-            # ★ Print captured API data for debugging
             if captured_api_data:
                 print(f"      📡 Total API responses captured: {len(captured_api_data)}")
                 for i, api in enumerate(captured_api_data[:5]):
@@ -628,12 +655,10 @@ def scrape_bonjoursante_clinic(clinic: dict, user: dict) -> dict:
                     print(f"      📡 Data: {data_str}")
 
             if has_slots:
-                # ★ Try to extract direct booking URL from captured API data
                 direct_booking_url = result_url
                 for api in captured_api_data:
                     data = api['data']
                     data_str = json.dumps(data)
-                    # Look for booking URLs in API responses
                     url_matches = re.findall(r'https?://[^\s"\']+(?:book|reserv|appointment|rendez-vous|slot|creneau)[^\s"\']*', data_str, re.I)
                     if url_matches:
                         direct_booking_url = url_matches[0]
