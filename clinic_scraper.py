@@ -175,7 +175,10 @@ def update_clinic_request(request_id, status, result=None):
         }
         if result:
             update_data["scraper_result"] = result
-            update_data["result_summary"] = f"Found: {result.get('clinic_name', 'Unknown')} via {result.get('platform', 'Unknown')}"
+            if result.get("found") == True:
+                update_data["result_summary"] = f"Found: {result.get('clinic_name', 'Unknown')} via {result.get('platform', 'Unknown')}"
+            else:
+                update_data["result_summary"] = "No appointments found"
         if status == "completed":
             update_data["completed_at"] = firestore.SERVER_TIMESTAMP
 
@@ -191,12 +194,39 @@ def send_notification(clinic_name, postal_code, platform, booking_url):
         messaging.send(messaging.Message(
             notification=messaging.Notification(
                 title="🎉 Rendez-vous trouvé!",
-                body=f"{clinic_name} près de {postal_code}."
+                body=f"{clinic_name} près de {postal_code}. Touchez pour réserver."
             ),
-            data={"url": booking_url, "platform": platform, "clinic": clinic_name, "postal": postal_code},
+            data={
+                "url": booking_url,
+                "platform": platform,
+                "clinic": clinic_name,
+                "postal": postal_code,
+                "click_action": "OPEN_BOOKING"
+            },
             token=token,
         ))
-        print("✅ Notification Sent")
+        print("✅ Notification Sent (slot found)")
+    except Exception as e:
+        print(f"❌ FCM Error: {e}")
+
+def send_no_slots_notification(postal_code, language):
+    token = get_user_token()
+    if not token: return
+    try:
+        title = "😴 Aucun rendez-vous trouvé" if language == "fr" else "😴 No appointments found"
+        body = "Notre concierge humain peut vous aider. Ouvrez l'application pour continuer." if language == "fr" else "Our human concierge can help. Open the app to continue."
+        messaging.send(messaging.Message(
+            notification=messaging.Notification(
+                title=title,
+                body=body
+            ),
+            data={
+                "click_action": "OPEN_CONCIERGE",
+                "postal": postal_code
+            },
+            token=token,
+        ))
+        print("✅ No-slots notification sent")
     except Exception as e:
         print(f"❌ FCM Error: {e}")
 
@@ -424,10 +454,10 @@ def scrape_pomelo_clinic(clinic: dict, user: dict) -> dict:
                 return {"found": True, "details": details, "booking_url": page.url}
             else:
                 print(f"      ❌ No slots")
-                return {"found": False, "details": details, "booking_url": ""}
+                return {"found": False, "details": details, "booking_url": booking_url}
         except Exception as e:
             print(f"      🚨 Pomelo error: {e}")
-            return {"found": False, "details": str(e), "booking_url": ""}
+            return {"found": False, "details": str(e), "booking_url": booking_url}
         finally:
             browser.close()
 
@@ -492,10 +522,10 @@ def scrape_bonjoursante_clinic(clinic: dict, user: dict) -> dict:
                 return {"found": True, "details": details, "booking_url": page.url}
             else:
                 print(f"      ❌ No slots")
-                return {"found": False, "details": details, "booking_url": ""}
+                return {"found": False, "details": details, "booking_url": booking_url}
         except Exception as e:
             print(f"      🚨 Bonjour Santé error: {e}")
-            return {"found": False, "details": str(e), "booking_url": ""}
+            return {"found": False, "details": str(e), "booking_url": booking_url}
         finally:
             browser.close()
 
@@ -511,7 +541,7 @@ def route_and_scrape_clinic(clinic: dict, user: dict) -> dict:
     elif platform == "bonjour_sante":
         return scrape_bonjoursante_clinic(clinic, user)
     else:
-        return {"found": False, "details": f"skipped_{platform}", "booking_url": ""}
+        return {"found": False, "details": f"skipped_{platform}", "booking_url": clinic.get("booking_url", "")}
 
 
 # ══════════════════════════════════════════════════════════════
@@ -539,7 +569,7 @@ def search_clinics_in_zone(user: dict, radius_km: int) -> bool:
             save_availability(clinic["name"], postal, clinic.get("platform"), True, result["booking_url"], result["details"])
             return True
         else:
-            save_availability(clinic["name"], postal, clinic.get("platform"), False, "", result["details"])
+            save_availability(clinic["name"], postal, clinic.get("platform"), False, clinic.get("booking_url", ""), result["details"])
     return False
 
 
@@ -555,6 +585,7 @@ def run_single_search(user_postal: str = None, request_id: str = None):
 
     user = get_user_data()
     user["postal_code"] = user_postal
+    language = user.get("language", "fr")
     KillSwitch.reset()
     max_date = (datetime.now() + timedelta(days=MAX_DAYS_AHEAD)).strftime("%Y-%m-%d")
 
@@ -581,6 +612,7 @@ def run_single_search(user_postal: str = None, request_id: str = None):
         print(f"\n😴 No appointments found in any tier.")
         if request_id:
             update_clinic_request(request_id, "completed", {"found": False, "details": "No appointments found in any tier"})
+        send_no_slots_notification(user_postal, language)
 
     return None
 
