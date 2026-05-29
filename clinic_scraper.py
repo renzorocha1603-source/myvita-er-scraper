@@ -424,13 +424,13 @@ def fill_pomelo_page4_search(page, postal_code: str):
 
 def verify_pomelo_calendar(page, clinic_name: str) -> tuple:
     print("      📅 Checking Pomelo calendar...")
-    if KillSwitch.is_active(): return False, "Kill switch"
+    if KillSwitch.is_active(): return False, "Kill switch", ""
     human_delay(2000, 3000)
     body_text = page.inner_text("body").lower()
     for phrase in ["aucune disponibilité", "no availability", "aucun rendez-vous", "complet", "full", "désolé"]:
-        if phrase in body_text: return False, phrase
+        if phrase in body_text: return False, phrase, ""
     has_positive = any(p in body_text for p in ["disponible", "available", "sélectionner", "select"])
-    return has_positive, "positive indicators" if has_positive else "no clear slots"
+    return has_positive, "positive indicators" if has_positive else "no clear slots", page.url
 
 def scrape_pomelo_clinic(clinic: dict, user: dict) -> dict:
     headless = os.getenv("HEADLESS", "true").lower() != "false"
@@ -448,10 +448,10 @@ def scrape_pomelo_clinic(clinic: dict, user: dict) -> dict:
             fill_pomelo_page2_contact(page, user)
             fill_pomelo_page3_consent(page)
             fill_pomelo_page4_search(page, user["postal_code"])
-            has_slots, details = verify_pomelo_calendar(page, clinic["name"])
+            has_slots, details, result_url = verify_pomelo_calendar(page, clinic["name"])
             if has_slots:
                 print(f"      🎉 SLOTS FOUND! ({details})")
-                return {"found": True, "details": details, "booking_url": page.url}
+                return {"found": True, "details": details, "booking_url": result_url}
             else:
                 print(f"      ❌ No slots")
                 return {"found": False, "details": details, "booking_url": booking_url}
@@ -463,7 +463,7 @@ def scrape_pomelo_clinic(clinic: dict, user: dict) -> dict:
 
 
 # ══════════════════════════════════════════════════════════════
-# 11. BONJOUR SANTÉ HANDLER
+# 11. BONJOUR SANTÉ HANDLER — ★ DEBUG MODE
 # ══════════════════════════════════════════════════════════════
 
 def fill_bonjoursante_page1(page, user: dict):
@@ -494,32 +494,154 @@ def fill_bonjoursante_page2(page, user: dict):
 
 def verify_bonjoursante_results(page, clinic_name: str) -> tuple:
     print("      📅 Checking Bonjour Santé results...")
-    if KillSwitch.is_active(): return False, "Kill switch"
+    if KillSwitch.is_active(): return False, "Kill switch", ""
+
     human_delay(2000, 3000)
+
+    # ★ DEBUG: Save page HTML snapshot
+    try:
+        html_snippet = page.content()
+        # Save first 3000 chars to avoid log overflow
+        print(f"      📄 Page HTML (first 3000 chars): {html_snippet[:3000]}")
+    except Exception as e:
+        print(f"      ⚠️ HTML capture error: {e}")
+
+    # ★ DEBUG: Capture all links on the page
+    try:
+        all_links = page.locator('a').all()
+        print(f"      🔗 Total links found: {len(all_links)}")
+        for link in all_links[:20]:
+            try:
+                href = link.get_attribute('href')
+                text = link.inner_text().strip()[:80]
+                if href and ('book' in href.lower() or 'reserv' in href.lower() or 'rendez-vous' in href.lower() or 'appointment' in href.lower() or 'slot' in href.lower() or 'creneau' in href.lower()):
+                    print(f"      🔗 BOOKING LINK: {text} → {href}")
+            except:
+                pass
+    except Exception as e:
+        print(f"      ⚠️ Link capture error: {e}")
+
+    # ★ DEBUG: Look for data attributes with slot info
+    try:
+        slot_elements = page.locator('[data-slot], [data-appointment], [data-creneau], [data-rendezvous], [data-id]').all()
+        print(f"      📊 Slot elements found: {len(slot_elements)}")
+        for el in slot_elements[:5]:
+            try:
+                dataset = el.evaluate('el => JSON.stringify(el.dataset)')
+                print(f"      📊 Slot data: {dataset[:200]}")
+            except:
+                pass
+    except Exception as e:
+        print(f"      ⚠️ Slot data error: {e}")
+
+    # ★ DEBUG: Look for JSON data in script tags
+    try:
+        script_tags = page.locator('script').all()
+        print(f"      📜 Script tags found: {len(script_tags)}")
+        for script in script_tags[:10]:
+            try:
+                content = script.inner_text()
+                if 'slot' in content.lower() or 'appointment' in content.lower() or 'booking' in content.lower() or 'rendez-vous' in content.lower() or 'creneau' in content.lower():
+                    print(f"      📜 Script with slot data (first 500 chars): {content[:500]}")
+            except:
+                pass
+    except Exception as e:
+        print(f"      ⚠️ Script tag error: {e}")
+
+    # ★ DEBUG: Look for buttons with booking-related text
+    try:
+        booking_buttons = page.locator('button:has-text("Réserver"), button:has-text("Book"), button:has-text("Choisir"), button:has-text("Select"), button:has-text("Prendre")').all()
+        print(f"      🔘 Booking buttons found: {len(booking_buttons)}")
+        for btn in booking_buttons[:5]:
+            try:
+                text = btn.inner_text().strip()[:80]
+                parent_html = btn.evaluate('el => el.parentElement.outerHTML')
+                print(f"      🔘 Button: {text}")
+                print(f"      🔘 Parent HTML (first 300 chars): {parent_html[:300]}")
+            except:
+                pass
+    except Exception as e:
+        print(f"      ⚠️ Button error: {e}")
+
+    # ★ DEBUG: Capture current page URL
+    current_url = page.url
+    print(f"      🌐 Current page URL: {current_url}")
+
+    # Original check
     body_text = page.inner_text("body").lower()
     for phrase in ["aucune disponibilité", "no availability", "aucun rendez-vous", "complet", "full", "désolé"]:
-        if phrase in body_text: return False, phrase
+        if phrase in body_text:
+            return False, phrase, current_url
+
     has_positive = any(p in body_text for p in ["disponible", "available", "réserver", "book", "choisir"])
-    return has_positive, "positive indicators" if has_positive else "no clear slots"
+    return has_positive, "positive indicators" if has_positive else "no clear slots", current_url
+
 
 def scrape_bonjoursante_clinic(clinic: dict, user: dict) -> dict:
     headless = os.getenv("HEADLESS", "true").lower() != "false"
     booking_url = clinic.get("booking_url", "")
     print(f"\n   🟠 BONJOUR SANTÉ: {clinic['name']} ({clinic.get('distance_km', '?')}km)")
     if KillSwitch.is_active(): return {"found": False, "details": "Kill switch", "booking_url": ""}
+
+    # ★ API response interceptor — capture booking data
+    captured_api_data = []
+
     with sync_playwright() as p:
         browser, context = launch_stealth_browser(p, headless=headless)
         page = context.new_page()
+
+        # ★ Intercept API responses (like ClicSanté backdoor)
+        def on_response(response):
+            try:
+                url = response.url
+                if response.status == 200:
+                    ct = response.headers.get('content-type', '')
+                    if 'json' in ct:
+                        try:
+                            body = response.json()
+                            # Look for slot/booking data in JSON responses
+                            body_str = json.dumps(body).lower()
+                            if any(kw in body_str for kw in ['slot', 'creneau', 'appointment', 'booking', 'rendez-vous', 'disponibilite', 'availability', 'plage']):
+                                captured_api_data.append({'url': url, 'data': body})
+                                print(f"      📡 API Intercepted: {url[:100]}")
+                        except:
+                            pass
+            except:
+                pass
+
+        page.on("response", on_response)
+
         try:
             page.goto(booking_url, wait_until="domcontentloaded", timeout=60000)
             human_delay(2000, 3000)
             if KillSwitch.is_active(): return {"found": False, "details": "Kill switch", "booking_url": ""}
             fill_bonjoursante_page1(page, user)
             fill_bonjoursante_page2(page, user)
-            has_slots, details = verify_bonjoursante_results(page, clinic["name"])
+            has_slots, details, result_url = verify_bonjoursante_results(page, clinic["name"])
+
+            # ★ Print captured API data for debugging
+            if captured_api_data:
+                print(f"      📡 Total API responses captured: {len(captured_api_data)}")
+                for i, api in enumerate(captured_api_data[:5]):
+                    print(f"      📡 API #{i+1}: {api['url'][:120]}")
+                    data_str = json.dumps(api['data'])[:500]
+                    print(f"      📡 Data: {data_str}")
+
             if has_slots:
+                # ★ Try to extract direct booking URL from captured API data
+                direct_booking_url = result_url
+                for api in captured_api_data:
+                    data = api['data']
+                    data_str = json.dumps(data)
+                    # Look for booking URLs in API responses
+                    url_matches = re.findall(r'https?://[^\s"\']+(?:book|reserv|appointment|rendez-vous|slot|creneau)[^\s"\']*', data_str, re.I)
+                    if url_matches:
+                        direct_booking_url = url_matches[0]
+                        print(f"      🎯 Direct booking URL from API: {direct_booking_url}")
+                        break
+
                 print(f"      🎉 SLOTS FOUND! ({details})")
-                return {"found": True, "details": details, "booking_url": page.url}
+                return {"found": True, "details": details, "booking_url": direct_booking_url}
             else:
                 print(f"      ❌ No slots")
                 return {"found": False, "details": details, "booking_url": booking_url}
