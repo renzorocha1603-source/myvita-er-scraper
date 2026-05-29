@@ -1,560 +1,754 @@
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, TimeoutError
 import time
 import random
 import os
 import json
 import re
+import math
 from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
 import firebase_admin
 from firebase_admin import credentials, messaging, firestore
 
-# ============================================================================
-# GEMI PROTOCOL — MyVita Transparent Health Access Bot
-# ============================================================================
-# Identity:    MyVita-Bot/1.0 — Declared in headers, stealth in execution
-# Purpose:     Public health appointment availability lookup
-# Contact:     legal@myvita.app
-# robots.txt:  Respected — checked before every session
-# Rate Limit:  1 req / 2 seconds minimum
-# Peak Hours:  No scraping 8:00–10:00 AM ET (requests queued silently)
-# Data Expiry: 2 hours max — Firestore TTL
-# Loi 25:      No personal data collected. No competing database.
-# ============================================================================
+# ══════════════════════════════════════════════════════════════
+# 1. CONFIGURATION
+# ══════════════════════════════════════════════════════════════
 
-# ★ TIMEZONE: Eastern Time (America/Toronto) for Quebec
-EASTERN_TZ = ZoneInfo("America/Toronto")
-
-def now_et():
-    """Return current datetime in Eastern Time."""
-    return datetime.now(EASTERN_TZ)
-
-# === 1. CONFIGURATION ===
-
-ZONE_GROUPS = {
-    "montreal_east": ["H1Y", "H1A", "H1B", "H1C", "H1Z", "H1W", "H1V"],
-    "montreal_north": ["H1H", "H1J", "H4L", "H4M", "H2E", "H2G", "H2H", "H3N", "H3L"],
-    "montreal_central": ["H2X", "H3A", "H3B", "H2Y", "H3C", "H3G", "H3H", "H2Z"],
-    "montreal_west": ["H3Z", "H4A", "H4B", "H4C", "H4V", "H4W", "H9R", "H9S"],
-    "montreal_south": ["H3E", "H3J", "H3K", "H4E", "H4G", "H4H", "H4J", "H4K"],
-    "laval": ["H7T", "H7V", "H7W", "H7X", "H7Y", "H7Z", "H7L", "H7M", "H7N", "H7P", "H7R", "H7S"],
-    "longueuil": ["J4K", "J4L", "J4M", "J4N", "J4P", "J4R", "J4S", "J4T"],
-    "quebec_central": ["G1R", "G1S", "G1K", "G1L", "G1M", "G1N", "G1P", "G1T"],
-    "quebec_ste_foy": ["G1V", "G1W", "G1X", "G1Y", "G2B", "G2C"],
-    "gatineau_hull": ["J8Y", "J8Z", "J8X", "J8V", "J8W", "J8T", "J8P"],
-    "gatineau_aylmer": ["J9A", "J9B", "J9H", "J9J", "J9X", "J9Y"],
-    "sherbrooke": ["J1H", "J1K", "J1L", "J1M", "J1N", "J1X", "J1Y"],
-    "trois_rivieres": ["G8Z", "G9A", "G9B", "G9C", "G8T", "G8V"],
-    "saguenay": ["G7H", "G7X", "G7Y", "G7Z", "G7B", "G7J"],
-    "outaouais_rural": ["J0X", "J0V", "J0W", "J0Y", "J0Z"],
-    "laurentides": ["J7V", "J7W", "J7X", "J7Y", "J7Z", "J8A", "J8B", "J8C"],
-    "monteregie": ["J2W", "J2X", "J2Y", "J3A", "J3B", "J3E", "J3G", "J3H", "J3L", "J3M", "J3P"],
-    "estrie": ["J0A", "J0B", "J0C", "J0E", "J0H", "J0J", "J0K", "J0L", "J0M"],
-    "mauricie": ["G8Z", "G9A", "G9B", "G9C", "G8T", "G8V", "G8W", "G8Y"],
-    "bas_st_laurent": ["G0K", "G0L", "G0M", "G5L", "G5M", "G5N", "G5R", "G5T"],
+POSTAL_CODES = {
+    "H1Y": "montreal_east", "H1A": "montreal_east", "H1B": "montreal_east",
+    "H1C": "montreal_east", "H1H": "montreal_north", "H1J": "montreal_north",
+    "H2X": "montreal_central", "H3A": "montreal_central", "H3B": "montreal_central",
+    "H4L": "montreal_north", "H4M": "montreal_north", "H1Z": "montreal_north",
+    "H2E": "montreal_north", "H2G": "montreal_north", "H2H": "montreal_north",
+    "H3N": "montreal_north", "H3L": "montreal_north",
+    "G1R": "quebec_central", "G1S": "quebec_central", "G1V": "quebec_ste_foy",
+    "G1K": "quebec_central", "G1L": "quebec_central",
+    "J8Y": "gatineau_hull", "J8Z": "gatineau_aylmer", "J8X": "gatineau_hull",
+    "J1H": "sherbrooke", "J1K": "sherbrooke", "J1L": "sherbrooke",
+    "H7T": "laval", "H7V": "laval", "H7W": "laval", "H7X": "laval",
+    "J4K": "longueuil", "J4L": "longueuil", "J4M": "longueuil",
+    "G8Z": "trois_rivieres", "G9A": "trois_rivieres",
+    "G7H": "saguenay", "G7X": "saguenay",
 }
 
-FSA_TO_ZONE = {}
-for zone, fsas in ZONE_GROUPS.items():
-    for fsa in fsas:
-        FSA_TO_ZONE[fsa] = zone
+GOOGLE_MAPS_PROXY = "https://us-central1-myvita-app-c5ecd.cloudfunctions.net/googleMapsProxy"
+RADIUS_TIERS = [15, 30, 50]
+MAX_DAYS_AHEAD = 10
 
-# === GEMI PROTOCOL CONSTANTS ===
-MYVITA_BOT_CONTACT = "legal@myvita.app"
-MYVITA_BOT_PURPOSE = "Public health appointment availability lookup — Accessibility Layer"
-PEAK_HOURS_START = 8
-PEAK_HOURS_END = 10
-RATE_LIMIT_SECONDS = 2.0
-MAX_DATA_AGE_HOURS = 2
-CLICSANTE_DOMAIN = "clicsante.ca"
-CLICSANTE_ROBOTS_URL = f"https://www.{CLICSANTE_DOMAIN}/robots.txt"
+# ══════════════════════════════════════════════════════════════
+# 2. KILL SWITCH
+# ══════════════════════════════════════════════════════════════
 
-def get_zone_group(postal_code: str) -> list:
-    fsa = postal_code[:3].upper()
-    zone = FSA_TO_ZONE.get(fsa)
-    if zone:
-        return ZONE_GROUPS.get(zone, [fsa])
-    return [fsa]
+class KillSwitch:
+    _active = False
+    _found_appointment = None
 
-def generate_search_codes(postal_code: str) -> list:
-    """Generate up to 6 search codes covering ~30km radius."""
-    fsas = get_zone_group(postal_code)
-    suffix = postal_code[3:]
-    codes = [postal_code.upper().replace(" ", "")]
-    for fsa in fsas[:5]:
-        candidate = f"{fsa}{suffix}"
-        if candidate.upper() not in [c.upper() for c in codes]:
-            codes.append(candidate)
-    return codes[:6]
+    @classmethod
+    def activate(cls, details: dict):
+        cls._active = True
+        cls._found_appointment = details
+        print(f"\n🛑 KILL SWITCH: {details.get('clinic_name')} | {details.get('platform')}")
 
-# === 2. FIREBASE SETUP ===
+    @classmethod
+    def is_active(cls) -> bool:
+        return cls._active
+
+    @classmethod
+    def reset(cls):
+        cls._active = False
+        cls._found_appointment = None
+        print("🔄 Kill switch reset")
+
+
+# ══════════════════════════════════════════════════════════════
+# 3. FIREBASE SETUP
+# ══════════════════════════════════════════════════════════════
+
 db = None
-try:
-    creds_json = os.getenv("FIREBASE_CREDENTIALS")
-    if creds_json:
-        cred_dict = json.loads(creds_json)
-        cred = credentials.Certificate(cred_dict)
-        if not firebase_admin._apps:
-            firebase_admin.initialize_app(cred, {'projectId': 'myvita-app-c5ecd'})
-        db = firestore.client()
-        print("✅ Firebase initialized")
-    elif os.path.exists("firebase-credentials.json"):
-        cred = credentials.Certificate("firebase-credentials.json")
-        if not firebase_admin._apps:
-            firebase_admin.initialize_app(cred, {'projectId': 'myvita-app-c5ecd'})
-        db = firestore.client()
-        print("✅ Firebase initialized (local)")
-    else:
-        print("⚠️ No Firebase credentials")
-except Exception as e:
-    print(f"⚠️ Firebase Init Error: {e}")
 
-# === 3. UTILITIES ===
+def init_firebase():
+    global db
+    try:
+        creds_json = os.getenv("FIREBASE_CREDENTIALS")
+        if creds_json:
+            cred_dict = json.loads(creds_json)
+            cred = credentials.Certificate(cred_dict)
+            if not firebase_admin._apps:
+                firebase_admin.initialize_app(cred, {'projectId': 'myvita-app-c5ecd'})
+            db = firestore.client()
+            print("✅ Firebase initialized (GitHub Secret)")
+    except Exception as e:
+        print(f"⚠️ Firebase Init Error: {e}")
 
-def human_delay(min_sec=0.5, max_sec=3.0):
-    time.sleep(random.uniform(min_sec, max_sec))
+init_firebase()
+
+
+# ══════════════════════════════════════════════════════════════
+# 4. USER DATA
+# ══════════════════════════════════════════════════════════════
+
+def get_user_data():
+    return {
+        "first_name": os.getenv("USER_FIRST_NAME", "Jean"),
+        "last_name": os.getenv("USER_LAST_NAME", "Tremblay"),
+        "ramq": os.getenv("USER_RAMQ", "TREJ6501011234"),
+        "ramq_seq": os.getenv("USER_RAMQ_SEQ", "01"),
+        "birth_date": os.getenv("USER_BIRTH_DATE", "1965-01-15"),
+        "sex": os.getenv("USER_SEX", "M"),
+        "email": os.getenv("USER_EMAIL", "user@example.com"),
+        "phone": os.getenv("USER_PHONE", "5145551234"),
+        "postal_code": os.getenv("POSTAL_CODE", "H1Y3H1"),
+        "language": os.getenv("USER_LANGUAGE", "fr"),
+    }
+
+
+# ══════════════════════════════════════════════════════════════
+# 5. UTILITY FUNCTIONS
+# ══════════════════════════════════════════════════════════════
+
+def human_delay(min_ms=500, max_ms=1500):
+    time.sleep(random.uniform(min_ms, max_ms) / 1000)
+
+def get_zone(postal_code: str) -> str:
+    return POSTAL_CODES.get(postal_code[:3].upper(), f"zone_{postal_code[:3]}")
+
+def haversine(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlng = math.radians(lng2 - lng1)
+    a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlng/2)**2
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+
+def geocode_postal_code(postal_code: str) -> dict:
+    import requests as req
+    try:
+        response = req.post(GOOGLE_MAPS_PROXY, json={
+            "endpoint": "geocode/json",
+            "params": {"address": f"{postal_code}, Quebec, Canada", "region": "ca"}
+        }, timeout=15)
+        data = response.json()
+        results = data.get("results", [])
+        if results:
+            loc = results[0]["geometry"]["location"]
+            return {"lat": loc["lat"], "lng": loc["lng"]}
+    except Exception as e:
+        print(f"⚠️ Geocode error: {e}")
+    return None
 
 def get_user_token():
     if db is None: return None
     try:
-        docs = db.collection('users').order_by('fcmTokenUpdated', direction='DESCENDING').limit(10).stream()
-        for doc in docs:
+        users_ref = db.collection('users').order_by('fcmTokenUpdated', direction='DESCENDING').limit(1)
+        for doc in users_ref.stream():
             token = doc.to_dict().get('fcmToken')
             if token: return token
     except: pass
     return None
 
-# ★ FIXED: Only checks recent pending requests — ignores old cancelled ones
-def is_request_cancelled(postal_code: str) -> bool:
-    """Check if the CURRENT pending request was cancelled by the user."""
-    if db is None:
-        return False
+
+# ══════════════════════════════════════════════════════════════
+# 6. NOTIFICATION & DATA SAVING
+# ══════════════════════════════════════════════════════════════
+
+def save_availability(clinic_name, postal_code, platform, has_slots, booking_url, slot_details):
+    if db is None: return
+    zone = get_zone(postal_code)
+    now = datetime.now()
+    doc_id = f"{platform}_{zone}_{clinic_name.replace(' ', '_')[:60]}"
     try:
-        # Only check requests from the last hour — ignore old cancelled ones
-        one_hour_ago = now_et() - timedelta(hours=1)
-        cancelled = db.collection("lab_requests") \
-            .where("postal_code", "==", postal_code) \
-            .where("status", "==", "cancelled") \
-            .where("requested_at", ">=", one_hour_ago) \
-            .limit(1).stream()
-        for _ in cancelled:
-            return True
-        return False
-    except:
-        return False
-
-# === GEMI PROTOCOL: PEAK HOURS (Eastern Time) ===
-
-def is_peak_hours():
-    """Check if current time is within peak hours (8am-10am ET)."""
-    now = now_et()
-    hour = now.hour
-    return PEAK_HOURS_START <= hour < PEAK_HOURS_END
-
-def queue_for_later(postal_code: str):
-    """Queue request for post-peak execution — SILENT, no notification."""
-    if db is None:
-        print("⚠️ No DB — cannot queue request")
-        return False
-    try:
-        db.collection("lab_requests_queue").document(postal_code).set({
-            "postal_code": postal_code,
-            "requested_at": now_et().isoformat(),
-            "status": "queued",
-            "execute_after": (now_et() + timedelta(hours=2)).isoformat(),
+        db.collection("availability").document(doc_id).set({
+            "platform": platform, "postal_code": postal_code,
+            "clinic_name": clinic_name, "zone": zone,
+            "slots_found": has_slots, "booking_url": booking_url,
+            "slot_details": slot_details, "last_checked": now,
         })
-        print(f"⏳ Queued {postal_code} for post-peak execution (after 10am ET) — silent, no notification sent")
-        return True
+        print(f"🔥 Firestore: {doc_id}")
     except Exception as e:
-        print(f"⚠️ Queue error: {e}")
-        return False
+        print(f"❌ Firestore Error: {e}")
 
-def process_queued_requests():
-    if db is None:
-        print("⚠️ No DB — cannot process queue")
-        return []
+def update_clinic_request(request_id, status, result=None):
+    if db is None or not request_id:
+        return
     try:
-        now = now_et()
-        queued = db.collection("lab_requests_queue").where("status", "==", "queued").stream()
-        ready_codes = []
-        for doc in queued:
-            data = doc.to_dict()
-            execute_after_str = data.get("execute_after", "2000-01-01T00:00:00")
-            execute_after = datetime.fromisoformat(execute_after_str)
-            # If execute_after is timezone-naive, make it ET-aware for comparison
-            if execute_after.tzinfo is None:
-                execute_after = execute_after.replace(tzinfo=EASTERN_TZ)
-            if now >= execute_after:
-                ready_codes.append(data.get("postal_code"))
-                doc.reference.update({"status": "processing"})
-        return ready_codes
-    except Exception as e:
-        print(f"⚠️ Process queue error: {e}")
-        return []
-
-# === GEMI PROTOCOL: robots.txt CHECK ===
-
-ROBOTS_TXT_CACHE = {"checked": False, "disallowed_paths": [], "crawl_delay": None}
-
-def check_robots_txt():
-    global ROBOTS_TXT_CACHE
-    if ROBOTS_TXT_CACHE["checked"]:
-        return ROBOTS_TXT_CACHE
-    print("🤖 Checking robots.txt...")
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
-            page = browser.new_page()
-            response = page.goto(CLICSANTE_ROBOTS_URL, timeout=15000)
-            if response and response.status == 200:
-                text = page.evaluate("() => document.body.innerText")
-                disallowed = []
-                crawl_delay = None
-                for line in text.split('\n'):
-                    line = line.strip().lower()
-                    if line.startswith('disallow:'):
-                        path = line.split(':', 1)[1].strip()
-                        if path: disallowed.append(path)
-                    elif line.startswith('crawl-delay:'):
-                        try: crawl_delay = float(line.split(':', 1)[1].strip())
-                        except: pass
-                ROBOTS_TXT_CACHE = {"checked": True, "disallowed_paths": disallowed, "crawl_delay": crawl_delay}
-                print(f"✅ robots.txt loaded — {len(disallowed)} disallowed paths, crawl-delay: {crawl_delay}")
+        update_data = {
+            "status": status,
+            "updated_at": firestore.SERVER_TIMESTAMP
+        }
+        if result:
+            update_data["scraper_result"] = result
+            if result.get("found") == True:
+                update_data["result_summary"] = f"Found: {result.get('clinic_name', 'Unknown')} via {result.get('platform', 'Unknown')}"
             else:
-                ROBOTS_TXT_CACHE = {"checked": True, "disallowed_paths": [], "crawl_delay": None}
-            browser.close()
+                update_data["result_summary"] = "No appointments found"
+        if status == "completed":
+            update_data["completed_at"] = firestore.SERVER_TIMESTAMP
+
+        db.collection("clinic_requests").document(request_id).update(update_data)
+        print(f"📝 Updated clinic_requests/{request_id}: status={status}")
     except Exception as e:
-        print(f"⚠️ robots.txt check failed: {e} — proceeding cautiously")
-        ROBOTS_TXT_CACHE = {"checked": True, "disallowed_paths": [], "crawl_delay": RATE_LIMIT_SECONDS}
-    return ROBOTS_TXT_CACHE
+        print(f"❌ Failed to update clinic request: {e}")
 
-def is_path_allowed(url: str) -> bool:
-    robots = check_robots_txt()
-    from urllib.parse import urlparse
-    path = urlparse(url).path
-    for disallowed in robots.get("disallowed_paths", []):
-        if path.startswith(disallowed):
-            print(f"⛔ robots.txt blocks: {path}")
-            return False
-    return True
-
-# === 4. STEALTH ENGINE ===
-
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-]
-
-VIEWPORT_SIZES = [
-    {"width": 1366, "height": 768}, {"width": 1440, "height": 900},
-    {"width": 1536, "height": 864}, {"width": 1280, "height": 720},
-    {"width": 1600, "height": 900}, {"width": 1920, "height": 1080},
-]
-
-CANVAS_EVASION_SCRIPT = """
-const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
-HTMLCanvasElement.prototype.toDataURL = function(type) {
-    const context = this.getContext('2d');
-    if (context) {
-        const imageData = context.getImageData(0, 0, this.width, this.height);
-        for (let i = 0; i < imageData.data.length; i += 4) { imageData.data[i] += Math.floor(Math.random() * 2); }
-        context.putImageData(imageData, 0, 0);
-    }
-    return originalToDataURL.apply(this, arguments);
-};
-const getParameter = WebGLRenderingContext.prototype.getParameter;
-WebGLRenderingContext.prototype.getParameter = function(parameter) {
-    if (parameter === 37445) return 'Intel Inc.';
-    if (parameter === 37446) return 'Intel Iris OpenGL Engine';
-    return getParameter.call(this, parameter);
-};
-Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
-Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]});
-Object.defineProperty(navigator, 'languages', {get: () => ['fr-CA', 'fr', 'en-CA', 'en']});
-"""
-
-def launch_stealth_browser(p):
-    browser = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-blink-features=AutomationControlled", "--disable-dev-shm-usage", "--disable-gpu", "--disable-infobars"])
-    viewport = random.choice(VIEWPORT_SIZES)
-    user_agent = random.choice(USER_AGENTS)
-    context = browser.new_context(viewport=viewport, user_agent=user_agent, locale="fr-CA", timezone_id="America/Toronto",
-        extra_http_headers={"Accept-Language": "fr-CA,fr;q=0.9,en-CA;q=0.8,en;q=0.7"})
-    context.add_init_script(CANVAS_EVASION_SCRIPT)
-    return browser, context
-
-# === 5. NOTIFICATION ===
-
-def send_single_notification(user_postal: str, clinics: list):
-    """Send ONE notification — no postal code in message, just 'Results ready'."""
+def send_notification(clinic_name, postal_code, platform, booking_url):
     token = get_user_token()
-    if not token or not clinics: return
-    body = "Vos resultats sont arrives. Ouvrez MyVita pour les voir."
-    if len(body) > 250: body = body[:247] + "..."
+    if not token: return
     try:
         messaging.send(messaging.Message(
             notification=messaging.Notification(
-                title="Resultats disponibles",
-                body=body),
-            data={"postal_code": user_postal, "type": "lab_results"},
-            token=token))
-        print(f"✅ Notification sent: {len(clinics)} clinics found")
-    except Exception as e: print(f"❌ FCM Error: {e}")
+                title="🎉 Rendez-vous trouvé!",
+                body=f"{clinic_name} près de {postal_code}. Touchez pour réserver."
+            ),
+            data={
+                "url": booking_url,
+                "platform": platform,
+                "clinic": clinic_name,
+                "postal": postal_code,
+                "click_action": "OPEN_BOOKING"
+            },
+            token=token,
+        ))
+        print("✅ Notification Sent (slot found)")
+    except Exception as e:
+        print(f"❌ FCM Error: {e}")
 
-def save_availability(user_postal, clinics):
-    if db is None: return
-    zone = user_postal[:3].upper()
-    now = now_et()
-    expires_at = now + timedelta(hours=MAX_DATA_AGE_HOURS)
+def send_no_slots_notification(postal_code, language):
+    token = get_user_token()
+    if not token: return
     try:
-        db.collection("availability").document(user_postal).set({
-            "service": "blood-test", "postal_code": user_postal, "zone": zone,
-            "slots_found": len(clinics) > 0,
-            "booking_url": clinics[0]['url'] if clinics else "",
-            "details": f"{len(clinics)} clinics found",
-            "clinics": clinics[:20],
-            "last_checked": now.isoformat(),
-            "expires_at": expires_at.isoformat(),
-            "gemi_protocol": True,
-            "status": "completed",
-        })
-        print(f"💾 Saved: {len(clinics)} clinics for {user_postal} (expires: {expires_at.strftime('%H:%M')})")
-    except Exception as e: print(f"❌ Firestore Error: {e}")
+        title = "😴 Aucun rendez-vous trouvé" if language == "fr" else "😴 No appointments found"
+        body = "Notre concierge humain peut vous aider. Ouvrez l'application pour continuer." if language == "fr" else "Our human concierge can help. Open the app to continue."
+        messaging.send(messaging.Message(
+            notification=messaging.Notification(
+                title=title,
+                body=body
+            ),
+            data={
+                "click_action": "OPEN_CONCIERGE",
+                "postal": postal_code
+            },
+            token=token,
+        ))
+        print("✅ No-slots notification sent")
+    except Exception as e:
+        print(f"❌ FCM Error: {e}")
 
-def clean_expired_data():
-    if db is None: return
-    try:
-        cutoff = now_et() - timedelta(hours=MAX_DATA_AGE_HOURS)
-        expired = db.collection("availability").where("last_checked", "<=", cutoff.isoformat()).stream()
-        count = 0
-        for doc in expired: doc.reference.delete(); count += 1
-        if count > 0: print(f"🧹 Cleaned {count} expired availability records")
-    except Exception as e: print(f"⚠️ Cleanup error: {e}")
 
-def save_clinic_to_database(clinic: dict):
-    if db is None: return
-    try:
-        db.collection("clinic_database").document(clinic['id']).set({
-            'name': clinic.get('name', ''), 'address': clinic.get('address', ''),
-            'phone': clinic.get('phone', ''), 'url': clinic.get('url', ''),
-            'type': clinic.get('type', ''), 'last_seen': now_et().isoformat(),
-        }, merge=True)
+# ══════════════════════════════════════════════════════════════
+# 7. BROWSER SETUP
+# ══════════════════════════════════════════════════════════════
+
+def launch_stealth_browser(p, headless=True):
+    browser = p.chromium.launch(headless=headless, args=[
+        "--no-sandbox", "--disable-blink-features=AutomationControlled", "--disable-dev-shm-usage"
+    ])
+    context = browser.new_context(
+        viewport={"width": 1280, "height": 800},
+        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36"
+    )
+    context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+    return browser, context
+
+
+# ══════════════════════════════════════════════════════════════
+# 8. CLINIC MAP WITH COORDINATES — 78 clinics
+# ══════════════════════════════════════════════════════════════
+
+CLINICS = [
+    # Montreal East
+    {"name": "GMF-R Cité Médicale Villeray", "lat": 45.5463, "lng": -73.6214, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "Centre Médical Mieux-Être (succursale Levasseur)", "lat": 45.5841, "lng": -73.6412, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/levasseur"},
+    {"name": "Clinique Médico-Centre Mont-Royal", "lat": 45.5163, "lng": -73.5786, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/montroyal"},
+    {"name": "GMF Médi-Centre Chomedey", "lat": 45.5451, "lng": -73.7483, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/medicentrechomedey"},
+    {"name": "Polyclinique du cœur-de-l'île GMF-R Jarry-Lajeunesse", "lat": 45.5442, "lng": -73.6256, "platform": "no_online_booking", "booking_url": ""},
+    {"name": "CLSC du Plateau-Mont-Royal", "lat": 45.5195, "lng": -73.5781, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "CLSC de Dorval-Lachine", "lat": 45.4385, "lng": -73.6841, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "UnionMD - Clinique Médicale Privée Montreal", "lat": 45.5032, "lng": -73.5721, "platform": "other", "booking_url": ""},
+    {"name": "CLSC de Saint-Henri (Montréal)", "lat": 45.4775, "lng": -73.5856, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "CLSC Métro (Montréal)", "lat": 45.4931, "lng": -73.5802, "platform": "clicsante", "booking_url": "https://portal3.clicsante.ca/"},
+    {"name": "CLSC de Hochelaga-Maisonneuve", "lat": 45.5422, "lng": -73.5397, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "Centre D'Urgence Saint-Laurent (GMF)", "lat": 45.5118, "lng": -73.6802, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/cusl"},
+    {"name": "GMF A-R Clinique médicale Angus (Montréal)", "lat": 45.5401, "lng": -73.5658, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/angus"},
+    # Montreal Central
+    {"name": "GMF Clinique Médicale St-Denis (Montréal)", "lat": 45.5264, "lng": -73.5932, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/stdenis"},
+    # Anjou
+    {"name": "GMF Centre Médical Mieux-Être (Succursale Anjou)", "lat": 45.6031, "lng": -73.5518, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    # Mieux-Être network
+    {"name": "Centre Médical Mieux-Être - Lasalle", "lat": 45.4312, "lng": -73.6248, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/cmmelasalle"},
+    {"name": "Centre Médical Mieux-Être - Henri-Bourassa", "lat": 45.6421, "lng": -73.6105, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/cmmehenribourassa"},
+    {"name": "GMF A-R Centre médical Mieux-Être – St-Léonard", "lat": 45.5892, "lng": -73.6014, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/mieuxetre"},
+    # Laval
+    {"name": "GMF Le Carrefour Médical (Laval)", "lat": 45.5684, "lng": -73.7431, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/lecarrefour"},
+    {"name": "GMF Clinique Médicale Sainte-Dorothée (Laval)", "lat": 45.5312, "lng": -73.8115, "platform": "pomelo", "booking_url": "https://pomelo.health/cliniquemedicalesaintedorothee"},
+    {"name": "GMF Polyclinique Concorde (Laval)", "lat": 45.5615, "lng": -73.7082, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "CLSC de Laval-des-Rapides", "lat": 45.5492, "lng": -73.7124, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "Super-Clinique Polyclinique Médicale Fabreville (GMF)", "lat": 45.5925, "lng": -73.7912, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/fabreville"},
+    {"name": "Clinique Médicale Saint-François (GMF)", "lat": 45.5781, "lng": -73.6542, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/stfrancois"},
+    {"name": "CLSC Idola-Saint-Jean", "lat": 45.5652, "lng": -73.6931, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "CLSC des Mille-Îles", "lat": 45.6315, "lng": -73.6212, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "CLSC de l'Ouest-de-l'Île", "lat": 45.4523, "lng": -73.8321, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "CLSC de Sainte-Rose", "lat": 45.6121, "lng": -73.7824, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "CLSC du Ruisseau-Papineau", "lat": 45.5794, "lng": -73.7251, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "GMF Centre Médical Laval", "lat": 45.5521, "lng": -73.7314, "platform": "pomelo", "booking_url": "https://qc.pomelo.health/centremedicallaval"},
+    # Longueuil / Rive-Sud
+    {"name": "Clinique médicale privée Longueuil - Rive-Sud - UnionMD", "lat": 45.5252, "lng": -73.5135, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/unionmdlongueuil"},
+    {"name": "GMF-R Clinique Médicale Longueuil-Ouest", "lat": 45.5314, "lng": -73.5248, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/longueuilouest"},
+    {"name": "CLSC de Longueuil-Ouest (Rive-Sud)", "lat": 45.5314, "lng": -73.5248, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "GMF-U Charles-Le Moyne (Longueuil)", "lat": 45.5184, "lng": -73.4831, "platform": "pomelo", "booking_url": "https://qc.pomelo.health/gmfucharleslemoyne"},
+    # Brossard
+    {"name": "GMF Dix30 (Clinique d'urgence avec rendez-vous Dix30 Brossard)", "lat": 45.4428, "lng": -73.4412, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/gmfdix30"},
+    {"name": "Clinique Sans Rendez-Vous Dix30 Brossard (GMF)", "lat": 45.4428, "lng": -73.4412, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/csansrendezvousdix30brossard"},
+    {"name": "GMF Samuel-de-Champlain", "lat": 45.4682, "lng": -73.4715, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "GMF Lapinière", "lat": 45.4561, "lng": -73.4623, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    # West Island
+    {"name": "GMF Stillview (West Island - Pointe-Claire)", "lat": 45.4485, "lng": -73.8124, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "GMF Clinique Médicale Brunswick (West Island - Pointe-Claire)", "lat": 45.4498, "lng": -73.8315, "platform": "pomelo", "booking_url": "https://pomelo.health/brunswickmedicalcenter"},
+    {"name": "CLSC du Lac-Saint-Louis (West Island - Pointe-Claire)", "lat": 45.4392, "lng": -73.8184, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "CLSC de Pierrefonds (West Island)", "lat": 45.4852, "lng": -73.8742, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    # North Shore
+    {"name": "GMF des Seigneurs (Terrebonne)", "lat": 45.7025, "lng": -73.6514, "platform": "pomelo", "booking_url": "https://qc.pomelo.health/gmfdesseigneurs"},
+    {"name": "GMF Clinique Médicale Terrebonne", "lat": 45.6982, "lng": -73.6391, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/cmterrebonne"},
+    {"name": "GMF des Affluents (Repentigny)", "lat": 45.7485, "lng": -73.4421, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "GMF-U du Sud de Lanaudière (Repentigny)", "lat": 45.7412, "lng": -73.4563, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "GMF-U de Saint-Charles-Borromée (Lanaudière Joliette)", "lat": 46.0465, "lng": -73.4682, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "GMF L'Assomption", "lat": 45.8312, "lng": -73.4215, "platform": "pomelo", "booking_url": "https://qc.pomelo.health/#/"},
+    {"name": "Centre de Médecine Métabolique de Lanaudière (CMML)", "lat": 46.0242, "lng": -73.4356, "platform": "pomelo", "booking_url": "https://qc.pomelo.health/cmml/portal#/patient-triage"},
+    # Saint-Jérôme
+    {"name": "GMF-R Clinique Médicale Saint-Jérôme", "lat": 45.7785, "lng": -74.0042, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
+    {"name": "GMF du Grand Saint-Jérôme (Clinique Saint-Hippolyte)", "lat": 45.8321, "lng": -73.9915, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/santhippolyte"},
+    # Rosemère
+    {"name": "GMF Clinique Médicale Rosemère", "lat": 45.6382, "lng": -73.7915, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/rosemere"},
+    # Vaudreuil
+    {"name": "GMF-R Vaudreuil-Dorion (Super-Clinique)", "lat": 45.3982, "lng": -74.0321, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/vaudreuildorion"},
+    # Saint-Eustache
+    {"name": "GMF Clinique Médicale de la Gare (Saint-Eustache)", "lat": 45.5582, "lng": -73.9015, "platform": "pomelo", "booking_url": "https://qc.pomelo.health/cliniquemedicaledelagare"},
+    # Saint-Jean
+    {"name": "GMF Clinique Médicale Saint-Luc (Saint-Jean-sur-Richelieu)", "lat": 45.3512, "lng": -73.2842, "platform": "pomelo", "booking_url": "https://qc.pomelo.health/cliniquemedicalesaintluc"},
+    # Laurentides
+    {"name": "GMF Clinique Médicale Lorraine (Laurentides)", "lat": 45.6512, "lng": -73.7814, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/cmlorraine"},
+]
+
+ACTIVE_PLATFORMS = {"bonjour_sante", "pomelo"}
+
+
+# ══════════════════════════════════════════════════════════════
+# 9. DISTANCE-BASED CLINIC DISCOVERY
+# ══════════════════════════════════════════════════════════════
+
+def discover_clinics_near(postal_code: str, radius_km: int) -> list:
+    print(f"\n🔍 Finding clinics within {radius_km}km of {postal_code}...")
+    coords = geocode_postal_code(postal_code)
+    if not coords:
+        print("❌ Could not geocode postal code")
+        return []
+    user_lat, user_lng = coords["lat"], coords["lng"]
+    nearby = []
+    for clinic in CLINICS:
+        if KillSwitch.is_active():
+            break
+        dist = haversine(user_lat, user_lng, clinic["lat"], clinic["lng"])
+        if dist <= radius_km and clinic["platform"] in ACTIVE_PLATFORMS:
+            nearby.append({
+                "name": clinic["name"],
+                "platform": clinic["platform"],
+                "booking_url": clinic["booking_url"],
+                "distance_km": round(dist, 1),
+            })
+    nearby.sort(key=lambda c: c["distance_km"])
+    print(f"✅ Found {len(nearby)} active clinics within {radius_km}km")
+    for c in nearby:
+        print(f"   📍 {c['name']} — {c['distance_km']}km — {c['platform']}")
+    return nearby
+
+
+# ══════════════════════════════════════════════════════════════
+# 10. POMELO HANDLER
+# ══════════════════════════════════════════════════════════════
+
+def fill_pomelo_page1_identification(page, user: dict):
+    print("      📝 Page 1 — Identification...")
+    if KillSwitch.is_active(): return False
+    birth_year = user.get("birth_date", "1965-01-15").split("-")[0]
+    try: page.locator("input[name='firstName'], #firstName").first.fill(user["first_name"]); human_delay(300, 600)
     except: pass
-
-# === 6. SINGLE CODE SEARCH ===
-
-def search_single_code(postal_code: str, browser_context) -> list:
-    clinics = []
-    captured_responses = []
-    page = browser_context.new_page()
-    def on_response(response):
-        try:
-            url = response.url
-            if ('clicsante' in url or 'api' in url) and response.status == 200:
-                ct = response.headers.get('content-type', '')
-                if 'json' in ct:
-                    body = response.json()
-                    captured_responses.append({'url': url, 'data': body})
-        except: pass
-    page.on("response", on_response)
+    try: page.locator("input[name='lastName'], #lastName").first.fill(user["last_name"]); human_delay(300, 600)
+    except: pass
+    try: page.locator("input[name*='ramq']").first.fill(user["ramq"]); human_delay(300, 600)
+    except: pass
+    try: page.locator("input[name*='seq']").first.fill(user["ramq_seq"]); human_delay(300, 600)
+    except: pass
+    try: page.locator("input[name*='birth'], input[name*='year']").first.fill(birth_year); human_delay(300, 600)
+    except: pass
     try:
-        human_delay(1.0, 3.5)
-        page.goto("https://portal3.clicsante.ca/services/blood-test", wait_until="networkidle", timeout=45000)
-        human_delay(1.5, 4)
-        try: page.keyboard.press("Escape"); time.sleep(random.uniform(0.2, 0.5))
-        except: pass
-        for txt in ["No fees", "Sans frais"]:
-            try: page.get_by_text(txt, exact=True).click(timeout=5000); break
-            except: continue
-        human_delay(0.4, 1.2)
+        if user["sex"].upper() == "M":
+            page.locator("input[value='M'], label:has-text('Masculin')").first.click()
+        else:
+            page.locator("input[value='F'], label:has-text('Féminin')").first.click()
+        human_delay(500, 800)
+    except:
         try:
-            field = page.get_by_placeholder("ex. A1A 1A1"); field.click()
-            human_delay(0.1, 0.3); field.fill(postal_code)
-        except:
-            try:
-                field = page.locator("input[type='text']").first; field.click()
-                human_delay(0.1, 0.3); field.fill(postal_code)
-            except: pass
-        human_delay(0.4, 1.2)
-        for btn_text in ["Search", "Rechercher", "Chercher"]:
-            try: page.get_by_role("button", name=re.compile(btn_text, re.I)).first.click(timeout=5000); break
-            except: continue
-        try: page.wait_for_selector("text=Disponible", timeout=8000); human_delay(0.5, 1.5)
-        except: human_delay(8, 14)
-        try:
-            el = page.locator("text=~").first
-            if el.count() > 0 and el.is_visible(): el.click(timeout=3000); human_delay(1.5, 4)
+            page.get_by_text(re.compile(r"Masculin|Homme|Féminin|Femme", re.I)).first.click()
+            human_delay(500, 800)
         except: pass
-        seen_ids = set()
-        for resp in captured_responses:
-            data = resp.get('data', {})
-            items = data if isinstance(data, list) else data.get('establishments', data.get('data', data.get('results', [])))
-            if isinstance(items, list):
-                for item in items:
-                    if not isinstance(item, dict): continue
-                    name = item.get('name', '')
-                    if not name: continue
-                    est_id = str(item.get('id', ''))
-                    if not est_id or len(est_id) < 3: continue
-                    if est_id in seen_ids: continue
-                    seen_ids.add(est_id)
-                    address = item.get('address', '')
-                    public_url = item.get('public_url', '')
-                    phone = item.get('phone', '')
-                    establishment_type = item.get('establishment_type', '')
-                    deep_link = public_url if public_url else f"https://clients3.clicsante.ca/65252/take-appt?portalEst={est_id}&portalPostalCode={postal_code}&lang=fr"
-                    clinic = {'id': est_id, 'name': str(name)[:80], 'address': str(address)[:120] if address else '',
-                              'phone': str(phone) if phone else '', 'url': deep_link,
-                              'type': str(establishment_type) if establishment_type else '', 'source': 'api_intercept'}
-                    clinics.append(clinic)
-                    save_clinic_to_database(clinic)
-    except Exception as e: print(f"   ⚠️ Error: {e}")
-    finally: page.close()
-    return clinics
+    try: page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next", re.I)).first.click(); human_delay(2000, 3000)
+    except: pass
+    return True
 
-# === 7. MAIN ===
+def fill_pomelo_page2_contact(page, user: dict):
+    print("      📧 Page 2 — Contact...")
+    if KillSwitch.is_active(): return False
+    try: page.locator("input[type='email']").first.fill(user["email"]); human_delay(300, 600)
+    except: pass
+    try: page.locator("input[type='tel']").first.fill(user["phone"]); human_delay(300, 600)
+    except: pass
+    try: page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next", re.I)).first.click(); human_delay(2000, 3000)
+    except: pass
+    return True
 
-def check_availability(postal_code_override=None):
-    user_postal = postal_code_override or os.getenv("POSTAL_CODE", "H1Y3H1").replace(" ", "")
-    search_codes = generate_search_codes(user_postal)
-    print(f"\n{'='*60}")
-    print(f"🚀 ClicSanté Search: {user_postal}")
-    print(f"   🤖 MyVita-Bot/1.0 — Health Access Concierge (Gemi Protocol)")
-    print(f"   📜 robots.txt respected | ⏱️ Rate: {RATE_LIMIT_SECONDS}s | 🕐 TTL: {MAX_DATA_AGE_HOURS}h")
-    print(f"   📍 30km radius | Searching {len(search_codes)} codes: {search_codes}")
-    print(f"   🕐 Current ET time: {now_et().strftime('%H:%M')}")
-    print(f"{'='*60}")
-    all_clinics = []
-    seen_ids = set()
-    check_robots_txt()
+def fill_pomelo_page3_consent(page):
+    print("      ✅ Page 3 — Consent...")
+    if KillSwitch.is_active(): return False
+    try: page.locator("input[type='checkbox']").first.check(); human_delay(500, 1000)
+    except: pass
+    try: page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next", re.I)).first.click(); human_delay(2000, 3000)
+    except: pass
+    return True
+
+def fill_pomelo_page4_search(page, postal_code: str):
+    print(f"      🔍 Page 4 — Search (postal: {postal_code})...")
+    if KillSwitch.is_active(): return False
+    try:
+        page.locator("input[name*='postal'], input[name*='code']").first.fill(postal_code)
+        human_delay(500, 1000)
+    except: pass
+    try: page.get_by_role("button", name=re.compile(r"Rechercher|Search|Chercher", re.I)).first.click(); human_delay(3000, 5000)
+    except: pass
+    return True
+
+def verify_pomelo_calendar(page, clinic_name: str) -> tuple:
+    print("      📅 Checking Pomelo calendar...")
+    if KillSwitch.is_active(): return False, "Kill switch", ""
+    human_delay(2000, 3000)
+    body_text = page.inner_text("body").lower()
+    for phrase in ["aucune disponibilité", "no availability", "aucun rendez-vous", "complet", "full", "désolé"]:
+        if phrase in body_text: return False, phrase, ""
+    has_positive = any(p in body_text for p in ["disponible", "available", "sélectionner", "select"])
+    return has_positive, "positive indicators" if has_positive else "no clear slots", page.url
+
+def scrape_pomelo_clinic(clinic: dict, user: dict) -> dict:
+    headless = os.getenv("HEADLESS", "true").lower() != "false"
+    booking_url = clinic.get("booking_url", "")
+    print(f"\n   🔴 POMELO: {clinic['name']} ({clinic.get('distance_km', '?')}km)")
+    if KillSwitch.is_active(): return {"found": False, "details": "Kill switch", "booking_url": ""}
     with sync_playwright() as p:
-        browser, context = launch_stealth_browser(p)
+        browser, context = launch_stealth_browser(p, headless=headless)
+        page = context.new_page()
         try:
-            for i, code in enumerate(search_codes):
-                print(f"\n🔍 [{i+1}/{len(search_codes)}] {code}")
-                clinics = search_single_code(code, context)
-                new_count = 0
-                for clinic in clinics:
-                    if clinic['id'] not in seen_ids:
-                        seen_ids.add(clinic['id']); all_clinics.append(clinic); new_count += 1
-                print(f"   ✅ {len(clinics)} found, {new_count} new (total: {len(all_clinics)})")
-                if i < len(search_codes) - 1: human_delay(1.5, 4)
-        finally: browser.close()
-    print(f"   📊 {user_postal}: {len(all_clinics)} unique clinics")
-    if db and postal_code_override:
-        try:
-            pending_docs = db.collection("lab_requests").where("postal_code", "==", user_postal).where("status", "==", "pending").stream()
-            for doc in pending_docs:
-                doc.reference.update({"status": "completed", "completed_at": now_et().isoformat(), "clinic_count": len(all_clinics)})
-        except: pass
-    return all_clinics
+            page.goto(booking_url, wait_until="domcontentloaded", timeout=60000)
+            human_delay(2000, 3000)
+            if KillSwitch.is_active(): return {"found": False, "details": "Kill switch", "booking_url": ""}
+            fill_pomelo_page1_identification(page, user)
+            fill_pomelo_page2_contact(page, user)
+            fill_pomelo_page3_consent(page)
+            fill_pomelo_page4_search(page, user["postal_code"])
+            has_slots, details, result_url = verify_pomelo_calendar(page, clinic["name"])
+            if has_slots:
+                print(f"      🎉 SLOTS FOUND! ({details})")
+                return {"found": True, "details": details, "booking_url": result_url}
+            else:
+                print(f"      ❌ No slots")
+                return {"found": False, "details": details, "booking_url": booking_url}
+        except Exception as e:
+            print(f"      🚨 Pomelo error: {e}")
+            return {"found": False, "details": str(e), "booking_url": booking_url}
+        finally:
+            browser.close()
 
-# === 8. MAIN ENTRY POINT ===
+
+# ══════════════════════════════════════════════════════════════
+# 11. BONJOUR SANTÉ HANDLER — ★ DEBUG MODE
+# ══════════════════════════════════════════════════════════════
+
+def fill_bonjoursante_page1(page, user: dict):
+    print("      📝 Bonjour Santé — Page 1 (RAMQ + Postal)...")
+    if KillSwitch.is_active(): return False
+    try: page.locator("input[name*='ramq']").first.fill(user["ramq"]); human_delay(400, 800)
+    except: pass
+    try: page.locator("input[name*='postal']").first.fill(user["postal_code"]); human_delay(400, 800)
+    except: pass
+    try: page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next|Rechercher", re.I)).first.click(); human_delay(2000, 3000)
+    except: pass
+    return True
+
+def fill_bonjoursante_page2(page, user: dict):
+    print("      📝 Bonjour Santé — Page 2 (Patient Info)...")
+    if KillSwitch.is_active(): return False
+    try: page.locator("input[name*='firstName'], input[name*='prenom']").first.fill(user["first_name"]); human_delay(300, 600)
+    except: pass
+    try: page.locator("input[name*='lastName'], input[name*='nom']").first.fill(user["last_name"]); human_delay(300, 600)
+    except: pass
+    try: page.locator("input[name*='sequence'], input[name*='seq']").first.fill(user["ramq_seq"]); human_delay(300, 600)
+    except: pass
+    try: page.locator("input[type='checkbox']").first.check(); human_delay(500, 1000)
+    except: pass
+    try: page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next", re.I)).first.click(); human_delay(2000, 3000)
+    except: pass
+    return True
+
+def verify_bonjoursante_results(page, clinic_name: str) -> tuple:
+    print("      📅 Checking Bonjour Santé results...")
+    if KillSwitch.is_active(): return False, "Kill switch", ""
+
+    human_delay(2000, 3000)
+
+    # ★ DEBUG: Save page HTML snapshot
+    try:
+        html_snippet = page.content()
+        # Save first 3000 chars to avoid log overflow
+        print(f"      📄 Page HTML (first 3000 chars): {html_snippet[:3000]}")
+    except Exception as e:
+        print(f"      ⚠️ HTML capture error: {e}")
+
+    # ★ DEBUG: Capture all links on the page
+    try:
+        all_links = page.locator('a').all()
+        print(f"      🔗 Total links found: {len(all_links)}")
+        for link in all_links[:20]:
+            try:
+                href = link.get_attribute('href')
+                text = link.inner_text().strip()[:80]
+                if href and ('book' in href.lower() or 'reserv' in href.lower() or 'rendez-vous' in href.lower() or 'appointment' in href.lower() or 'slot' in href.lower() or 'creneau' in href.lower()):
+                    print(f"      🔗 BOOKING LINK: {text} → {href}")
+            except:
+                pass
+    except Exception as e:
+        print(f"      ⚠️ Link capture error: {e}")
+
+    # ★ DEBUG: Look for data attributes with slot info
+    try:
+        slot_elements = page.locator('[data-slot], [data-appointment], [data-creneau], [data-rendezvous], [data-id]').all()
+        print(f"      📊 Slot elements found: {len(slot_elements)}")
+        for el in slot_elements[:5]:
+            try:
+                dataset = el.evaluate('el => JSON.stringify(el.dataset)')
+                print(f"      📊 Slot data: {dataset[:200]}")
+            except:
+                pass
+    except Exception as e:
+        print(f"      ⚠️ Slot data error: {e}")
+
+    # ★ DEBUG: Look for JSON data in script tags
+    try:
+        script_tags = page.locator('script').all()
+        print(f"      📜 Script tags found: {len(script_tags)}")
+        for script in script_tags[:10]:
+            try:
+                content = script.inner_text()
+                if 'slot' in content.lower() or 'appointment' in content.lower() or 'booking' in content.lower() or 'rendez-vous' in content.lower() or 'creneau' in content.lower():
+                    print(f"      📜 Script with slot data (first 500 chars): {content[:500]}")
+            except:
+                pass
+    except Exception as e:
+        print(f"      ⚠️ Script tag error: {e}")
+
+    # ★ DEBUG: Look for buttons with booking-related text
+    try:
+        booking_buttons = page.locator('button:has-text("Réserver"), button:has-text("Book"), button:has-text("Choisir"), button:has-text("Select"), button:has-text("Prendre")').all()
+        print(f"      🔘 Booking buttons found: {len(booking_buttons)}")
+        for btn in booking_buttons[:5]:
+            try:
+                text = btn.inner_text().strip()[:80]
+                parent_html = btn.evaluate('el => el.parentElement.outerHTML')
+                print(f"      🔘 Button: {text}")
+                print(f"      🔘 Parent HTML (first 300 chars): {parent_html[:300]}")
+            except:
+                pass
+    except Exception as e:
+        print(f"      ⚠️ Button error: {e}")
+
+    # ★ DEBUG: Capture current page URL
+    current_url = page.url
+    print(f"      🌐 Current page URL: {current_url}")
+
+    # Original check
+    body_text = page.inner_text("body").lower()
+    for phrase in ["aucune disponibilité", "no availability", "aucun rendez-vous", "complet", "full", "désolé"]:
+        if phrase in body_text:
+            return False, phrase, current_url
+
+    has_positive = any(p in body_text for p in ["disponible", "available", "réserver", "book", "choisir"])
+    return has_positive, "positive indicators" if has_positive else "no clear slots", current_url
+
+
+def scrape_bonjoursante_clinic(clinic: dict, user: dict) -> dict:
+    headless = os.getenv("HEADLESS", "true").lower() != "false"
+    booking_url = clinic.get("booking_url", "")
+    print(f"\n   🟠 BONJOUR SANTÉ: {clinic['name']} ({clinic.get('distance_km', '?')}km)")
+    if KillSwitch.is_active(): return {"found": False, "details": "Kill switch", "booking_url": ""}
+
+    # ★ API response interceptor — capture booking data
+    captured_api_data = []
+
+    with sync_playwright() as p:
+        browser, context = launch_stealth_browser(p, headless=headless)
+        page = context.new_page()
+
+        # ★ Intercept API responses (like ClicSanté backdoor)
+        def on_response(response):
+            try:
+                url = response.url
+                if response.status == 200:
+                    ct = response.headers.get('content-type', '')
+                    if 'json' in ct:
+                        try:
+                            body = response.json()
+                            # Look for slot/booking data in JSON responses
+                            body_str = json.dumps(body).lower()
+                            if any(kw in body_str for kw in ['slot', 'creneau', 'appointment', 'booking', 'rendez-vous', 'disponibilite', 'availability', 'plage']):
+                                captured_api_data.append({'url': url, 'data': body})
+                                print(f"      📡 API Intercepted: {url[:100]}")
+                        except:
+                            pass
+            except:
+                pass
+
+        page.on("response", on_response)
+
+        try:
+            page.goto(booking_url, wait_until="domcontentloaded", timeout=60000)
+            human_delay(2000, 3000)
+            if KillSwitch.is_active(): return {"found": False, "details": "Kill switch", "booking_url": ""}
+            fill_bonjoursante_page1(page, user)
+            fill_bonjoursante_page2(page, user)
+            has_slots, details, result_url = verify_bonjoursante_results(page, clinic["name"])
+
+            # ★ Print captured API data for debugging
+            if captured_api_data:
+                print(f"      📡 Total API responses captured: {len(captured_api_data)}")
+                for i, api in enumerate(captured_api_data[:5]):
+                    print(f"      📡 API #{i+1}: {api['url'][:120]}")
+                    data_str = json.dumps(api['data'])[:500]
+                    print(f"      📡 Data: {data_str}")
+
+            if has_slots:
+                # ★ Try to extract direct booking URL from captured API data
+                direct_booking_url = result_url
+                for api in captured_api_data:
+                    data = api['data']
+                    data_str = json.dumps(data)
+                    # Look for booking URLs in API responses
+                    url_matches = re.findall(r'https?://[^\s"\']+(?:book|reserv|appointment|rendez-vous|slot|creneau)[^\s"\']*', data_str, re.I)
+                    if url_matches:
+                        direct_booking_url = url_matches[0]
+                        print(f"      🎯 Direct booking URL from API: {direct_booking_url}")
+                        break
+
+                print(f"      🎉 SLOTS FOUND! ({details})")
+                return {"found": True, "details": details, "booking_url": direct_booking_url}
+            else:
+                print(f"      ❌ No slots")
+                return {"found": False, "details": details, "booking_url": booking_url}
+        except Exception as e:
+            print(f"      🚨 Bonjour Santé error: {e}")
+            return {"found": False, "details": str(e), "booking_url": booking_url}
+        finally:
+            browser.close()
+
+
+# ══════════════════════════════════════════════════════════════
+# 12. DISPATCHER
+# ══════════════════════════════════════════════════════════════
+
+def route_and_scrape_clinic(clinic: dict, user: dict) -> dict:
+    platform = clinic.get("platform", "unknown")
+    if platform == "pomelo":
+        return scrape_pomelo_clinic(clinic, user)
+    elif platform == "bonjour_sante":
+        return scrape_bonjoursante_clinic(clinic, user)
+    else:
+        return {"found": False, "details": f"skipped_{platform}", "booking_url": clinic.get("booking_url", "")}
+
+
+# ══════════════════════════════════════════════════════════════
+# 13. ZONE SEARCH
+# ══════════════════════════════════════════════════════════════
+
+def search_clinics_in_zone(user: dict, radius_km: int) -> bool:
+    postal = user["postal_code"]
+    clinics = discover_clinics_near(postal, radius_km)
+    if not clinics:
+        return False
+
+    for clinic in clinics:
+        if KillSwitch.is_active():
+            return True
+        result = route_and_scrape_clinic(clinic, user)
+        if result["found"]:
+            KillSwitch.activate({
+                "clinic_name": clinic["name"],
+                "platform": clinic.get("platform"),
+                "booking_url": result["booking_url"],
+                "details": result["details"],
+            })
+            send_notification(clinic["name"], postal, clinic.get("platform"), result["booking_url"])
+            save_availability(clinic["name"], postal, clinic.get("platform"), True, result["booking_url"], result["details"])
+            return True
+        else:
+            save_availability(clinic["name"], postal, clinic.get("platform"), False, clinic.get("booking_url", ""), result["details"])
+    return False
+
+
+# ══════════════════════════════════════════════════════════════
+# 14. MAIN ORCHESTRATOR
+# ══════════════════════════════════════════════════════════════
+
+def run_single_search(user_postal: str = None, request_id: str = None):
+    if user_postal is None:
+        user_postal = os.getenv("POSTAL_CODE", "H1Y3H1")
+    if request_id is None:
+        request_id = os.getenv("REQUEST_ID", "")
+
+    user = get_user_data()
+    user["postal_code"] = user_postal
+    language = user.get("language", "fr")
+    KillSwitch.reset()
+    max_date = (datetime.now() + timedelta(days=MAX_DAYS_AHEAD)).strftime("%Y-%m-%d")
+
+    print(f"\n{'='*60}")
+    print(f"🚀 MYVITA CLINIC SCRAPER")
+    print(f"   Postal: {user_postal} | Max: {max_date}")
+    print(f"   Request ID: {request_id if request_id else 'N/A'}")
+    print(f"   Tiers: {RADIUS_TIERS}km | 78-clinic map with coordinates")
+    print(f"   Platforms: Pomelo + Bonjour Santé")
+    print(f"{'='*60}\n")
+
+    for radius in RADIUS_TIERS:
+        if KillSwitch.is_active():
+            break
+        print(f"\n🔵 TIER: {radius}km")
+        found = search_clinics_in_zone(user, radius)
+        if found:
+            print(f"\n🎉 FOUND! {KillSwitch._found_appointment.get('clinic_name')}")
+            if request_id:
+                update_clinic_request(request_id, "completed", KillSwitch._found_appointment)
+            return KillSwitch._found_appointment
+
+    if not KillSwitch.is_active():
+        print(f"\n😴 No appointments found in any tier.")
+        if request_id:
+            update_clinic_request(request_id, "completed", {"found": False, "details": "No appointments found in any tier"})
+        send_no_slots_notification(user_postal, language)
+
+    return None
+
+
+# ══════════════════════════════════════════════════════════════
+# 15. MAIN
+# ══════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("🤖 MyVita-Bot/1.0 — Health Access Concierge")
-    print(f"   Contact: {MYVITA_BOT_CONTACT}")
-    print(f"   🕐 Current ET time: {now_et().strftime('%H:%M')}")
-    print("   GEMI PROTOCOL: Active ✅ | Stealth: Active 🔒")
-    print("=" * 60)
-
-    clean_expired_data()
-
-    # ★ Track which postal codes already got a notification this session
-    notified_codes = set()
-
-    queued_codes = process_queued_requests()
-    if queued_codes:
-        print(f"\n📋 Processing {len(queued_codes)} queued request(s)...")
-        for code in queued_codes:
-            print(f"\n⏳ Processing queued: {code}")
-            clinics = check_availability(code)
-            if clinics:
-                for i, c in enumerate(clinics[:5]):
-                    extra = f" — {c['address'][:60]}" if c.get('address') else ""
-                    print(f"      {i+1}. {c['name'][:60]}{extra}")
-                # ★ Only send if not already notified for this code
-                if code not in notified_codes:
-                    send_single_notification(code, clinics)
-                    notified_codes.add(code)
-                save_availability(code, clinics)
-                if db:
-                    try: db.collection("lab_requests_queue").document(code).update({"status": "completed"})
-                    except: pass
-
-    requested_code = os.getenv("POSTAL_CODE", "").strip()
-
-    if requested_code:
-        # ★ Check if the CURRENT pending request was cancelled
-        if is_request_cancelled(requested_code):
-            print(f"\n⛔ Request for {requested_code} was CANCELLED — writing empty result to stop loading")
-            # ★ FIX: Write empty completed result so app stops loading
-            save_availability(requested_code, [])
-            # Update pending lab_request to completed
-            if db:
-                try:
-                    pending = db.collection("lab_requests") \
-                        .where("postal_code", "==", requested_code) \
-                        .where("status", "==", "pending").stream()
-                    for doc in pending:
-                        doc.reference.update({"status": "completed", "clinic_count": 0})
-                except: pass
-        elif is_peak_hours():
-            # ★ FIX: Silent queuing — NO notification during peak hours
-            print(f"\n⏰ PEAK HOURS (8am-10am ET) — Silently queueing request for {requested_code}")
-            print(f"   🔇 No notification sent — user will be notified when results are found after 10am")
-            queue_for_later(requested_code)
-            # ★ REMOVED: No notification sent during peak hours
-            # The user will get a notification when results are actually found (after 10am)
-        else:
-            print(f"\n📱 On-demand search for: {requested_code}")
-            clinics = check_availability(requested_code)
-            if clinics:
-                for i, c in enumerate(clinics[:5]):
-                    extra = f" — {c['address'][:60]}" if c.get('address') else ""
-                    print(f"      {i+1}. {c['name'][:60]}{extra}")
-                # ★ Only send if not already notified for this code
-                if requested_code not in notified_codes:
-                    send_single_notification(requested_code, clinics)
-                    notified_codes.add(requested_code)
-                save_availability(requested_code, clinics)
-            else:
-                # ★ No clinics found — still save empty result so app stops loading
-                print(f"   ⚠️ No clinics found for {requested_code}")
-                save_availability(requested_code, [])
-    else:
-        test_codes = ["H1Y3H1", "H4L2B5", "H2X1Y7", "G1R2A3", "J8Y3H1"]
-        all_results = {}
-        for code in test_codes:
-            clinics = check_availability(code)
-            all_results[code] = clinics
-            if clinics:
-                for i, c in enumerate(clinics[:3]):
-                    extra = f" — {c['address'][:60]}" if c.get('address') else ""
-                    print(f"      {i+1}. {c['name'][:60]}{extra}")
-            time.sleep(5)
-        all_clinics = []
-        seen_all = set()
-        for code, clinics in all_results.items():
-            for clinic in clinics:
-                if clinic['id'] not in seen_all:
-                    seen_all.add(clinic['id']); all_clinics.append(clinic)
-        print(f"\n{'='*60}")
-        print(f"🏁 FINAL: {len(all_clinics)} unique clinics across all codes")
-        if all_clinics:
-            for i, c in enumerate(all_clinics[:5]):
-                extra = f" — {c['address'][:60]}" if c.get('address') else ""
-                print(f"   {i+1}. {c['name'][:60]}{extra}")
-            # ★ Test mode: only notify once
-            if test_codes[0] not in notified_codes:
-                send_single_notification(test_codes[0], all_clinics)
-                notified_codes.add(test_codes[0])
-            save_availability(test_codes[0], all_clinics)
-        print(f"\n📦 Clinic database size: {len(all_clinics)} entries saved to Firestore")
-
-    clean_expired_data()
-    print("\n✅ MyVita-Bot session complete — Gemi Protocol compliant")
+    print("╔══════════════════════════════════════════════════════╗")
+    print("║     MYVITA CLINIC SCRAPER — Map-First v2            ║")
+    print("║     78 clinics with coordinates                     ║")
+    print("╚══════════════════════════════════════════════════════╝")
+    postal = os.getenv("POSTAL_CODE", "H1Y3H1")
+    request_id = os.getenv("REQUEST_ID", "")
+    run_single_search(user_postal=postal, request_id=request_id)
+    print("\n✅ Session complete")
