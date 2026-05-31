@@ -208,7 +208,7 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
                         if 'json' in ct:
                             data = response.json()
                             api_response_data.append({"url": url, "data": data})
-                            print(f"   [{profile_name}] 📡 API intercepted!")
+                            print(f"   [{profile_name}] 📡 API intercepted at {url[:120]}")
                     except:
                         pass
 
@@ -219,7 +219,7 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
             page.goto("https://portal3.clicsante.ca/services/blood-test",
                      wait_until="networkidle", timeout=60000)
             print(f"   [{profile_name}] 📄 Page loaded")
-            time.sleep(1.5)
+            time.sleep(2)
 
             # Select "No fees"
             try:
@@ -234,7 +234,7 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
                     except:
                         pass
 
-            time.sleep(0.8)
+            time.sleep(1)
 
             # Enter postal code
             try:
@@ -247,40 +247,64 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
             except:
                 print(f"   [{profile_name}] ⚠️ Postal input failed")
 
-            time.sleep(1)
+            time.sleep(1.5)
 
             # Click Search
+            search_clicked = False
             for btn_text in ["Search", "Rechercher", "Chercher"]:
                 try:
                     page.get_by_role("button", name=btn_text).first.click(timeout=5000)
                     print(f"   [{profile_name}] ✅ Clicked '{btn_text}'")
+                    search_clicked = True
                     break
                 except:
                     continue
-            else:
-                page.keyboard.press("Enter")
 
-            # ★ WAIT FOR API RESPONSE FIRST — don't fall back yet ★
-            print(f"   [{profile_name}] ⏳ Waiting for API...")
+            if not search_clicked:
+                try:
+                    page.keyboard.press("Enter")
+                    print(f"   [{profile_name}] ✅ Pressed Enter")
+                except:
+                    pass
+
+            # ★ WAIT FOR API RESPONSE — up to 10 minutes ★
+            print(f"   [{profile_name}] ⏳ Waiting for API (up to 10 min)...")
             waited = 0
-            while not api_response_data and waited < 30:
-                time.sleep(1)
-                waited += 1
+            while not api_response_data and waited < 600:
+                time.sleep(10)
+                waited += 10
+                if waited % 60 == 0:
+                    print(f"   [{profile_name}] Still waiting... ({waited//60} min)")
 
             if api_response_data:
-                print(f"   [{profile_name}] ✅ API response after {waited}s")
+                print(f"   [{profile_name}] ✅ API response after {waited}s ({waited//60} min)")
 
-                # ★ PARSE API DATA PROPERLY ★
+                # ★ PARSE API DATA ★
                 data = api_response_data[0]['data']
 
-                if isinstance(data, dict):
-                    # Try to find the list of places in the response
-                    for key, val in data.items():
-                        if isinstance(val, list) and len(val) > 0 and isinstance(val[0], dict):
-                            first_item = val[0]
-                            print(f"   [{profile_name}] 📦 Found '{key}' with {len(val)} items")
-                            print(f"   [{profile_name}] 📦 Keys: {list(first_item.keys())}")
+                # Save full API response for debugging
+                try:
+                    with open(f"clicsante_api_{profile_name.replace(' ', '_')}.json", "w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=2, ensure_ascii=False)
+                    print(f"   [{profile_name}] 📁 API response saved")
+                except:
+                    pass
 
+                if isinstance(data, dict):
+                    print(f"   [{profile_name}] 📦 Response keys: {list(data.keys())}")
+
+                    # Try to find the list of places
+                    for key, val in data.items():
+                        if isinstance(val, list) and len(val) > 0:
+                            print(f"   [{profile_name}] 📦 '{key}' has {len(val)} items")
+
+                            if isinstance(val[0], dict):
+                                first = val[0]
+                                print(f"   [{profile_name}] 📦 Item keys: {list(first.keys())}")
+                                print(f"   [{profile_name}] 📦 First item (truncated):")
+                                print(json.dumps(first, indent=2, ensure_ascii=False)[:2000])
+
+                            # Extract places from this array
                             for item in val[:5]:
                                 if isinstance(item, dict):
                                     # Extract all possible ID fields
@@ -306,13 +330,14 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
 
                                     # Build place
                                     place = {
-                                        'name': name,
-                                        'id': str(place_id),
-                                        'address': item.get('address') or item.get('location') or item.get('fullAddress') or '',
+                                        'name': str(name),
+                                        'id': str(place_id) if place_id else '',
+                                        'address': str(item.get('address') or item.get('location') or item.get('fullAddress') or ''),
                                         'distance': '',
-                                        'phone': item.get('phone') or item.get('phoneNumber') or '',
+                                        'phone': str(item.get('phone') or item.get('phoneNumber') or ''),
                                     }
 
+                                    # Format distance
                                     raw_dist = item.get('distance') or item.get('distanceKm') or item.get('dist') or ''
                                     if raw_dist:
                                         try:
@@ -320,18 +345,18 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
                                         except:
                                             place['distance'] = str(raw_dist)
 
-                                    # Build direct URL if we have an ID
+                                    # Build direct URL
                                     if place['id']:
                                         place['direct_url'] = f"https://clients3.clicsante.ca/{place['id']}/take-appt"
 
-                                    # Only add if we got a real name
+                                    # Only add real places
                                     if name and name != 'Unknown' and len(name) > 3:
                                         places.append(place)
-                            break  # Only process first array
+                            break  # Only process first array found
 
             # ★ FALLBACK: Only if API completely failed ★
             if not places:
-                print(f"   [{profile_name}] ⚠️ No API data, trying page text...")
+                print(f"   [{profile_name}] ⚠️ No API data after {waited}s — extracting from page...")
                 try:
                     body_text = page.inner_text("body")
                     lines = body_text.split('\n')
@@ -342,12 +367,12 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
                                 skip_words = ["Skip to main content", "All services", "Cancel an appointment", "Need help?", "Specimens", "Blood Test"]
                                 if not any(sw in line for sw in skip_words):
                                     places.append({"name": line, "id": "", "direct_url": "", "address": "", "distance": ""})
-                                    if len(places) >= 3:
+                                    if len(places) >= 5:
                                         break
                 except:
                     pass
 
-            # Save screenshot for debugging
+            # Save screenshot
             try:
                 page.screenshot(path=f"clicsante_{profile_name.replace(' ', '_')}.png")
             except:
@@ -357,6 +382,8 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
 
         except Exception as e:
             print(f"   [{profile_name}] ❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
         finally:
             browser.close()
 
@@ -374,6 +401,7 @@ def check_availability():
     print(f"\n{'='*60}")
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M')}] 📍 {postal_code} | {zone}")
     print(f"🚀 Launching {len(BROWSER_PROFILES)} parallel browsers...")
+    print(f"⏱️  Max wait: 10 minutes per browser")
     print(f"{'='*60}")
 
     all_places = []
@@ -414,6 +442,8 @@ def check_availability():
             print(f"      📞 {p.get('phone')}")
         if p.get('direct_url'):
             print(f"      🔗 {p.get('direct_url')}")
+        elif p.get('id'):
+            print(f"      🆔 ID: {p.get('id')}")
 
     # Save & notify
     save_to_firestore(postal_code, all_places)
