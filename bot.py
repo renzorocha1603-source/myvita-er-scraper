@@ -2,7 +2,6 @@ from playwright.sync_api import sync_playwright
 import time
 import os
 import json
-import requests
 from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, messaging, firestore
@@ -60,7 +59,7 @@ def get_user_token():
         pass
     return None
 
-def save_to_firestore(postal_code: str, results_url: str, places_found: list):
+def save_to_firestore(postal_code: str, places_found: list):
     """Save search results to Firestore"""
     if db is None:
         print("⚠️ Firestore not available — skipping")
@@ -69,12 +68,15 @@ def save_to_firestore(postal_code: str, results_url: str, places_found: list):
     zone = get_zone(postal_code)
     now = datetime.now()
     
+    # Build a summary URL for the notification
+    summary_url = f"https://portal3.clicsante.ca/?postalCode={postal_code.replace(' ', '+')}&serviceId=227"
+    
     data = {
         "service": "blood-test",
         "postal_code": postal_code,
         "zone": zone,
-        "results_url": results_url,
         "places_found": places_found,
+        "results_url": summary_url,
         "slots_found": len(places_found) > 0,
         "last_checked": now,
     }
@@ -85,23 +87,24 @@ def save_to_firestore(postal_code: str, results_url: str, places_found: list):
     except Exception as e:
         print(f"❌ Firestore save failed: {e}")
 
-def send_notification(postal_code: str, results_url: str, places_found: list):
-    """Send push notification with the results link"""
+def send_notification(postal_code: str, places_found: list):
+    """Send push notification with the top places"""
     token = get_user_token()
     if not token:
         print("⚠️ No FCM token found — skipping notification")
         return
     
-    place_names = ", ".join([p.get('name', 'Unknown') for p in places_found[:3]])
+    place_names = ", ".join([p.get('name', 'Unknown')[:40] for p in places_found[:3]])
+    summary_url = f"https://portal3.clicsante.ca/?postalCode={postal_code.replace(' ', '+')}&serviceId=227"
     
-    title = "🏥 Résultats disponibles!"
-    body = f"{len(places_found)} lieux trouvés près de {postal_code}: {place_names}..."
+    title = "🏥 Résultats ClicSanté disponibles!"
+    body = f"{len(places_found)} lieux trouvés: {place_names}..."
     
     try:
         message = messaging.Message(
             notification=messaging.Notification(title=title, body=body),
             data={
-                "url": results_url,
+                "url": summary_url,
                 "postal_code": postal_code,
                 "click_action": "OPEN_BOOKING"
             },
@@ -134,8 +137,7 @@ def check_availability():
         def handle_response(response):
             if response.status == 200:
                 url = response.url
-                # Look for availability/places/search API calls
-                if any(kw in url.lower() for kw in ["availabilities", "places", "establishments", "search", "place", "avail"]):
+                if "availabilitiesByGeolocalisation" in url:
                     try:
                         ct = response.headers.get('content-type', '')
                         if 'json' in ct:
@@ -151,7 +153,7 @@ def check_availability():
             # Load ClicSanté blood test page
             page.goto("https://portal3.clicsante.ca/services/blood-test", 
                      wait_until="networkidle", timeout=60000)
-            print(f"📄 Page loaded: {page.url}")
+            print(f"📄 Page loaded")
             time.sleep(2)
 
             # Select "No fees" / "Sans frais"
@@ -184,7 +186,7 @@ def check_availability():
             
             time.sleep(1.5)
 
-            # Click Search — try multiple approaches
+            # Click Search
             search_clicked = False
             for btn_text in ["Search", "Rechercher", "Chercher"]:
                 try:
@@ -199,134 +201,103 @@ def check_availability():
                 try:
                     page.keyboard.press("Enter")
                     print("✅ Pressed Enter to search")
-                    search_clicked = True
                 except:
                     pass
 
-            # ★ WAIT FOR DYNAMIC RESULTS ★
-            print("⏳ Waiting for dynamic results...")
+            # ★ WAIT FOR API RESPONSE ★
+            print("⏳ Waiting for API response...")
             time.sleep(8)
 
-            # Check if results loaded on the page
-            results_url = page.url
-            print(f"📍 Current URL: {results_url}")
-
-            # Try to find establishment cards or result items
+            # ★ PARSE API DATA TO EXTRACT CLINIC INFO ★
             places_found = []
-            results_loaded = False
 
-            # Check multiple selectors that indicate results loaded
-            result_selectors = [
-                ".establishment-card",
-                "[class*='establishment']",
-                "[class*='result-item']",
-                "[class*='place-card']",
-                "[class*='clinic-card']",
-                "article",
-                ".list-item",
-                "[data-testid*='result']",
-                "[data-testid*='establishment']",
-            ]
-
-            for selector in result_selectors:
-                try:
-                    elements = page.locator(selector).all()
-                    if len(elements) > 0:
-                        print(f"✅ Found {len(elements)} elements with '{selector}'")
-                        for el in elements[:10]:
-                            try:
-                                name = el.inner_text().strip()
-                                if name and len(name) > 5 and name not in ["Skip to main content", "All services", "Cancel an appointment", "Need help?"]:
-                                    places_found.append({"name": name[:100]})
-                            except:
-                                pass
-                        if len(places_found) >= 3:
-                            results_loaded = True
-                            break
-                except:
-                    continue
-
-            # If no structured elements found, check page text
-            if not results_loaded:
-                body_text = page.inner_text("body")
-                print(f"📄 Body text length: {len(body_text)} chars")
+            if api_response_data:
+                print(f"\n📡 Captured {len(api_response_data)} API responses")
+                data = api_response_data[0]['data']
                 
-                # Check for common result indicators
-                result_keywords = ["km", "distance", "disponible", "available", "prochain", "next", "créneau", "creneau"]
-                found_keywords = [kw for kw in result_keywords if kw in body_text.lower()]
-                if found_keywords:
-                    print(f"✅ Found result keywords: {found_keywords}")
-                    results_loaded = True
-                    # Extract lines that look like establishment names
-                    lines = body_text.split('\n')
-                    for line in lines:
-                        line = line.strip()
-                        if line and len(line) > 10 and len(line) < 150:
-                            if any(c.isdigit() for c in line) or any(kw in line.lower() for kw in ["clsc", "clinique", "hopital", "hôpital", "pharmacie", "gmf"]):
-                                places_found.append({"name": line})
-                                if len(places_found) >= 5:
-                                    break
+                # Debug: show structure
+                print(f"\n📦 API RESPONSE KEYS: {list(data.keys()) if isinstance(data, dict) else 'not a dict'}")
+                
+                # Find the array with clinic data
+                if isinstance(data, dict):
+                    for key, val in data.items():
+                        if isinstance(val, list) and len(val) > 0:
+                            print(f"\n📦 '{key}' has {len(val)} items")
+                            if isinstance(val[0], dict):
+                                print(f"📦 First item keys: {list(val[0].keys())}")
+                                print(f"📦 First item (full):")
+                                print(json.dumps(val[0], indent=2)[:3000])
+                            
+                            # Extract places from this array
+                            for item in val[:5]:
+                                if isinstance(item, dict):
+                                    place = {}
+                                    
+                                    # Try to find name
+                                    place['name'] = item.get('name') or item.get('title') or item.get('label') or item.get('placeName') or item.get('establishmentName') or 'Unknown'
+                                    
+                                    # Try to find ID for direct URL
+                                    place['id'] = item.get('id') or item.get('placeId') or item.get('establishmentId') or item.get('estId') or ''
+                                    
+                                    # Try to find address
+                                    place['address'] = item.get('address') or item.get('location') or ''
+                                    
+                                    # Try to find distance
+                                    place['distance'] = item.get('distance') or item.get('distanceKm') or ''
+                                    
+                                    # Try to find phone
+                                    place['phone'] = item.get('phone') or item.get('phoneNumber') or ''
+                                    
+                                    # Build direct URL if we have an ID
+                                    if place['id']:
+                                        place['direct_url'] = f"https://clients3.clicsante.ca/{place['id']}/take-appt"
+                                    
+                                    places_found.append(place)
+                            break  # Only process the first array found
+            
+            # Fallback: extract from page if API didn't work
+            if not places_found:
+                print("⚠️ No API data parsed — extracting from page")
+                body_text = page.inner_text("body")
+                lines = body_text.split('\n')
+                for line in lines:
+                    line = line.strip()
+                    if line and len(line) > 10 and len(line) < 150:
+                        if any(kw in line.lower() for kw in ["clsc", "clinique", "hopital", "hôpital", "pharmacie", "gmf", "km"]):
+                            places_found.append({"name": line, "id": "", "direct_url": ""})
+                            if len(places_found) >= 5:
+                                break
 
-            # ★ CHECK INTERCEPTED API DATA ★
-            if api_response_data:
-                print(f"📡 Captured {len(api_response_data)} API responses")
-                for api in api_response_data:
-                    print(f"   📡 {api['url'][:120]}")
-                    # Try to extract place names from API data
-                    data = api['data']
-                    data_str = json.dumps(data)
-                    # Look for place names in the API response
-                    try:
-                        if isinstance(data, dict):
-                            # Try common key patterns
-                            for key in ['places', 'results', 'establishments', 'items', 'data']:
-                                items = data.get(key, [])
-                                if isinstance(items, list):
-                                    for item in items[:5]:
-                                        if isinstance(item, dict):
-                                            name = item.get('name') or item.get('title') or item.get('label')
-                                            if name and name not in [p['name'] for p in places_found]:
-                                                places_found.append({"name": str(name)})
-                    except:
-                        pass
-
-            # ★ USE API URL IF FOUND ★
-            if api_response_data:
-                # The API URL often has the search parameters we need
-                api_url = api_response_data[0]['url']
-                print(f"🔗 Using API URL for results: {api_url[:150]}")
-                results_url = api_url
-            elif results_loaded:
-                print(f"🔗 Using page URL for results")
-            else:
-                print("⚠️ No results detected")
-                places_found = [{"name": f"Search near {postal_code} — tap to check ClicSanté"}]
-
-            # Deduplicate
-            seen = set()
-            unique_places = []
-            for p in places_found:
-                if p['name'] not in seen:
-                    seen.add(p['name'])
-                    unique_places.append(p)
-            places_found = unique_places[:5]
-
-            print(f"✅ Found {len(places_found)} places")
+            # ★ RESULTS ★
+            print(f"\n✅ Found {len(places_found)} places:")
             for p in places_found:
                 print(f"   📍 {p.get('name')}")
+                if p.get('id'):
+                    print(f"      🔗 {p.get('direct_url')}")
+                if p.get('address'):
+                    print(f"      📫 {p.get('address')}")
+                if p.get('distance'):
+                    print(f"      📏 {p.get('distance')}")
 
             # Save screenshot for debugging
             try:
                 page.screenshot(path="clicsante_result.png")
-                print("📸 Screenshot saved")
+                print("\n📸 Screenshot saved")
             except:
                 pass
 
             # Save to Firestore & notify user
-            save_to_firestore(postal_code, results_url, places_found)
-            send_notification(postal_code, results_url, places_found)
+            save_to_firestore(postal_code, places_found)
+            send_notification(postal_code, places_found)
             
-            print(f"🎉 Done! User can book at: {results_url}")
+            print(f"\n🎉 Done!")
+            
+            # ★ SAVE FULL API RESPONSE FOR DEBUGGING ★
+            if api_response_data:
+                with open("clicsante_api_response.json", "w") as f:
+                    json.dump(api_response_data[0]['data'], f, indent=2)
+                print("📁 Full API response saved to clicsante_api_response.json")
+            
             return True
 
         except Exception as e:
