@@ -272,9 +272,27 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
                 if total_wait % 120 == 0:
                     print(f"   [{profile_name}] Still waiting... ({total_wait//60} min)")
 
-            # ★ PROCESS API DATA FIRST (if available) ★
+            # ★ STEP 1: Extract page text FIRST (fast, always works) ★
+            page_places = []
+            print(f"   [{profile_name}] 📄 Extracting page text as backup...")
+            try:
+                body_text = page.inner_text("body")
+                lines = body_text.split('\n')
+                for line in lines:
+                    line = line.strip()
+                    if line and len(line) > 10 and len(line) < 200:
+                        if any(kw in line.lower() for kw in ["clsc", "clinique", "hopital", "hôpital", "pharmacie", "gmf", "km", "laboratoire"]):
+                            skip_words = ["Skip to main content", "All services", "Cancel an appointment", "Need help?", "Specimens", "Blood Test"]
+                            if not any(sw in line for sw in skip_words):
+                                page_places.append({"name": line, "id": "", "direct_url": "", "address": "", "distance": ""})
+                                if len(page_places) >= 5:
+                                    break
+            except:
+                pass
+
+            # ★ STEP 2: Check if API arrived (even during page extraction) ★
             if api_response_data:
-                print(f"   [{profile_name}] 📡 Processing API data...")
+                print(f"   [{profile_name}] 📡 API data arrived! Processing...")
 
                 # Save full response for debugging
                 try:
@@ -299,28 +317,28 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
                                 print(f"   [{profile_name}] 📦 First item:")
                                 print(json.dumps(first_item, indent=2, ensure_ascii=False)[:3000])
 
-                            # Extract places
+                            # Extract places from API
                             for item in val[:5]:
                                 if isinstance(item, dict):
                                     place_id = str(
-                                        item.get('id') or 
-                                        item.get('placeId') or 
-                                        item.get('establishmentId') or 
-                                        item.get('estId') or 
-                                        item.get('clinicId') or 
-                                        item.get('organizationId') or 
+                                        item.get('id') or
+                                        item.get('placeId') or
+                                        item.get('establishmentId') or
+                                        item.get('estId') or
+                                        item.get('clinicId') or
+                                        item.get('organizationId') or
                                         ''
                                     )
                                     name = str(
-                                        item.get('name') or 
-                                        item.get('placeName') or 
-                                        item.get('establishmentName') or 
-                                        item.get('title') or 
-                                        item.get('label') or 
+                                        item.get('name') or
+                                        item.get('placeName') or
+                                        item.get('establishmentName') or
+                                        item.get('title') or
+                                        item.get('label') or
                                         'Unknown'
                                     )
 
-                                    place = {
+                                    api_place = {
                                         'name': name,
                                         'id': place_id,
                                         'address': str(item.get('address') or item.get('location') or item.get('fullAddress') or ''),
@@ -331,34 +349,23 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
                                     raw_dist = item.get('distance') or item.get('distanceKm') or item.get('dist') or ''
                                     if raw_dist:
                                         try:
-                                            place['distance'] = f"{float(raw_dist):.1f} km"
+                                            api_place['distance'] = f"{float(raw_dist):.1f} km"
                                         except:
-                                            place['distance'] = str(raw_dist)
+                                            api_place['distance'] = str(raw_dist)
 
-                                    if place['id']:
-                                        place['direct_url'] = f"https://clients3.clicsante.ca/{place['id']}/take-appt"
+                                    if api_place['id']:
+                                        api_place['direct_url'] = f"https://clients3.clicsante.ca/{api_place['id']}/take-appt"
 
                                     if name and name != 'Unknown' and len(name) > 3:
-                                        places.append(place)
+                                        places.append(api_place)
                             break  # Only process first array
 
-            # ★ FALLBACK: Only if API gave us nothing ★
+            # ★ STEP 3: Use page text only if API gave nothing ★
             if not places:
-                print(f"   [{profile_name}] ⚠️ No API data — extracting from page text...")
-                try:
-                    body_text = page.inner_text("body")
-                    lines = body_text.split('\n')
-                    for line in lines:
-                        line = line.strip()
-                        if line and len(line) > 10 and len(line) < 200:
-                            if any(kw in line.lower() for kw in ["clsc", "clinique", "hopital", "hôpital", "pharmacie", "gmf", "km", "laboratoire"]):
-                                skip_words = ["Skip to main content", "All services", "Cancel an appointment", "Need help?", "Specimens", "Blood Test"]
-                                if not any(sw in line for sw in skip_words):
-                                    places.append({"name": line, "id": "", "direct_url": "", "address": "", "distance": ""})
-                                    if len(places) >= 5:
-                                        break
-                except:
-                    pass
+                print(f"   [{profile_name}] ⚠️ Using page text results ({len(page_places)} places)")
+                places = page_places
+            else:
+                print(f"   [{profile_name}] ✅ Using API data ({len(places)} places)")
 
             # Save screenshot
             try:
@@ -366,7 +373,7 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
             except:
                 pass
 
-            print(f"   [{profile_name}] ✅ Found {len(places)} places")
+            print(f"   [{profile_name}] ✅ Final: {len(places)} places")
             for p in places:
                 if p.get('direct_url'):
                     print(f"      🔗 {p['name'][:60]}: {p['direct_url']}")
