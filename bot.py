@@ -290,9 +290,20 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
             except:
                 pass
 
-            # ★ STEP 2: Check if API arrived (even during page extraction) ★
+            # ★ STEP 1.5: WAIT 60 MORE SECONDS for API to catch up ★
+            if not api_response_data:
+                print(f"   [{profile_name}] ⏳ Waiting 60s more for late API...")
+                for _ in range(12):  # 12 x 5s = 60s
+                    time.sleep(5)
+                    if api_response_data:
+                        print(f"   [{profile_name}] ✅ API arrived during extra wait!")
+                        break
+                if not api_response_data:
+                    print(f"   [{profile_name}] ⚠️ API still not here after extra wait")
+
+            # ★ STEP 2: Process API data if available ★
             if api_response_data:
-                print(f"   [{profile_name}] 📡 API data arrived! Processing...")
+                print(f"   [{profile_name}] 📡 Processing API data...")
 
                 # Save full response for debugging
                 try:
@@ -399,7 +410,7 @@ def check_availability():
     print(f"\n{'='*60}")
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M')}] 📍 {postal_code} | {zone}")
     print(f"🚀 Launching {len(BROWSER_PROFILES)} parallel browsers...")
-    print(f"⏱️  Max wait: 15 minutes per browser (breaks when API arrives)")
+    print(f"⏱️  Max wait: 15 min + 60s grace period per browser")
     print(f"{'='*60}")
 
     all_places = []
