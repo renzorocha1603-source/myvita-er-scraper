@@ -3,6 +3,7 @@ import time
 import os
 import json
 import re
+import random
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import firebase_admin
@@ -22,15 +23,141 @@ if os.path.exists(FIREBASE_CRED):
 else:
     print("⚠️ Firebase credentials not found — notifications & Firestore disabled")
 
-# === ZONE MAPPING ===
+# === ZONE MAPPING — All Quebec regions ===
 ZONES = {
+    # Montreal
     "H1Y": "montreal_east", "H1A": "montreal_east", "H1B": "montreal_east",
     "H1C": "montreal_east", "H1H": "montreal_north", "H1J": "montreal_north",
-    "H2X": "montreal_central", "H3A": "montreal_central", "H3B": "montreal_central",
-    "H4L": "montreal_north", "H4M": "montreal_north",
-    "G1R": "quebec_central", "G1S": "quebec_central", "G1V": "quebec_ste_foy",
-    "J8Y": "gatineau_hull", "J8Z": "gatineau_aylmer",
-    "J1H": "sherbrooke", "J1K": "sherbrooke",
+    "H1Z": "montreal_north", "H2X": "montreal_central", "H3A": "montreal_central",
+    "H3B": "montreal_central", "H2E": "montreal_north", "H2G": "montreal_north",
+    "H2H": "montreal_north", "H2J": "montreal_central", "H2K": "montreal_central",
+    "H2L": "montreal_central", "H2M": "montreal_north", "H2N": "montreal_north",
+    "H2P": "montreal_north", "H2R": "montreal_north", "H2S": "montreal_north",
+    "H2T": "montreal_central", "H2V": "montreal_central", "H2W": "montreal_central",
+    "H2Y": "montreal_central", "H3C": "montreal_central", "H3E": "montreal_central",
+    "H3G": "montreal_central", "H3H": "montreal_central", "H3J": "montreal_central",
+    "H3K": "montreal_central", "H3L": "montreal_north", "H3M": "montreal_north",
+    "H3N": "montreal_north", "H3P": "montreal_north", "H3R": "montreal_north",
+    "H3S": "montreal_north", "H3T": "montreal_north", "H3V": "montreal_north",
+    "H3W": "montreal_north", "H3X": "montreal_north", "H3Y": "montreal_north",
+    "H4A": "montreal_west", "H4B": "montreal_west", "H4C": "montreal_west",
+    "H4E": "montreal_west", "H4G": "montreal_west", "H4H": "montreal_west",
+    "H4J": "montreal_west", "H4K": "montreal_west", "H4L": "montreal_north",
+    "H4M": "montreal_north", "H4N": "montreal_north", "H4P": "montreal_west",
+    "H4R": "montreal_west", "H4S": "montreal_west", "H4T": "montreal_west",
+    "H4V": "montreal_west", "H4W": "montreal_west", "H4X": "montreal_west",
+    "H4Y": "montreal_west", "H4Z": "montreal_west",
+    "H8N": "montreal_south", "H8P": "montreal_south", "H8R": "montreal_south",
+    "H8S": "montreal_south", "H8T": "montreal_south", "H8Y": "montreal_south",
+    "H8Z": "montreal_south", "H9A": "montreal_west", "H9B": "montreal_west",
+    "H9C": "montreal_west", "H9E": "montreal_west", "H9G": "montreal_west",
+    "H9H": "montreal_west", "H9J": "montreal_west", "H9K": "montreal_west",
+    # Laval
+    "H7A": "laval", "H7B": "laval", "H7C": "laval", "H7E": "laval",
+    "H7G": "laval", "H7H": "laval", "H7J": "laval", "H7K": "laval",
+    "H7L": "laval", "H7M": "laval", "H7N": "laval", "H7P": "laval",
+    "H7R": "laval", "H7S": "laval", "H7T": "laval", "H7V": "laval",
+    "H7W": "laval", "H7X": "laval", "H7Y": "laval",
+    # Longueuil / Rive-Sud
+    "J4A": "longueuil", "J4B": "longueuil", "J4C": "longueuil", "J4G": "longueuil",
+    "J4H": "longueuil", "J4J": "longueuil", "J4K": "longueuil", "J4L": "longueuil",
+    "J4M": "longueuil", "J4N": "longueuil", "J4P": "longueuil", "J4R": "longueuil",
+    "J4S": "longueuil", "J4T": "longueuil", "J4V": "longueuil", "J4W": "longueuil",
+    "J4X": "longueuil", "J4Y": "longueuil", "J4Z": "longueuil",
+    # Quebec City
+    "G1A": "quebec", "G1B": "quebec", "G1C": "quebec", "G1E": "quebec",
+    "G1G": "quebec", "G1H": "quebec", "G1J": "quebec", "G1K": "quebec",
+    "G1L": "quebec", "G1M": "quebec", "G1N": "quebec", "G1P": "quebec",
+    "G1R": "quebec", "G1S": "quebec", "G1T": "quebec", "G1V": "quebec_ste_foy",
+    "G1W": "quebec_ste_foy", "G1X": "quebec_ste_foy", "G1Y": "quebec_ste_foy",
+    "G2A": "quebec", "G2B": "quebec", "G2C": "quebec", "G2E": "quebec",
+    "G2G": "quebec", "G2J": "quebec", "G2K": "quebec", "G2L": "quebec",
+    "G2M": "quebec", "G2N": "quebec",
+    # Gatineau
+    "J8P": "gatineau", "J8R": "gatineau", "J8T": "gatineau", "J8V": "gatineau",
+    "J8W": "gatineau", "J8X": "gatineau", "J8Y": "gatineau", "J8Z": "gatineau",
+    "J9A": "gatineau", "J9H": "gatineau", "J9J": "gatineau",
+    # Sherbrooke
+    "J1A": "sherbrooke", "J1C": "sherbrooke", "J1E": "sherbrooke",
+    "J1G": "sherbrooke", "J1H": "sherbrooke", "J1J": "sherbrooke",
+    "J1K": "sherbrooke", "J1L": "sherbrooke", "J1M": "sherbrooke",
+    "J1N": "sherbrooke",
+    # Trois-Rivières
+    "G8T": "trois_rivieres", "G8V": "trois_rivieres", "G8W": "trois_rivieres",
+    "G8Y": "trois_rivieres", "G8Z": "trois_rivieres", "G9A": "trois_rivieres",
+    "G9B": "trois_rivieres", "G9C": "trois_rivieres",
+    # Saguenay
+    "G7A": "saguenay", "G7B": "saguenay", "G7G": "saguenay", "G7H": "saguenay",
+    "G7J": "saguenay", "G7K": "saguenay", "G7N": "saguenay", "G7P": "saguenay",
+    "G7S": "saguenay", "G7T": "saguenay", "G7X": "saguenay", "G7Y": "saguenay",
+    # Other regions
+    "G5A": "rimouski", "G5L": "rimouski", "G5M": "rimouski",
+    "G3A": "portneuf", "G3C": "portneuf", "G4A": "charlevoix",
+    "G6A": "chaudiere", "G6B": "chaudiere", "G6C": "chaudiere",
+    "J0A": "centre_quebec", "J0B": "estrie", "J0C": "centre_quebec",
+    "J0E": "monteregie", "J0G": "centre_quebec", "J0H": "monteregie",
+    "J0J": "monteregie", "J0K": "lanaudiere", "J0L": "monteregie",
+    "J0M": "monteregie", "J0N": "laurentides", "J0P": "laurentides",
+    "J0R": "laurentides", "J0S": "centre_quebec", "J0T": "laurentides",
+    "J0V": "laurentides", "J0W": "outaouais", "J0X": "outaouais",
+    "J0Y": "abitibi", "J0Z": "abitibi",
+    "J2A": "centre_quebec", "J2B": "centre_quebec", "J2C": "centre_quebec",
+    "J2E": "centre_quebec", "J2G": "monteregie", "J2H": "monteregie",
+    "J2J": "monteregie", "J2K": "monteregie", "J2L": "monteregie",
+    "J2M": "monteregie", "J2N": "monteregie", "J2P": "monteregie",
+    "J2R": "monteregie", "J2S": "monteregie", "J2T": "monteregie",
+    "J2W": "monteregie", "J2X": "monteregie", "J2Y": "monteregie",
+    "J3A": "monteregie", "J3B": "monteregie", "J3E": "monteregie",
+    "J3G": "monteregie", "J3H": "monteregie", "J3J": "monteregie",
+    "J3L": "monteregie", "J3M": "monteregie", "J3N": "monteregie",
+    "J3P": "monteregie", "J3R": "monteregie", "J3T": "monteregie",
+    "J3V": "monteregie", "J3X": "monteregie", "J3Y": "monteregie",
+    "J5A": "monteregie", "J5B": "monteregie", "J5C": "monteregie",
+    "J5J": "laurentides", "J5K": "monteregie", "J5L": "laurentides",
+    "J5M": "lanaudiere", "J5N": "lanaudiere", "J5R": "monteregie",
+    "J5T": "lanaudiere", "J5V": "lanaudiere", "J5W": "lanaudiere",
+    "J5X": "lanaudiere", "J5Y": "lanaudiere", "J5Z": "lanaudiere",
+    "J6A": "lanaudiere", "J6B": "lanaudiere", "J6E": "lanaudiere",
+    "J6J": "lanaudiere", "J6K": "lanaudiere", "J6N": "lanaudiere",
+    "J6R": "lanaudiere", "J6S": "lanaudiere", "J6T": "lanaudiere",
+    "J6V": "lanaudiere", "J6W": "lanaudiere", "J6X": "lanaudiere",
+    "J6Y": "lanaudiere", "J6Z": "lanaudiere",
+    "J7A": "laurentides", "J7B": "laurentides", "J7C": "laurentides",
+    "J7E": "laurentides", "J7G": "laurentides", "J7H": "laurentides",
+    "J7J": "laurentides", "J7K": "lanaudiere", "J7L": "lanaudiere",
+    "J7M": "lanaudiere", "J7N": "laurentides", "J7P": "laurentides",
+    "J7R": "laurentides", "J7S": "laurentides", "J7T": "laurentides",
+    "J7V": "laurentides", "J7W": "laurentides", "J7X": "laurentides",
+    "J7Y": "laurentides", "J7Z": "laurentides",
+    "G0A": "quebec_region", "G0C": "gaspesie", "G0E": "gaspesie",
+    "G0G": "cote_nord", "G0H": "cote_nord", "G0J": "gaspesie",
+    "G0K": "bas_st_laurent", "G0L": "bas_st_laurent", "G0M": "estrie",
+    "G0N": "chaudiere", "G0P": "centre_quebec", "G0R": "bas_st_laurent",
+    "G0S": "chaudiere", "G0T": "cote_nord", "G0V": "saguenay",
+    "G0W": "saguenay", "G0X": "mauricie", "G0Y": "estrie", "G0Z": "centre_quebec",
+    "G4R": "cote_nord", "G4S": "cote_nord", "G4T": "gaspesie",
+    "G4V": "gaspesie", "G4W": "gaspesie", "G4X": "gaspesie",
+    "G4Y": "gaspesie", "G4Z": "gaspesie",
+    "G5B": "gaspesie", "G5C": "gaspesie", "G5E": "gaspesie",
+    "G5G": "gaspesie", "G5H": "gaspesie", "G5J": "gaspesie",
+    "G5K": "gaspesie", "G5N": "gaspesie", "G5P": "gaspesie",
+    "G5R": "gaspesie", "G5S": "gaspesie", "G5T": "bas_st_laurent",
+    "G5V": "bas_st_laurent", "G5X": "bas_st_laurent", "G5Y": "bas_st_laurent",
+    "G5Z": "bas_st_laurent",
+    "G6E": "chaudiere", "G6G": "chaudiere", "G6H": "chaudiere",
+    "G6J": "chaudiere", "G6K": "chaudiere", "G6L": "chaudiere",
+    "G6P": "chaudiere", "G6R": "chaudiere", "G6S": "chaudiere",
+    "G6T": "chaudiere", "G6V": "chaudiere", "G6W": "chaudiere",
+    "G6X": "chaudiere", "G6Y": "chaudiere", "G6Z": "chaudiere",
+    "G8A": "saguenay", "G8B": "saguenay", "G8C": "saguenay",
+    "G8E": "saguenay", "G8G": "saguenay", "G8H": "saguenay",
+    "G8J": "saguenay", "G8K": "saguenay", "G8L": "saguenay",
+    "G8M": "saguenay", "G8N": "saguenay", "G8P": "abitibi",
+    "G8R": "abitibi", "G8S": "mauricie", "G8T": "mauricie",
+    "G9H": "mauricie", "G9J": "mauricie", "G9K": "mauricie",
+    "G9L": "mauricie", "G9M": "mauricie", "G9N": "mauricie",
+    "G9P": "mauricie", "G9R": "mauricie", "G9S": "mauricie",
+    "G9T": "mauricie", "G9X": "mauricie",
 }
 
 # === 5 DIFFERENT HUMAN FINGERPRINTS ===
@@ -41,6 +168,7 @@ BROWSER_PROFILES = [
         "viewport": {"width": 1366, "height": 768},
         "locale": "fr-CA",
         "timezone": "America/Montreal",
+        "delay": 0,
     },
     {
         "name": "User-2-Safari-Mac",
@@ -48,6 +176,7 @@ BROWSER_PROFILES = [
         "viewport": {"width": 1440, "height": 900},
         "locale": "fr-CA",
         "timezone": "America/Montreal",
+        "delay": 15,
     },
     {
         "name": "User-3-Firefox-Win",
@@ -55,6 +184,7 @@ BROWSER_PROFILES = [
         "viewport": {"width": 1536, "height": 864},
         "locale": "en-CA",
         "timezone": "America/Toronto",
+        "delay": 30,
     },
     {
         "name": "User-4-Chrome-Linux",
@@ -62,6 +192,7 @@ BROWSER_PROFILES = [
         "viewport": {"width": 1280, "height": 720},
         "locale": "fr-CA",
         "timezone": "America/Montreal",
+        "delay": 45,
     },
     {
         "name": "User-5-iPhone",
@@ -70,6 +201,7 @@ BROWSER_PROFILES = [
         "locale": "fr-CA",
         "timezone": "America/Montreal",
         "is_mobile": True,
+        "delay": 60,
     },
 ]
 
@@ -82,6 +214,13 @@ def get_postal_code():
     if postal and len(postal) >= 3:
         return postal
     return "H1Y3H1"
+
+def is_peak_hours() -> bool:
+    """Check if current time is peak hours (8am-10am Quebec time)"""
+    now = datetime.now()
+    hour = now.hour
+    # 8am-10am = peak, requests go to queue
+    return 8 <= hour < 10
 
 def get_user_token():
     if db is None:
@@ -97,65 +236,109 @@ def get_user_token():
     return None
 
 def save_to_firestore(postal_code: str, places_found: list):
+    """Save to Firestore so the appointments page can display results"""
     if db is None:
+        print("⚠️ Firestore not available — skipping")
         return
+
+    zone = get_zone(postal_code)
+    now = datetime.now()
+
+    # Save to availability/{zone}
+    data = {
+        "service": "blood-test",
+        "postal_code": postal_code,
+        "zone": zone,
+        "status": "completed",
+        "clinics": places_found,
+        "places_found": places_found,
+        "slots_found": len(places_found) > 0,
+        "last_checked": now,
+    }
+
     try:
-        zone = get_zone(postal_code)
-        db.collection("availability").document(zone).set({
-            "service": "blood-test",
-            "postal_code": postal_code,
-            "zone": zone,
-            "places_found": places_found,
-            "slots_found": len(places_found) > 0,
-            "last_checked": datetime.now(),
-        })
-        print(f"🔥 Saved to Firestore: availability/{zone}")
+        db.collection("availability").document(zone).set(data)
+        print(f"🔥 Saved to Firestore: availability/{zone} with {len(places_found)} clinics")
+
+        # Update pending lab_requests
+        requests_ref = db.collection("lab_requests").where("postal_code", "==", postal_code[:3]).where("status", "in", ["pending", "processing", "dispatched"]).stream()
+        for req in requests_ref:
+            req.reference.update({
+                "status": "completed",
+                "results": places_found,
+                "completed_at": now,
+            })
+            print(f"📝 Updated lab_request: {req.id}")
+
     except Exception as e:
         print(f"❌ Firestore save failed: {e}")
 
 def send_notification(postal_code: str, places_found: list):
+    """Send push notification so user can open the appointments page"""
     token = get_user_token()
     if not token:
+        print("⚠️ No FCM token found — skipping notification")
         return
 
     place_names = ", ".join([p.get('name', 'Unknown')[:30] for p in places_found[:3]])
     first_url = places_found[0].get('direct_url', '') if places_found else ''
-    summary_url = f"https://portal3.clicsante.ca/?postalCode={postal_code.replace(' ', '+')}&serviceId=227"
-    click_url = first_url if first_url else summary_url
+
+    title = "🏥 Résultats ClicSanté disponibles!"
+    body = f"{len(places_found)} lieux trouvés près de {postal_code}. Ouvre l'app pour voir!"
 
     data_payload = {
-        "url": click_url,
+        "url": first_url if first_url else f"https://portal3.clicsante.ca/?postalCode={postal_code.replace(' ', '+')}&serviceId=227",
         "postal_code": postal_code,
-        "click_action": "OPEN_BOOKING",
+        "click_action": "OPEN_APPOINTMENTS",
         "place_count": str(len(places_found)),
     }
+
     for i, p in enumerate(places_found[:5]):
         data_payload[f"place_{i}_name"] = p.get('name', 'Unknown')[:100]
         data_payload[f"place_{i}_url"] = p.get('direct_url', '')[:500]
+        if p.get('address'):
+            data_payload[f"place_{i}_address"] = p.get('address', '')[:200]
         if p.get('distance'):
             data_payload[f"place_{i}_distance"] = str(p.get('distance', ''))
 
     try:
         messaging.send(messaging.Message(
-            notification=messaging.Notification(
-                title="🏥 Résultats ClicSanté disponibles!",
-                body=f"{len(places_found)} lieux trouvés près de {postal_code}: {place_names}..."
-            ),
+            notification=messaging.Notification(title=title, body=body),
             data=data_payload,
             token=token,
         ))
-        print(f"✅ Notification sent")
+        print(f"✅ Notification sent: {len(places_found)} places")
     except Exception as e:
         print(f"❌ Notification failed: {e}")
 
+def add_to_queue(postal_code: str):
+    """Add request to queue during peak hours"""
+    if db is None:
+        return
+    try:
+        db.collection("lab_requests_queue").document(postal_code).set({
+            "postal_code": postal_code,
+            "status": "queued",
+            "queued_at": datetime.now(),
+        })
+        print(f"⏳ Added to queue: {postal_code} (will process after 10am)")
+    except Exception as e:
+        print(f"❌ Queue failed: {e}")
+
 
 # ══════════════════════════════════════════════════════════════
-# ★ SINGLE WORKER — Pure UI, scrape clinic IDs from HTML ★
+# ★ SINGLE WORKER — Staggered, extracts names + IDs ★
 # ══════════════════════════════════════════════════════════════
 
 def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
-    """Navigate ClicSanté like a human, scrape clinic IDs from rendered HTML"""
+    """Navigate ClicSanté, extract clinic names AND IDs"""
     profile_name = profile.get("name", f"User-{worker_id}")
+    stagger_delay = profile.get("delay", worker_id * 15)
+
+    if stagger_delay > 0:
+        print(f"   [{profile_name}] ⏳ Waiting {stagger_delay}s (staggered start)...")
+        time.sleep(stagger_delay)
+
     print(f"\n   [{profile_name}] 🧑 Starting human-like search...")
 
     places = []
@@ -174,227 +357,139 @@ def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
         page = context.new_page()
 
         try:
-            # Step 1: Go to blood test page
+            time.sleep(random.uniform(1, 3))
+
             page.goto("https://portal3.clicsante.ca/services/blood-test",
                      wait_until="networkidle", timeout=60000)
             print(f"   [{profile_name}] 📄 Page loaded")
-            time.sleep(2)
+            time.sleep(random.uniform(1.5, 3))
 
-            # Step 2: Click "Sans frais"
+            time.sleep(random.uniform(0.5, 1.5))
             try:
                 page.locator("text=Sans frais").first.click(timeout=8000)
                 print(f"   [{profile_name}] ✅ Sans frais")
             except:
                 try:
                     page.locator("text=No fees").first.click(timeout=5000)
-                    print(f"   [{profile_name}] ✅ No fees")
                 except:
-                    print(f"   [{profile_name}] ⚠️ Free filter skipped")
-            time.sleep(1.5)
+                    pass
+            time.sleep(random.uniform(1, 2))
 
-            # Step 3: Enter postal code
             try:
                 inputs = page.locator("input[type='text']").all()
                 if inputs:
                     inputs[0].click()
+                    time.sleep(random.uniform(0.3, 0.8))
                     inputs[0].fill("")
-                    time.sleep(0.5)
-                    inputs[0].type(postal_code, delay=150)
+                    time.sleep(random.uniform(0.2, 0.5))
+                    inputs[0].type(postal_code, delay=random.randint(100, 200))
                     print(f"   [{profile_name}] ✅ Postal: {postal_code}")
             except:
-                print(f"   [{profile_name}] ⚠️ Postal input failed")
-            time.sleep(2)
+                pass
+            time.sleep(random.uniform(1.5, 3))
 
-            # Step 4: Click Search
             try:
                 page.get_by_role("button", name="Search").first.click(timeout=8000)
-                print(f"   [{profile_name}] ✅ Clicked Search")
+                print(f"   [{profile_name}] ✅ Search")
             except:
                 try:
                     page.get_by_role("button", name="Rechercher").first.click(timeout=5000)
                 except:
                     page.keyboard.press("Enter")
-            time.sleep(3)
+            time.sleep(random.uniform(2, 4))
 
-            # Step 5: Wait for results to render
             print(f"   [{profile_name}] ⏳ Waiting for results...")
             try:
                 page.wait_for_selector("text=km", timeout=30000)
-                print(f"   [{profile_name}] ✅ Results loaded (found 'km')")
+                print(f"   [{profile_name}] ✅ Results loaded")
             except:
                 print(f"   [{profile_name}] ⚠️ Waiting anyway...")
-            time.sleep(5)
+            time.sleep(random.uniform(3, 6))
 
-            # Step 6: Get the results page URL
-            results_url = page.url
-            print(f"   [{profile_name}] 🔗 Results URL: {results_url[:120]}")
+            # ★ EXTRACT CLINIC NAMES + IDs ★
+            print(f"   [{profile_name}] 🔍 Extracting clinics...")
 
-            # ★ STEP 7: SCRAPE CLINIC IDs FROM HTML ★
-            print(f"   [{profile_name}] 🔍 Scraping clinic IDs from page HTML...")
+            book_links = page.locator("a[href*='take-appt']").all()
+            print(f"   [{profile_name}] 📎 {len(book_links)} booking links")
 
-            # Method 1: Find links with take-appt or establishment IDs
-            try:
-                all_links = page.locator("a").all()
-                print(f"   [{profile_name}] 📎 Total links on page: {len(all_links)}")
-                for link in all_links:
+            for link in book_links:
+                try:
+                    href = link.get_attribute("href") or ""
+                    clinic_id = re.search(r'/(\d+)/take-appt', href)
+                    if not clinic_id:
+                        continue
+
+                    clinic_id = clinic_id.group(1)
+                    name = ""
+
+                    # Try to get name from parent container
                     try:
-                        href = link.get_attribute("href") or ""
-                        text = link.inner_text().strip()
-                        
-                        # Look for links containing clinic/establishment IDs
-                        if any(kw in href.lower() for kw in ["take-appt", "establishment", "place", "clinic", "appointment", "rendez-vous"]):
-                            if text and len(text) > 3:
-                                # Extract numeric ID from the URL
-                                id_match = re.search(r'/(\d{3,})/', href) or re.search(r'id=(\d+)', href)
-                                clinic_id = id_match.group(1) if id_match else ""
-                                
-                                if clinic_id:
-                                    place = {
-                                        "name": text[:100],
-                                        "id": clinic_id,
-                                        "direct_url": f"https://clients3.clicsante.ca/{clinic_id}/take-appt",
-                                    }
-                                    if place not in places:
-                                        places.append(place)
-                                        print(f"   [{profile_name}]    🔗 {text[:60]}: {place['direct_url']}")
+                        parent = link.evaluate("el => el.closest('div, li, article, section')?.innerText")
+                        if parent:
+                            lines = parent.strip().split('\n')
+                            for line in lines:
+                                line = line.strip()
+                                if line and line != "Book appt." and len(line) > 5:
+                                    if any(kw in line.lower() for kw in ["clsc", "clinique", "hopital", "hôpital", "pharmacie", "gmf", "familiprix", "jean coutu", "pharmaprix", "uniprix", "brunet", "centre", "point de service", "prélèvement", "laboratoire", "santé"]):
+                                        name = line[:120]
+                                        break
+                            if not name:
+                                for line in lines:
+                                    line = line.strip()
+                                    if line and len(line) > 10 and line != "Book appt." and "km" not in line.lower():
+                                        name = line[:120]
+                                        break
                     except:
                         pass
-            except Exception as e:
-                print(f"   [{profile_name}] ⚠️ Link scan error: {e}")
 
-            # Method 2: Look for data attributes on cards/containers
-            if not places:
-                try:
-                    data_selectors = [
-                        "[data-id]",
-                        "[data-place-id]",
-                        "[data-establishment-id]",
-                        "[data-clinic-id]",
-                        "[data-organization-id]",
-                    ]
-                    for selector in data_selectors:
-                        cards = page.locator(selector).all()
-                        if len(cards) > 0:
-                            print(f"   [{profile_name}] 🃏 Found {len(cards)} cards with {selector}")
-                            for card in cards[:10]:
-                                try:
-                                    clinic_id = card.get_attribute("data-id") or card.get_attribute("data-place-id") or card.get_attribute("data-establishment-id") or card.get_attribute("data-clinic-id") or card.get_attribute("data-organization-id") or ""
-                                    name = card.inner_text().strip()[:100]
-                                    if clinic_id and name and len(name) > 5:
-                                        place = {
-                                            "name": name,
-                                            "id": clinic_id,
-                                            "direct_url": f"https://clients3.clicsante.ca/{clinic_id}/take-appt",
-                                        }
-                                        if place not in places:
-                                            places.append(place)
-                                            print(f"   [{profile_name}]    🃏 {name[:60]}: {place['direct_url']}")
-                                except:
-                                    pass
-                            if places:
-                                break
-                except Exception as e:
-                    print(f"   [{profile_name}] ⚠️ Data attribute scan error: {e}")
-
-            # Method 3: Scrape embedded JSON in script tags
-            if not places:
-                try:
-                    scripts = page.locator("script").all()
-                    print(f"   [{profile_name}] 📜 Scanning {len(scripts)} script tags...")
-                    for script in scripts:
+                    if not name:
                         try:
-                            content = script.inner_text()
-                            if len(content) > 100 and "id" in content.lower():
-                                # Find JSON objects with id and name fields
-                                json_patterns = [
-                                    r'\{"id":\s*(\d+)[^}]*"name":\s*"([^"]+)"[^}]*\}',
-                                    r'"id":\s*(\d+)[^}]*"name":\s*"([^"]+)"',
-                                    r'\{[^}]*"establishmentId":\s*(\d+)[^}]*\}',
-                                ]
-                                for pattern in json_patterns:
-                                    matches = re.findall(pattern, content)
-                                    for match in matches[:10]:
-                                        if isinstance(match, tuple):
-                                            clinic_id = match[0]
-                                            name = match[1] if len(match) > 1 else "Unknown"
-                                        else:
-                                            clinic_id = match
-                                            name = "Unknown"
-                                        if clinic_id and clinic_id.isdigit():
-                                            place = {
-                                                "name": name[:100],
-                                                "id": clinic_id,
-                                                "direct_url": f"https://clients3.clicsante.ca/{clinic_id}/take-appt",
-                                            }
-                                            if place not in places:
-                                                places.append(place)
-                                    if places:
+                            prev = link.evaluate("el => el.previousElementSibling?.innerText")
+                            if prev and len(prev.strip()) > 5:
+                                name = prev.strip()[:120]
+                        except:
+                            pass
+
+                    if not name:
+                        try:
+                            grandparent = link.evaluate("el => el.closest('div, li')?.parentElement?.innerText")
+                            if grandparent:
+                                lines = grandparent.strip().split('\n')
+                                for line in lines:
+                                    line = line.strip()
+                                    if line and len(line) > 15 and "km" in line.lower():
+                                        name = line[:120]
                                         break
                         except:
                             pass
-                except Exception as e:
-                    print(f"   [{profile_name}] ⚠️ Script scan error: {e}")
 
-            # Method 4: Capture ALL page HTML and search for ID patterns
-            if not places:
-                try:
-                    html = page.content()
-                    # Look for hrefs containing numeric IDs and clinic names
-                    href_pattern = re.findall(r'href="[^"]*/(\d{3,})/[^"]*"[^>]*>([^<]+)<', html)
-                    for match in href_pattern[:10]:
-                        clinic_id = match[0]
-                        name = match[1].strip()
-                        if clinic_id and name and len(name) > 3:
-                            place = {
-                                "name": name[:100],
-                                "id": clinic_id,
-                                "direct_url": f"https://clients3.clicsante.ca/{clinic_id}/take-appt",
-                            }
-                            if place not in places:
-                                places.append(place)
-                except Exception as e:
-                    print(f"   [{profile_name}] ⚠️ Full HTML scan error: {e}")
+                    if not name:
+                        name = f"Clinique #{clinic_id}"
 
-            # Method 5: Fallback to visible text if no IDs found
-            if not places:
-                print(f"   [{profile_name}] ⚠️ No IDs found — using visible text with results URL")
-                try:
-                    body = page.inner_text("body")
-                    for line in body.split('\n'):
-                        line = line.strip()
-                        if 15 < len(line) < 200:
-                            if any(kw in line.lower() for kw in ["clsc", "clinique", "hopital", "hôpital", "pharmacie", "gmf", "familiprix", "jean coutu", "pharmaprix", "uniprix", "brunet", "centre de prélèvement", "point de service"]):
-                                if line not in ["Skip to main content", "All services", "Cancel an appointment", "Need help?", "Specimens and / or Blood Test"]:
-                                    places.append({
-                                        "name": line,
-                                        "id": "",
-                                        "direct_url": results_url,
-                                    })
-                                    if len(places) >= 5:
-                                        break
+                    place = {
+                        "name": name[:120],
+                        "id": clinic_id,
+                        "direct_url": f"https://clients3.clicsante.ca/{clinic_id}/take-appt",
+                    }
+
+                    if place not in places:
+                        places.append(place)
+                        print(f"   [{profile_name}]    📍 {name[:80]}")
+
+                    if len(places) >= 5:
+                        break
+
                 except:
                     pass
 
-            # Save screenshot for debugging
-            try:
-                page.screenshot(path=f"clicsante_{profile_name}.png")
-            except:
-                pass
-
-            print(f"   [{profile_name}] ✅ Found {len(places)} places with IDs")
-            for i, p in enumerate(places):
-                print(f"      {i+1}. 📍 {p['name'][:60]}")
-                if p.get('direct_url'):
-                    print(f"         🔗 {p['direct_url'][:120]}")
+            print(f"   [{profile_name}] ✅ Found {len(places)} places")
 
         except Exception as e:
             print(f"   [{profile_name}] ❌ Error: {e}")
-            import traceback
-            traceback.print_exc()
         finally:
             browser.close()
 
-    return places
+    return places[:5]
 
 
 # ══════════════════════════════════════════════════════════════
@@ -405,13 +500,22 @@ def check_availability():
     postal_code = get_postal_code()
     zone = get_zone(postal_code)
 
+    # ★ PEAK HOURS CHECK ★
+    if is_peak_hours():
+        print(f"\n{'='*60}")
+        print(f"⏰ PEAK HOURS (8am-10am) — Request queued")
+        print(f"   Will process after 10:01am to respect government systems")
+        print(f"{'='*60}")
+        add_to_queue(postal_code)
+        return True
+
     print(f"\n{'='*60}")
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M')}] 📍 {postal_code} | {zone}")
-    print(f"🧑 5 human-like browsers scraping clinic IDs from results page...")
+    print(f"🧑 5 human-like browsers (staggered starts, 15s apart)...")
     print(f"{'='*60}")
 
     all_places = []
-    seen_names = set()
+    seen_ids = set()
 
     with ThreadPoolExecutor(max_workers=5) as executor:
         futures = {
@@ -422,32 +526,27 @@ def check_availability():
             try:
                 places = future.result()
                 for p in places:
-                    key = p.get('id') or p['name']
-                    if key not in seen_names and len(p.get('name', '')) > 5:
-                        seen_names.add(key)
+                    pid = p.get('id', p['name'])
+                    if pid not in seen_ids:
+                        seen_ids.add(pid)
                         all_places.append(p)
             except Exception as e:
                 print(f"   ❌ Worker failed: {e}")
 
+    # ★ EXACTLY 5 (or less if not enough found) ★
     all_places = all_places[:5]
 
     print(f"\n{'='*60}")
-    print(f"✅ FINAL RESULTS: {len(all_places)} unique places near {postal_code}")
+    print(f"✅ FINAL RESULTS: {len(all_places)} places near {postal_code}")
     print(f"{'='*60}")
     for i, p in enumerate(all_places):
         print(f"\n   {i+1}. 📍 {p.get('name')}")
-        if p.get('distance'):
-            print(f"      📏 {p.get('distance')}")
-        if p.get('direct_url'):
-            print(f"      🔗 {p.get('direct_url')}")
-        elif p.get('id'):
-            print(f"      🆔 ID: {p.get('id')}")
+        print(f"      🔗 {p.get('direct_url')}")
 
     save_to_firestore(postal_code, all_places)
     send_notification(postal_code, all_places)
 
-    print(f"\n🎉 Done! User has {len(all_places)} choices.")
-    print(f"💡 Legal: Pure UI automation — same as a human clicking buttons.")
+    print(f"\n🎉 Done! {len(all_places)} choices sent to app.")
     return True
 
 
