@@ -260,20 +260,23 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
             else:
                 page.keyboard.press("Enter")
 
-            # ★ WAIT FOR API RESPONSE — up to 12 minutes ★
-            print(f"   [{profile_name}] ⏳ Waiting for API (up to 12 min)...")
-            waited = 0
-            while not api_response_data and waited < 720:
-                time.sleep(15)
-                waited += 15
-                if waited % 60 == 0:
-                    print(f"   [{profile_name}] Still waiting... ({waited//60} min)")
+            # ★ WAIT — keep page alive for 15 minutes, break when API arrives ★
+            print(f"   [{profile_name}] ⏳ Keeping page alive (15 min max, breaks on API)...")
+            total_wait = 0
+            while total_wait < 900:
+                time.sleep(30)
+                total_wait += 30
+                if api_response_data:
+                    print(f"   [{profile_name}] ✅ API arrived at {total_wait}s ({total_wait//60} min)!")
+                    break
+                if total_wait % 120 == 0:
+                    print(f"   [{profile_name}] Still waiting... ({total_wait//60} min)")
 
-            # ★ PARSE API DATA IF AVAILABLE ★
+            # ★ PROCESS API DATA FIRST (if available) ★
             if api_response_data:
-                print(f"   [{profile_name}] ✅ API response received after {waited}s")
+                print(f"   [{profile_name}] 📡 Processing API data...")
 
-                # Save API response for debugging
+                # Save full response for debugging
                 try:
                     with open(f"clicsante_api_{profile_name.replace(' ', '_')}.json", "w", encoding="utf-8") as f:
                         json.dump(api_response_data[0]['data'], f, indent=2, ensure_ascii=False)
@@ -291,18 +294,31 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
                             print(f"   [{profile_name}] 📦 '{key}' has {len(val)} items")
 
                             if isinstance(val[0], dict):
-                                print(f"   [{profile_name}] 📦 Item keys: {list(val[0].keys())}")
-                                # Print first item for debugging
-                                try:
-                                    print(f"   [{profile_name}] 📦 First item sample:")
-                                    print(json.dumps(val[0], indent=2, ensure_ascii=False)[:3000])
-                                except:
-                                    pass
+                                first_item = val[0]
+                                print(f"   [{profile_name}] 📦 Item keys: {list(first_item.keys())}")
+                                print(f"   [{profile_name}] 📦 First item:")
+                                print(json.dumps(first_item, indent=2, ensure_ascii=False)[:3000])
 
+                            # Extract places
                             for item in val[:5]:
                                 if isinstance(item, dict):
-                                    place_id = str(item.get('id') or item.get('placeId') or item.get('establishmentId') or item.get('estId') or item.get('clinicId') or item.get('organizationId') or '')
-                                    name = str(item.get('name') or item.get('placeName') or item.get('establishmentName') or item.get('title') or item.get('label') or 'Unknown')
+                                    place_id = str(
+                                        item.get('id') or 
+                                        item.get('placeId') or 
+                                        item.get('establishmentId') or 
+                                        item.get('estId') or 
+                                        item.get('clinicId') or 
+                                        item.get('organizationId') or 
+                                        ''
+                                    )
+                                    name = str(
+                                        item.get('name') or 
+                                        item.get('placeName') or 
+                                        item.get('establishmentName') or 
+                                        item.get('title') or 
+                                        item.get('label') or 
+                                        'Unknown'
+                                    )
 
                                     place = {
                                         'name': name,
@@ -324,11 +340,11 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
 
                                     if name and name != 'Unknown' and len(name) > 3:
                                         places.append(place)
-                            break
+                            break  # Only process first array
 
             # ★ FALLBACK: Only if API gave us nothing ★
             if not places:
-                print(f"   [{profile_name}] ⚠️ No API data — extracting from page...")
+                print(f"   [{profile_name}] ⚠️ No API data — extracting from page text...")
                 try:
                     body_text = page.inner_text("body")
                     lines = body_text.split('\n')
@@ -376,7 +392,7 @@ def check_availability():
     print(f"\n{'='*60}")
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M')}] 📍 {postal_code} | {zone}")
     print(f"🚀 Launching {len(BROWSER_PROFILES)} parallel browsers...")
-    print(f"⏱️  Max wait: 12 minutes per browser")
+    print(f"⏱️  Max wait: 15 minutes per browser (breaks when API arrives)")
     print(f"{'='*60}")
 
     all_places = []
