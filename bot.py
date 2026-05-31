@@ -182,7 +182,6 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
 
-        # Create context with unique fingerprint
         context_options = {
             "viewport": profile.get("viewport", {"width": 1280, "height": 720}),
             "user_agent": profile.get("user_agent"),
@@ -261,44 +260,78 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
             else:
                 page.keyboard.press("Enter")
 
-            # Wait for API response
+            # ★ WAIT FOR API RESPONSE FIRST — don't fall back yet ★
+            print(f"   [{profile_name}] ⏳ Waiting for API...")
             waited = 0
-            while not api_response_data and waited < 20:
+            while not api_response_data and waited < 30:
                 time.sleep(1)
                 waited += 1
 
             if api_response_data:
                 print(f"   [{profile_name}] ✅ API response after {waited}s")
+
+                # ★ PARSE API DATA PROPERLY ★
                 data = api_response_data[0]['data']
 
                 if isinstance(data, dict):
+                    # Try to find the list of places in the response
                     for key, val in data.items():
                         if isinstance(val, list) and len(val) > 0 and isinstance(val[0], dict):
+                            first_item = val[0]
+                            print(f"   [{profile_name}] 📦 Found '{key}' with {len(val)} items")
+                            print(f"   [{profile_name}] 📦 Keys: {list(first_item.keys())}")
+
                             for item in val[:5]:
                                 if isinstance(item, dict):
+                                    # Extract all possible ID fields
+                                    place_id = (
+                                        item.get('id') or
+                                        item.get('placeId') or
+                                        item.get('establishmentId') or
+                                        item.get('estId') or
+                                        item.get('clinicId') or
+                                        item.get('organizationId') or
+                                        ''
+                                    )
+
+                                    # Extract name
+                                    name = (
+                                        item.get('name') or
+                                        item.get('placeName') or
+                                        item.get('establishmentName') or
+                                        item.get('title') or
+                                        item.get('label') or
+                                        'Unknown'
+                                    )
+
+                                    # Build place
                                     place = {
-                                        'name': item.get('name') or item.get('placeName') or item.get('establishmentName') or item.get('title') or 'Unknown',
-                                        'id': item.get('id') or item.get('placeId') or item.get('establishmentId') or '',
-                                        'address': item.get('address') or item.get('location') or '',
+                                        'name': name,
+                                        'id': str(place_id),
+                                        'address': item.get('address') or item.get('location') or item.get('fullAddress') or '',
                                         'distance': '',
                                         'phone': item.get('phone') or item.get('phoneNumber') or '',
                                     }
 
-                                    raw_dist = item.get('distance') or item.get('distanceKm') or ''
+                                    raw_dist = item.get('distance') or item.get('distanceKm') or item.get('dist') or ''
                                     if raw_dist:
                                         try:
                                             place['distance'] = f"{float(raw_dist):.1f} km"
                                         except:
                                             place['distance'] = str(raw_dist)
 
+                                    # Build direct URL if we have an ID
                                     if place['id']:
                                         place['direct_url'] = f"https://clients3.clicsante.ca/{place['id']}/take-appt"
 
-                                    places.append(place)
-                            break
+                                    # Only add if we got a real name
+                                    if name and name != 'Unknown' and len(name) > 3:
+                                        places.append(place)
+                            break  # Only process first array
 
+            # ★ FALLBACK: Only if API completely failed ★
             if not places:
-                print(f"   [{profile_name}] ⚠️ No places from API, trying page text...")
+                print(f"   [{profile_name}] ⚠️ No API data, trying page text...")
                 try:
                     body_text = page.inner_text("body")
                     lines = body_text.split('\n')
@@ -306,12 +339,19 @@ def run_browser_worker(profile: dict, postal_code: str, worker_id: int) -> list:
                         line = line.strip()
                         if line and len(line) > 10 and len(line) < 200:
                             if any(kw in line.lower() for kw in ["clsc", "clinique", "hopital", "hôpital", "pharmacie", "gmf", "km", "laboratoire"]):
-                                if line not in ["Skip to main content", "All services", "Cancel an appointment", "Need help?", "Specimens and / or Blood Test"]:
+                                skip_words = ["Skip to main content", "All services", "Cancel an appointment", "Need help?", "Specimens", "Blood Test"]
+                                if not any(sw in line for sw in skip_words):
                                     places.append({"name": line, "id": "", "direct_url": "", "address": "", "distance": ""})
                                     if len(places) >= 3:
                                         break
                 except:
                     pass
+
+            # Save screenshot for debugging
+            try:
+                page.screenshot(path=f"clicsante_{profile_name.replace(' ', '_')}.png")
+            except:
+                pass
 
             print(f"   [{profile_name}] ✅ Found {len(places)} places")
 
