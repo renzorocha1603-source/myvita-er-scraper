@@ -36,64 +36,21 @@ elif os.path.exists(FIREBASE_CRED_PATH):
 else:
     print("⚠️ Firebase credentials not found — notifications & Firestore disabled")
 
-# === ZONE MAPPING — All Quebec regions ===
+# === ZONE MAPPING ===
 ZONES = {
     "H1Y": "montreal_east", "H1A": "montreal_east", "H1B": "montreal_east",
     "H1C": "montreal_east", "H1H": "montreal_north", "H1J": "montreal_north",
     "H1Z": "montreal_north", "H2X": "montreal_central", "H3A": "montreal_central",
-    "H3B": "montreal_central", "H2E": "montreal_north", "H2G": "montreal_north",
-    "H2H": "montreal_north", "H2J": "montreal_central", "H2K": "montreal_central",
-    "H2L": "montreal_central", "H2M": "montreal_north", "H2N": "montreal_north",
-    "H2P": "montreal_north", "H2R": "montreal_north", "H2S": "montreal_north",
-    "H2T": "montreal_central", "H2V": "montreal_central", "H2W": "montreal_central",
-    "H2Y": "montreal_central", "H3C": "montreal_central", "H3E": "montreal_central",
-    "H3G": "montreal_central", "H3H": "montreal_central", "H3J": "montreal_central",
-    "H3K": "montreal_central", "H3L": "montreal_north", "H3M": "montreal_north",
-    "H3N": "montreal_north", "H3P": "montreal_north", "H3R": "montreal_north",
-    "H3S": "montreal_north", "H3T": "montreal_north", "H3V": "montreal_north",
-    "H3W": "montreal_north", "H3X": "montreal_north", "H3Y": "montreal_north",
-    "H4A": "montreal_west", "H4B": "montreal_west", "H4C": "montreal_west",
-    "H4E": "montreal_west", "H4G": "montreal_west", "H4H": "montreal_west",
-    "H4J": "montreal_west", "H4K": "montreal_west", "H4L": "montreal_north",
-    "H4M": "montreal_north", "H4N": "montreal_north", "H4P": "montreal_west",
-    "H4R": "montreal_west", "H4S": "montreal_west", "H4T": "montreal_west",
-    "H4V": "montreal_west", "H4W": "montreal_west", "H4X": "montreal_west",
-    "H4Y": "montreal_west", "H4Z": "montreal_west",
-    "H8N": "montreal_south", "H8P": "montreal_south", "H8R": "montreal_south",
-    "H8S": "montreal_south", "H8T": "montreal_south", "H8Y": "montreal_south",
-    "H8Z": "montreal_south", "H9A": "montreal_west", "H9B": "montreal_west",
-    "H9C": "montreal_west", "H9E": "montreal_west", "H9G": "montreal_west",
-    "H9H": "montreal_west", "H9J": "montreal_west", "H9K": "montreal_west",
-    "H7A": "laval", "H7B": "laval", "H7C": "laval", "H7E": "laval",
-    "H7G": "laval", "H7H": "laval", "H7J": "laval", "H7K": "laval",
+    "H3B": "montreal_central", "H7A": "laval", "H7B": "laval", "H7C": "laval",
     "H7L": "laval", "H7M": "laval", "H7N": "laval", "H7P": "laval",
     "H7R": "laval", "H7S": "laval", "H7T": "laval", "H7V": "laval",
     "H7W": "laval", "H7X": "laval", "H7Y": "laval",
-    "J4A": "longueuil", "J4B": "longueuil", "J4C": "longueuil", "J4G": "longueuil",
-    "J4H": "longueuil", "J4J": "longueuil", "J4K": "longueuil", "J4L": "longueuil",
-    "J4M": "longueuil", "J4N": "longueuil", "J4P": "longueuil", "J4R": "longueuil",
-    "J4S": "longueuil", "J4T": "longueuil", "J4V": "longueuil", "J4W": "longueuil",
-    "J4X": "longueuil", "J4Y": "longueuil", "J4Z": "longueuil",
-    "G1A": "quebec", "G1B": "quebec", "G1C": "quebec", "G1E": "quebec",
-    "G1G": "quebec", "G1H": "quebec", "G1J": "quebec", "G1K": "quebec",
-    "G1L": "quebec", "G1M": "quebec", "G1N": "quebec", "G1P": "quebec",
-    "G1R": "quebec", "G1S": "quebec", "G1T": "quebec", "G1V": "quebec_ste_foy",
-    "G1W": "quebec_ste_foy", "G1X": "quebec_ste_foy", "G1Y": "quebec_ste_foy",
-    "G2A": "quebec", "G2B": "quebec", "G2C": "quebec", "G2E": "quebec",
-    "G2G": "quebec", "G2J": "quebec", "G2K": "quebec", "G2L": "quebec",
-    "G2M": "quebec", "G2N": "quebec",
-    "J8P": "gatineau", "J8R": "gatineau", "J8T": "gatineau", "J8V": "gatineau",
-    "J8W": "gatineau", "J8X": "gatineau", "J8Y": "gatineau", "J8Z": "gatineau",
-    "J9A": "gatineau", "J9H": "gatineau", "J9J": "gatineau",
-    "J1A": "sherbrooke", "J1C": "sherbrooke", "J1E": "sherbrooke",
-    "J1G": "sherbrooke", "J1H": "sherbrooke", "J1J": "sherbrooke",
-    "J1K": "sherbrooke", "J1L": "sherbrooke", "J1M": "sherbrooke", "J1N": "sherbrooke",
-    "G8T": "trois_rivieres", "G8V": "trois_rivieres", "G8W": "trois_rivieres",
-    "G8Y": "trois_rivieres", "G8Z": "trois_rivieres", "G9A": "trois_rivieres",
-    "G9B": "trois_rivieres", "G9C": "trois_rivieres",
-    "G7A": "saguenay", "G7B": "saguenay", "G7G": "saguenay", "G7H": "saguenay",
-    "G7J": "saguenay", "G7K": "saguenay", "G7N": "saguenay", "G7P": "saguenay",
-    "G7S": "saguenay", "G7T": "saguenay", "G7X": "saguenay", "G7Y": "saguenay",
+    "J4A": "longueuil", "J4B": "longueuil", "J4K": "longueuil", "J4L": "longueuil",
+    "G1A": "quebec", "G1R": "quebec", "G1S": "quebec", "G1V": "quebec_ste_foy",
+    "J8P": "gatineau", "J8Y": "gatineau", "J8Z": "gatineau",
+    "J1H": "sherbrooke", "J1K": "sherbrooke",
+    "G8Z": "trois_rivieres", "G9A": "trois_rivieres",
+    "G7H": "saguenay", "G7X": "saguenay",
 }
 
 # === 5 DIFFERENT HUMAN FINGERPRINTS ===
@@ -170,98 +127,64 @@ def get_user_token():
     return None
 
 def save_to_firestore(postal_code: str, places_found: list):
-    """Save to BOTH the full postal code AND the FSA so the app finds it"""
     if db is None:
         print("⚠️ Firestore not available — skipping")
         return
-
     fsa = postal_code[:3].upper()
     zone = get_zone(postal_code)
     now = datetime.now()
-
     data = {
-        "service": "blood-test",
-        "postal_code": postal_code,
-        "fsa": fsa,
-        "zone": zone,
-        "status": "completed",
-        "clinics": places_found,
-        "places_found": places_found,
-        "slots_found": len(places_found) > 0,
+        "service": "blood-test", "postal_code": postal_code, "fsa": fsa,
+        "zone": zone, "status": "completed", "clinics": places_found,
+        "places_found": places_found, "slots_found": len(places_found) > 0,
         "last_checked": now,
     }
-
     try:
         db.collection("availability").document(postal_code).set(data)
         db.collection("availability").document(fsa).set(data)
-        print(f"🔥 Saved to Firestore: availability/{postal_code} + availability/{fsa} with {len(places_found)} clinics")
-
+        print(f"🔥 Saved to Firestore: availability/{postal_code} + availability/{fsa}")
         requests_ref = db.collection("lab_requests").where("postal_code", "==", fsa).where("status", "in", ["pending", "processing", "dispatched"]).stream()
         for req in requests_ref:
-            req.reference.update({
-                "status": "completed",
-                "results": places_found,
-                "completed_at": now,
-            })
-            print(f"📝 Updated lab_request: {req.id}")
-
+            req.reference.update({"status": "completed", "results": places_found, "completed_at": now})
     except Exception as e:
         print(f"❌ Firestore save failed: {e}")
 
 def send_notification(postal_code: str, places_found: list):
-    """Send ONE push notification with all 5 links"""
     token = get_user_token()
     if not token:
         print("⚠️ No FCM token found — skipping notification")
         return
-
     place_names = ", ".join([p.get('name', 'Unknown')[:30] for p in places_found[:3]])
     first_url = places_found[0].get('url', '') if places_found else ''
-
     title = "🏥 Résultats ClicSanté disponibles!"
     body = f"{len(places_found)} lieux trouvés près de {postal_code}. Ouvre l'app pour voir!"
-
     data_payload = {
         "url": first_url if first_url else f"https://portal3.clicsante.ca/?postalCode={postal_code.replace(' ', '+')}&serviceId=227",
-        "postal_code": postal_code,
-        "click_action": "OPEN_APPOINTMENTS",
-        "place_count": str(len(places_found)),
+        "postal_code": postal_code, "click_action": "OPEN_APPOINTMENTS", "place_count": str(len(places_found)),
     }
-
     for i, p in enumerate(places_found[:5]):
         data_payload[f"place_{i}_name"] = p.get('name', 'Unknown')[:100]
         data_payload[f"place_{i}_url"] = p.get('url', '')[:500]
-
     try:
-        messaging.send(messaging.Message(
-            notification=messaging.Notification(title=title, body=body),
-            data=data_payload,
-            token=token,
-        ))
+        messaging.send(messaging.Message(notification=messaging.Notification(title=title, body=body), data=data_payload, token=token))
         print(f"✅ 1 notification sent with {len(places_found)} places")
     except Exception as e:
         print(f"❌ Notification failed: {e}")
 
 def add_to_queue(postal_code: str):
-    if db is None:
-        return
+    if db is None: return
     try:
-        db.collection("lab_requests_queue").document(postal_code).set({
-            "postal_code": postal_code,
-            "status": "queued",
-            "queued_at": datetime.now(),
-        })
+        db.collection("lab_requests_queue").document(postal_code).set({"postal_code": postal_code, "status": "queued", "queued_at": datetime.now()})
         print(f"⏳ Added to queue: {postal_code}")
     except Exception as e:
         print(f"❌ Queue failed: {e}")
 
 
 # ══════════════════════════════════════════════════════════════
-# ★ SINGLE WORKER — Extracts REAL clinic names from page ★
+# ★ SINGLE WORKER — DEBUG MODE: Dump HTML + extract cards ★
 # ══════════════════════════════════════════════════════════════
 
 def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
-    """Navigate ClicSanté, extract REAL clinic/hospital/pharmacy names from the page"""
     profile_name = profile.get("name", f"User-{worker_id}")
     stagger_delay = profile.get("delay", worker_id * 15)
 
@@ -329,151 +252,178 @@ def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
                 print(f"   [{profile_name}] ⚠️ Waiting anyway...")
             time.sleep(random.uniform(3, 6))
 
-            # ★ NEW APPROACH: Extract names from the FULL results page ★
-            print(f"   [{profile_name}] 🔍 Extracting real clinic names...")
+            # ══════════════════════════════════════════════════
+            # ★ DEBUG: Save full page HTML ★
+            # ══════════════════════════════════════════════════
+            print(f"   [{profile_name}] 📁 Saving full page HTML for debugging...")
+            try:
+                html = page.content()
+                filename = f"clicsante_debug_{profile_name.replace(' ', '_').replace('-', '_')}.html"
+                with open(filename, "w", encoding="utf-8") as f:
+                    f.write(html)
+                print(f"   [{profile_name}] 📁 Saved: {filename} ({len(html)} chars)")
+            except Exception as e:
+                print(f"   [{profile_name}] ⚠️ HTML save failed: {e}")
 
-            # Get ALL text from the results section of the page
-            full_text = page.inner_text("body")
-            lines = full_text.split('\n')
+            # ══════════════════════════════════════════════════
+            # ★ EXTRACT: Find booking links and their parent cards ★
+            # ══════════════════════════════════════════════════
+            print(f"   [{profile_name}] 🔍 Extracting clinic data...")
 
-            # Find the results section (starts after "Specimens and/or Blood Test")
-            results_started = False
-            name_buffer = []
-            current_distance = ""
-
-            for i, line in enumerate(lines):
-                line = line.strip()
-                if not line:
-                    continue
-
-                # Detect when results section starts
-                if "specimens" in line.lower() and "blood" in line.lower():
-                    results_started = True
-                    continue
-                if "skip to main" in line.lower() or "all services" in line.lower():
-                    continue
-                if "cancel an appointment" in line.lower() or "need help" in line.lower():
-                    continue
-
-                if not results_started:
-                    continue
-
-                # Stop when we hit the footer/end of results
-                if "source:" in line.lower() or "accessibilite" in line.lower() or "contact us" in line.lower():
-                    break
-
-                # Detect distance lines (contain "km")
-                if "km" in line.lower() and len(line) < 100:
-                    current_distance = line
-                    # If we have a name buffered, this is a place
-                    if name_buffer:
-                        full_name = " ".join(name_buffer).strip()
-                        if full_name and len(full_name) > 5 and "km" not in full_name.lower():
-                            # Clean up the name
-                            full_name = full_name.replace("Add to favorites", "").replace("Service", "").strip()
-                            if full_name:
-                                places.append({
-                                    "name": full_name[:150],
-                                    "distance": current_distance,
-                                    "url": "",  # Will be filled by booking link lookup
-                                })
-                        name_buffer = []
-                    continue
-
-                # Detect "Book appt." lines
-                if "book appt" in line.lower():
-                    continue
-
-                # Lines before "km" are likely place names
-                if not current_distance and len(line) > 10 and len(line) < 200:
-                    name_buffer.append(line)
-
-            # ★ SECOND PASS: Match booking links to places by proximity ★
-            print(f"   [{profile_name}] 📎 Matching booking links...")
             book_links = page.locator("a[href*='take-appt']").all()
-            link_urls = []
-            for link in book_links:
+            print(f"   [{profile_name}] 📎 Found {len(book_links)} 'Book appt.' links")
+
+            for i, link in enumerate(book_links):
                 try:
                     href = link.get_attribute("href") or ""
-                    clinic_id = re.search(r'/(\d+)/take-appt', href)
-                    if clinic_id:
-                        link_urls.append(f"https://clients3.clicsante.ca/{clinic_id.group(1)}/take-appt")
-                except:
-                    pass
+                    clinic_id_match = re.search(r'/(\d+)/take-appt', href)
+                    if not clinic_id_match:
+                        continue
+                    clinic_id = clinic_id_match.group(1)
+                    url = f"https://clients3.clicsante.ca/{clinic_id}/take-appt"
 
-            # Assign links to places
-            for i in range(min(len(places), len(link_urls))):
-                places[i]["url"] = link_urls[i]
-
-            # Remove places without links
-            places = [p for p in places if p.get("url")]
-
-            # If we didn't find enough, try scraping the booking links with surrounding text
-            if len(places) < 3:
-                print(f"   [{profile_name}] ⚠️ Only {len(places)} places — trying link scraping...")
-                places = []
-                book_links = page.locator("a[href*='take-appt']").all()
-                for link in book_links:
-                    try:
-                        href = link.get_attribute("href") or ""
-                        clinic_id = re.search(r'/(\d+)/take-appt', href)
-                        if not clinic_id:
-                            continue
-                        clinic_id = clinic_id.group(1)
-                        url = f"https://clients3.clicsante.ca/{clinic_id}/take-appt"
-
-                        # Get ALL text in the parent row/container
-                        parent_text = link.evaluate("""el => {
-                            let p = el.parentElement;
-                            for (let i = 0; i < 6; i++) {
-                                if (p && p.innerText && p.innerText.length > 30) {
-                                    return p.innerText;
-                                }
-                                p = p ? p.parentElement : null;
+                    # ══════════════════════════════════════════
+                    # ★ METHOD 1: Get parent card/row text ★
+                    # ══════════════════════════════════════════
+                    card_info = link.evaluate("""el => {
+                        let current = el;
+                        let result = { tagPath: [], texts: [] };
+                        
+                        // Walk up to find the card container
+                        for (let level = 0; level < 10; level++) {
+                            if (!current || !current.parentElement) break;
+                            current = current.parentElement;
+                            let tag = current.tagName;
+                            let cls = current.className || '';
+                            let id = current.id || '';
+                            result.tagPath.push(tag + (cls ? '.' + cls.split(' ')[0] : '') + (id ? '#' + id : ''));
+                            
+                            let text = current.innerText?.trim();
+                            if (text && text.length > 40 && text.length < 800) {
+                                result.texts.push({
+                                    level: level,
+                                    length: text.length,
+                                    text: text.substring(0, 400),
+                                    tagPath: [...result.tagPath]
+                                });
                             }
-                            return '';
-                        }""")
+                        }
+                        return result;
+                    }""")
 
-                        if parent_text:
-                            # Find the best name from the parent text
-                            plines = parent_text.strip().split('\n')
-                            best_name = ""
-                            for pline in plines:
-                                pline = pline.strip()
-                                # Skip buttons, distances, generic text
-                                if not pline or pline == "Book appt.":
-                                    continue
-                                if "km" in pline.lower() and len(pline) < 50:
-                                    continue
-                                if pline.lower() in ["add to favorites", "service", "book appt."]:
-                                    continue
-                                if len(pline) > 10 and len(pline) < 200:
-                                    # Take the first substantial line as the name
-                                    if not best_name:
-                                        best_name = pline
+                    # ══════════════════════════════════════════
+                    # ★ METHOD 2: Find heading/name near the link ★
+                    # ══════════════════════════════════════════
+                    nearby_heading = link.evaluate("""el => {
+                        // Look for h2, h3, h4, strong tags in the same container
+                        let parent = el.closest('li, article, div[class*="result"], div[class*="card"], div[class*="item"]');
+                        if (!parent) parent = el.closest('div');
+                        if (!parent) return '';
+                        
+                        let headings = parent.querySelectorAll('h1, h2, h3, h4, h5, strong, b, [class*="name"], [class*="title"], [class*="heading"]');
+                        for (let h of headings) {
+                            let text = h.innerText?.trim();
+                            if (text && text.length > 5 && text.length < 200 && text !== 'Book appt.') {
+                                return text;
+                            }
+                        }
+                        return '';
+                    }""")
+
+                    # ══════════════════════════════════════════
+                    # ★ METHOD 3: Get ALL text in the row/li ★
+                    # ══════════════════════════════════════════
+                    row_text = link.evaluate("""el => {
+                        let row = el.closest('li, tr, [class*="row"], [class*="item"], [class*="result"]');
+                        if (row) return row.innerText?.trim()?.substring(0, 500);
+                        return '';
+                    }""")
+
+                    # ══════════════════════════════════════════
+                    # ★ METHOD 4: Get previous sibling text ★
+                    # ══════════════════════════════════════════
+                    prev_text = link.evaluate("""el => {
+                        let prev = el.previousElementSibling;
+                        let count = 0;
+                        while (prev && count < 5) {
+                            let text = prev.innerText?.trim();
+                            if (text && text.length > 5 && text.length < 200 && text !== 'Book appt.') {
+                                return text;
+                            }
+                            prev = prev.previousElementSibling;
+                            count++;
+                        }
+                        return '';
+                    }""")
+
+                    # ══════════════════════════════════════════
+                    # ★ DEBUG: Print all extracted info ★
+                    # ══════════════════════════════════════════
+                    print(f"\n   [{profile_name}] 📦 Link #{i+1} (ID: {clinic_id})")
+                    print(f"   [{profile_name}]    🔗 URL: {url}")
+                    print(f"   [{profile_name}]    📝 Nearby heading: {nearby_heading[:120] if nearby_heading else 'NONE'}")
+                    print(f"   [{profile_name}]    📝 Previous sibling: {prev_text[:120] if prev_text else 'NONE'}")
+                    print(f"   [{profile_name}]    📝 Row text (first 200): {row_text[:200] if row_text else 'NONE'}")
+
+                    if card_info and card_info.get('texts'):
+                        print(f"   [{profile_name}]    📦 Container texts found at levels:")
+                        for t in card_info['texts'][:3]:
+                            print(f"   [{profile_name}]       Level {t['level']} ({t['length']} chars): {t['text'][:150]}")
+
+                    # ══════════════════════════════════════════
+                    # ★ PICK THE BEST NAME ★
+                    # ══════════════════════════════════════════
+                    name = ""
+
+                    # Priority 1: Nearby heading
+                    if nearby_heading and len(nearby_heading) > 5:
+                        name = nearby_heading[:150]
+
+                    # Priority 2: Previous sibling
+                    if not name and prev_text and len(prev_text) > 5:
+                        name = prev_text[:150]
+
+                    # Priority 3: First meaningful line from row text
+                    if not name and row_text:
+                        lines = row_text.split('\n')
+                        for line in lines:
+                            line = line.strip()
+                            if line and line != "Book appt." and len(line) > 10 and len(line) < 200:
+                                if "km" not in line.lower() and "book" not in line.lower():
+                                    name = line[:150]
+                                    break
+
+                    # Priority 4: First meaningful text from container
+                    if not name and card_info and card_info.get('texts'):
+                        for t in card_info['texts']:
+                            text = t['text']
+                            lines = text.split('\n')
+                            for line in lines:
+                                line = line.strip()
+                                if line and line != "Book appt." and len(line) > 10 and len(line) < 200:
+                                    if "km" not in line.lower() and "book" not in line.lower():
+                                        name = line[:150]
                                         break
-                            if best_name:
-                                places.append({
-                                    "name": best_name[:150],
-                                    "url": url,
-                                })
-                        if len(places) >= 5:
-                            break
-                    except:
-                        pass
+                            if name:
+                                break
 
-            # Deduplicate by name
-            seen = set()
-            unique_places = []
-            for p in places:
-                if p['name'] not in seen:
-                    seen.add(p['name'])
-                    unique_places.append(p)
-            places = unique_places[:5]
+                    # Fallback
+                    if not name:
+                        name = f"Clinique #{clinic_id}"
 
-            print(f"   [{profile_name}] ✅ Found {len(places)} places")
-            for p in places:
-                print(f"      📍 {p['name'][:80]}")
+                    print(f"   [{profile_name}]    ✅ SELECTED NAME: {name[:120]}")
+
+                    place = {"name": name[:150], "url": url}
+                    if place not in places:
+                        places.append(place)
+
+                    if len(places) >= 5:
+                        break
+
+                except Exception as e:
+                    print(f"   [{profile_name}]    ❌ Link #{i+1} error: {e}")
+
+            print(f"\n   [{profile_name}] ✅ Found {len(places)} places with debug info")
 
         except Exception as e:
             print(f"   [{profile_name}] ❌ Error: {e}")
@@ -481,6 +431,7 @@ def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
             traceback.print_exc()
         finally:
             browser.close()
+
     return places[:5]
 
 
@@ -497,7 +448,7 @@ def check_availability():
 
     print(f"\n{'='*60}")
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M')}] 📍 {postal_code} | {zone}")
-    print(f"🧑 5 human-like browsers...")
+    print(f"🧑 5 human-like browsers (DEBUG MODE — saving HTML)...")
     print(f"{'='*60}")
 
     all_places = []
@@ -527,6 +478,7 @@ def check_availability():
     save_to_firestore(postal_code, all_places)
     send_notification(postal_code, all_places)
     print(f"\n🎉 Done! {len(all_places)} choices saved + 1 notification sent.")
+    print(f"📁 HTML debug files saved as clicsante_debug_*.html")
     return True
 
 
