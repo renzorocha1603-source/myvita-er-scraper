@@ -192,12 +192,10 @@ def save_to_firestore(postal_code: str, places_found: list):
     }
 
     try:
-        # Save to BOTH documents so the app finds it regardless of which ID it uses
         db.collection("availability").document(postal_code).set(data)
         db.collection("availability").document(fsa).set(data)
         print(f"🔥 Saved to Firestore: availability/{postal_code} + availability/{fsa} with {len(places_found)} clinics")
 
-        # Update pending lab_requests
         requests_ref = db.collection("lab_requests").where("postal_code", "==", fsa).where("status", "in", ["pending", "processing", "dispatched"]).stream()
         for req in requests_ref:
             req.reference.update({
@@ -218,7 +216,7 @@ def send_notification(postal_code: str, places_found: list):
         return
 
     place_names = ", ".join([p.get('name', 'Unknown')[:30] for p in places_found[:3]])
-    first_url = places_found[0].get('direct_url', '') if places_found else ''
+    first_url = places_found[0].get('url', '') if places_found else ''
 
     title = "🏥 Résultats ClicSanté disponibles!"
     body = f"{len(places_found)} lieux trouvés près de {postal_code}. Ouvre l'app pour voir!"
@@ -232,7 +230,7 @@ def send_notification(postal_code: str, places_found: list):
 
     for i, p in enumerate(places_found[:5]):
         data_payload[f"place_{i}_name"] = p.get('name', 'Unknown')[:100]
-        data_payload[f"place_{i}_url"] = p.get('direct_url', '')[:500]
+        data_payload[f"place_{i}_url"] = p.get('url', '')[:500]
 
     try:
         messaging.send(messaging.Message(
@@ -257,6 +255,10 @@ def add_to_queue(postal_code: str):
     except Exception as e:
         print(f"❌ Queue failed: {e}")
 
+
+# ══════════════════════════════════════════════════════════════
+# ★ SINGLE WORKER — Better name extraction + correct URL field
+# ══════════════════════════════════════════════════════════════
 
 def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
     profile_name = profile.get("name", f"User-{worker_id}")
@@ -338,30 +340,75 @@ def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
                         continue
                     clinic_id = clinic_id.group(1)
                     name = ""
+
+                    # Method 1: Go up parent elements to find meaningful text
                     try:
-                        parent = link.evaluate("el => el.closest('div, li, article, section')?.innerText")
-                        if parent:
-                            lines = parent.strip().split('\n')
+                        container = link.evaluate("""el => {
+                            let current = el;
+                            for (let i = 0; i < 5; i++) {
+                                if (current.parentElement) {
+                                    current = current.parentElement;
+                                    let text = current.innerText;
+                                    if (text && text.length > 30 && text.length < 500) {
+                                        return text;
+                                    }
+                                }
+                            }
+                            return '';
+                        }""")
+                        if container:
+                            lines = container.strip().split('\n')
                             for line in lines:
                                 line = line.strip()
-                                if line and line != "Book appt." and len(line) > 5:
-                                    if any(kw in line.lower() for kw in ["clsc", "clinique", "hopital", "hôpital", "pharmacie", "gmf", "familiprix", "jean coutu", "pharmaprix", "uniprix", "brunet", "centre", "point de service", "prélèvement", "laboratoire", "santé"]):
-                                        name = line[:120]
-                                        break
-                            if not name:
-                                for line in lines:
-                                    line = line.strip()
-                                    if line and len(line) > 10 and line != "Book appt." and "km" not in line.lower():
+                                if line and line != "Book appt." and len(line) > 5 and len(line) < 200:
+                                    if "km" not in line.lower() and "book" not in line.lower() and "add to" not in line.lower():
                                         name = line[:120]
                                         break
                     except:
                         pass
+
+                    # Method 2: Find heading element nearby
+                    if not name:
+                        try:
+                            heading = link.evaluate("""el => {
+                                let parent = el.closest('div, li, article');
+                                if (parent) {
+                                    let h = parent.querySelector('h2, h3, h4, strong, [class*="name"], [class*="title"]');
+                                    return h ? h.innerText : '';
+                                }
+                                return '';
+                            }""")
+                            if heading and len(heading.strip()) > 5:
+                                name = heading.strip()[:120]
+                        except:
+                            pass
+
+                    # Method 3: Get row/card text
+                    if not name:
+                        try:
+                            row_text = link.evaluate("""el => {
+                                let row = el.closest('li, tr, [class*="row"], [class*="item"], [class*="card"], [class*="result"]');
+                                return row ? row.innerText : '';
+                            }""")
+                            if row_text:
+                                lines = row_text.strip().split('\n')
+                                for line in lines:
+                                    line = line.strip()
+                                    if line and line != "Book appt." and len(line) > 5 and len(line) < 200:
+                                        if "km" not in line.lower():
+                                            name = line[:120]
+                                            break
+                        except:
+                            pass
+
+                    # Fallback
                     if not name:
                         name = f"Clinique #{clinic_id}"
+
                     place = {
                         "name": name[:120],
                         "id": clinic_id,
-                        "direct_url": f"https://clients3.clicsante.ca/{clinic_id}/take-appt",
+                        "url": f"https://clients3.clicsante.ca/{clinic_id}/take-appt",
                     }
                     if place not in places:
                         places.append(place)
@@ -417,11 +464,11 @@ def check_availability():
     print(f"{'='*60}")
     for i, p in enumerate(all_places):
         print(f"\n   {i+1}. 📍 {p.get('name')}")
-        print(f"      🔗 {p.get('direct_url')}")
+        print(f"      🔗 {p.get('url')}")
 
     save_to_firestore(postal_code, all_places)
     send_notification(postal_code, all_places)
-    print(f"\n🎉 Done! {len(all_places)} choices saved to BOTH availability/{postal_code} AND availability/{postal_code[:3].upper()} + 1 notification sent.")
+    print(f"\n🎉 Done! {len(all_places)} choices saved + 1 notification sent.")
     return True
 
 
