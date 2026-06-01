@@ -10,16 +10,31 @@ import firebase_admin
 from firebase_admin import credentials, messaging, firestore
 
 # === FIREBASE SETUP ===
-FIREBASE_CRED = os.getenv("FIREBASE_CRED_PATH", "firebase-credentials.json")
+# Check for GitHub Secret first (FIREBASE_CREDENTIALS = JSON string)
+# Then fall back to local file (FIREBASE_CRED_PATH)
+FIREBASE_CREDENTIALS_JSON = os.getenv("FIREBASE_CREDENTIALS", "")
+FIREBASE_CRED_PATH = os.getenv("FIREBASE_CRED_PATH", "firebase-credentials.json")
 
 db = None
-if os.path.exists(FIREBASE_CRED):
-    cred = credentials.Certificate(FIREBASE_CRED)
-    firebase_admin.initialize_app(cred, {
-        'projectId': 'myvita-app-c5ecd',
-    })
-    db = firestore.client()
-    print("✅ Firebase initialized (Firestore ready)")
+if FIREBASE_CREDENTIALS_JSON:
+    try:
+        cred_dict = json.loads(FIREBASE_CREDENTIALS_JSON)
+        cred = credentials.Certificate(cred_dict)
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred, {'projectId': 'myvita-app-c5ecd'})
+        db = firestore.client()
+        print("✅ Firebase initialized (GitHub Secret)")
+    except Exception as e:
+        print(f"⚠️ Firebase init error from secret: {e}")
+elif os.path.exists(FIREBASE_CRED_PATH):
+    try:
+        cred = credentials.Certificate(FIREBASE_CRED_PATH)
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred, {'projectId': 'myvita-app-c5ecd'})
+        db = firestore.client()
+        print("✅ Firebase initialized (local file)")
+    except Exception as e:
+        print(f"⚠️ Firebase init error from file: {e}")
 else:
     print("⚠️ Firebase credentials not found — notifications & Firestore disabled")
 
@@ -219,7 +234,6 @@ def is_peak_hours() -> bool:
     """Check if current time is peak hours (8am-10am Quebec time)"""
     now = datetime.now()
     hour = now.hour
-    # 8am-10am = peak, requests go to queue
     return 8 <= hour < 10
 
 def get_user_token():
@@ -244,7 +258,6 @@ def save_to_firestore(postal_code: str, places_found: list):
     zone = get_zone(postal_code)
     now = datetime.now()
 
-    # Save to availability/{zone}
     data = {
         "service": "blood-test",
         "postal_code": postal_code,
@@ -274,7 +287,7 @@ def save_to_firestore(postal_code: str, places_found: list):
         print(f"❌ Firestore save failed: {e}")
 
 def send_notification(postal_code: str, places_found: list):
-    """Send push notification so user can open the appointments page"""
+    """Send ONE push notification with all 5 links"""
     token = get_user_token()
     if not token:
         print("⚠️ No FCM token found — skipping notification")
@@ -307,7 +320,7 @@ def send_notification(postal_code: str, places_found: list):
             data=data_payload,
             token=token,
         ))
-        print(f"✅ Notification sent: {len(places_found)} places")
+        print(f"✅ 1 notification sent with {len(places_found)} places")
     except Exception as e:
         print(f"❌ Notification failed: {e}")
 
@@ -533,7 +546,6 @@ def check_availability():
             except Exception as e:
                 print(f"   ❌ Worker failed: {e}")
 
-    # ★ EXACTLY 5 (or less if not enough found) ★
     all_places = all_places[:5]
 
     print(f"\n{'='*60}")
@@ -546,7 +558,7 @@ def check_availability():
     save_to_firestore(postal_code, all_places)
     send_notification(postal_code, all_places)
 
-    print(f"\n🎉 Done! {len(all_places)} choices sent to app.")
+    print(f"\n🎉 Done! {len(all_places)} choices saved + 1 notification sent.")
     return True
 
 
