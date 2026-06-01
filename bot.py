@@ -170,16 +170,15 @@ def get_user_token():
     return None
 
 def save_to_firestore(postal_code: str, places_found: list):
-    """Save to Firestore using FSA (first 3 chars) so the appointments page can find it"""
+    """Save to BOTH the full postal code AND the FSA so the app finds it"""
     if db is None:
         print("⚠️ Firestore not available — skipping")
         return
 
-    fsa = postal_code[:3].upper()  # "H1Y"
+    fsa = postal_code[:3].upper()
     zone = get_zone(postal_code)
     now = datetime.now()
 
-    # ★ Save to availability/{FSA} — this is what the appointments page listens to
     data = {
         "service": "blood-test",
         "postal_code": postal_code,
@@ -193,11 +192,12 @@ def save_to_firestore(postal_code: str, places_found: list):
     }
 
     try:
-        # Save with FSA as document ID so the app finds it
+        # Save to BOTH documents so the app finds it regardless of which ID it uses
+        db.collection("availability").document(postal_code).set(data)
         db.collection("availability").document(fsa).set(data)
-        print(f"🔥 Saved to Firestore: availability/{fsa} with {len(places_found)} clinics")
+        print(f"🔥 Saved to Firestore: availability/{postal_code} + availability/{fsa} with {len(places_found)} clinics")
 
-        # Update pending lab_requests for this postal code
+        # Update pending lab_requests
         requests_ref = db.collection("lab_requests").where("postal_code", "==", fsa).where("status", "in", ["pending", "processing", "dispatched"]).stream()
         for req in requests_ref:
             req.reference.update({
@@ -421,7 +421,7 @@ def check_availability():
 
     save_to_firestore(postal_code, all_places)
     send_notification(postal_code, all_places)
-    print(f"\n🎉 Done! {len(all_places)} choices saved + 1 notification sent.")
+    print(f"\n🎉 Done! {len(all_places)} choices saved to BOTH availability/{postal_code} AND availability/{postal_code[:3].upper()} + 1 notification sent.")
     return True
 
 
