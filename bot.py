@@ -36,21 +36,64 @@ elif os.path.exists(FIREBASE_CRED_PATH):
 else:
     print("⚠️ Firebase credentials not found — notifications & Firestore disabled")
 
-# === ZONE MAPPING ===
+# === ZONE MAPPING — All Quebec regions ===
 ZONES = {
     "H1Y": "montreal_east", "H1A": "montreal_east", "H1B": "montreal_east",
     "H1C": "montreal_east", "H1H": "montreal_north", "H1J": "montreal_north",
     "H1Z": "montreal_north", "H2X": "montreal_central", "H3A": "montreal_central",
-    "H3B": "montreal_central", "H7A": "laval", "H7B": "laval", "H7C": "laval",
+    "H3B": "montreal_central", "H2E": "montreal_north", "H2G": "montreal_north",
+    "H2H": "montreal_north", "H2J": "montreal_central", "H2K": "montreal_central",
+    "H2L": "montreal_central", "H2M": "montreal_north", "H2N": "montreal_north",
+    "H2P": "montreal_north", "H2R": "montreal_north", "H2S": "montreal_north",
+    "H2T": "montreal_central", "H2V": "montreal_central", "H2W": "montreal_central",
+    "H2Y": "montreal_central", "H3C": "montreal_central", "H3E": "montreal_central",
+    "H3G": "montreal_central", "H3H": "montreal_central", "H3J": "montreal_central",
+    "H3K": "montreal_central", "H3L": "montreal_north", "H3M": "montreal_north",
+    "H3N": "montreal_north", "H3P": "montreal_north", "H3R": "montreal_north",
+    "H3S": "montreal_north", "H3T": "montreal_north", "H3V": "montreal_north",
+    "H3W": "montreal_north", "H3X": "montreal_north", "H3Y": "montreal_north",
+    "H4A": "montreal_west", "H4B": "montreal_west", "H4C": "montreal_west",
+    "H4E": "montreal_west", "H4G": "montreal_west", "H4H": "montreal_west",
+    "H4J": "montreal_west", "H4K": "montreal_west", "H4L": "montreal_north",
+    "H4M": "montreal_north", "H4N": "montreal_north", "H4P": "montreal_west",
+    "H4R": "montreal_west", "H4S": "montreal_west", "H4T": "montreal_west",
+    "H4V": "montreal_west", "H4W": "montreal_west", "H4X": "montreal_west",
+    "H4Y": "montreal_west", "H4Z": "montreal_west",
+    "H8N": "montreal_south", "H8P": "montreal_south", "H8R": "montreal_south",
+    "H8S": "montreal_south", "H8T": "montreal_south", "H8Y": "montreal_south",
+    "H8Z": "montreal_south", "H9A": "montreal_west", "H9B": "montreal_west",
+    "H9C": "montreal_west", "H9E": "montreal_west", "H9G": "montreal_west",
+    "H9H": "montreal_west", "H9J": "montreal_west", "H9K": "montreal_west",
+    "H7A": "laval", "H7B": "laval", "H7C": "laval", "H7E": "laval",
+    "H7G": "laval", "H7H": "laval", "H7J": "laval", "H7K": "laval",
     "H7L": "laval", "H7M": "laval", "H7N": "laval", "H7P": "laval",
     "H7R": "laval", "H7S": "laval", "H7T": "laval", "H7V": "laval",
     "H7W": "laval", "H7X": "laval", "H7Y": "laval",
-    "J4A": "longueuil", "J4B": "longueuil", "J4K": "longueuil", "J4L": "longueuil",
-    "G1A": "quebec", "G1R": "quebec", "G1S": "quebec", "G1V": "quebec_ste_foy",
-    "J8P": "gatineau", "J8Y": "gatineau", "J8Z": "gatineau",
-    "J1H": "sherbrooke", "J1K": "sherbrooke",
-    "G8Z": "trois_rivieres", "G9A": "trois_rivieres",
-    "G7H": "saguenay", "G7X": "saguenay",
+    "J4A": "longueuil", "J4B": "longueuil", "J4C": "longueuil", "J4G": "longueuil",
+    "J4H": "longueuil", "J4J": "longueuil", "J4K": "longueuil", "J4L": "longueuil",
+    "J4M": "longueuil", "J4N": "longueuil", "J4P": "longueuil", "J4R": "longueuil",
+    "J4S": "longueuil", "J4T": "longueuil", "J4V": "longueuil", "J4W": "longueuil",
+    "J4X": "longueuil", "J4Y": "longueuil", "J4Z": "longueuil",
+    "G1A": "quebec", "G1B": "quebec", "G1C": "quebec", "G1E": "quebec",
+    "G1G": "quebec", "G1H": "quebec", "G1J": "quebec", "G1K": "quebec",
+    "G1L": "quebec", "G1M": "quebec", "G1N": "quebec", "G1P": "quebec",
+    "G1R": "quebec", "G1S": "quebec", "G1T": "quebec", "G1V": "quebec_ste_foy",
+    "G1W": "quebec_ste_foy", "G1X": "quebec_ste_foy", "G1Y": "quebec_ste_foy",
+    "G2A": "quebec", "G2B": "quebec", "G2C": "quebec", "G2E": "quebec",
+    "G2G": "quebec", "G2J": "quebec", "G2K": "quebec", "G2L": "quebec",
+    "G2M": "quebec", "G2N": "quebec",
+    "J8P": "gatineau", "J8R": "gatineau", "J8T": "gatineau", "J8V": "gatineau",
+    "J8W": "gatineau", "J8X": "gatineau", "J8Y": "gatineau", "J8Z": "gatineau",
+    "J9A": "gatineau", "J9H": "gatineau", "J9J": "gatineau",
+    "J1A": "sherbrooke", "J1C": "sherbrooke", "J1E": "sherbrooke",
+    "J1G": "sherbrooke", "J1H": "sherbrooke", "J1J": "sherbrooke",
+    "J1K": "sherbrooke", "J1L": "sherbrooke", "J1M": "sherbrooke", "J1N": "sherbrooke",
+    "G8T": "trois_rivieres", "G8V": "trois_rivieres", "G8W": "trois_rivieres",
+    "G8Y": "trois_rivieres", "G8Z": "trois_rivieres", "G9A": "trois_rivieres",
+    "G9B": "trois_rivieres", "G9C": "trois_rivieres",
+    "G7A": "saguenay", "G7B": "saguenay", "G7G": "saguenay", "G7H": "saguenay",
+    "G7J": "saguenay", "G7K": "saguenay", "G7N": "saguenay", "G7P": "saguenay",
+    "G7S": "saguenay", "G7T": "saguenay", "G7X": "saguenay", "G7Y": "saguenay",
 }
 
 # === 5 DIFFERENT HUMAN FINGERPRINTS ===
@@ -175,21 +218,13 @@ def add_to_queue(postal_code: str):
     if db is None: return
     try:
         db.collection("lab_requests_queue").document(postal_code).set({"postal_code": postal_code, "status": "queued", "queued_at": datetime.now()})
-        print(f"⏳ Added to queue: {postal_code}")
-    except Exception as e:
-        print(f"❌ Queue failed: {e}")
+    except: pass
 
-
-# ══════════════════════════════════════════════════════════════
-# ★ SINGLE WORKER — DEBUG MODE: Dump HTML + extract cards ★
-# ══════════════════════════════════════════════════════════════
 
 def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
     profile_name = profile.get("name", f"User-{worker_id}")
     stagger_delay = profile.get("delay", worker_id * 15)
-
     if stagger_delay > 0:
-        print(f"   [{profile_name}] ⏳ Waiting {stagger_delay}s...")
         time.sleep(stagger_delay)
 
     print(f"\n   [{profile_name}] 🧑 Starting...")
@@ -211,227 +246,121 @@ def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
         try:
             time.sleep(random.uniform(1, 3))
             page.goto("https://portal3.clicsante.ca/services/blood-test", wait_until="networkidle", timeout=60000)
-            print(f"   [{profile_name}] 📄 Page loaded")
             time.sleep(random.uniform(1.5, 3))
-            time.sleep(random.uniform(0.5, 1.5))
             try:
                 page.locator("text=Sans frais").first.click(timeout=8000)
                 print(f"   [{profile_name}] ✅ Sans frais")
             except:
-                try:
-                    page.locator("text=No fees").first.click(timeout=5000)
-                except:
-                    pass
+                try: page.locator("text=No fees").first.click(timeout=5000)
+                except: pass
             time.sleep(random.uniform(1, 2))
             try:
                 inputs = page.locator("input[type='text']").all()
                 if inputs:
-                    inputs[0].click()
-                    time.sleep(random.uniform(0.3, 0.8))
-                    inputs[0].fill("")
-                    time.sleep(random.uniform(0.2, 0.5))
+                    inputs[0].click(); time.sleep(0.3)
+                    inputs[0].fill(""); time.sleep(0.2)
                     inputs[0].type(postal_code, delay=random.randint(100, 200))
                     print(f"   [{profile_name}] ✅ Postal: {postal_code}")
-            except:
-                pass
+            except: pass
             time.sleep(random.uniform(1.5, 3))
-            try:
-                page.get_by_role("button", name="Search").first.click(timeout=8000)
-                print(f"   [{profile_name}] ✅ Search")
+            try: page.get_by_role("button", name="Search").first.click(timeout=8000)
             except:
-                try:
-                    page.get_by_role("button", name="Rechercher").first.click(timeout=5000)
-                except:
-                    page.keyboard.press("Enter")
+                try: page.get_by_role("button", name="Rechercher").first.click(timeout=5000)
+                except: page.keyboard.press("Enter")
             time.sleep(random.uniform(2, 4))
-            print(f"   [{profile_name}] ⏳ Waiting for results...")
-            try:
-                page.wait_for_selector("text=km", timeout=30000)
-                print(f"   [{profile_name}] ✅ Results loaded")
-            except:
-                print(f"   [{profile_name}] ⚠️ Waiting anyway...")
+            try: page.wait_for_selector("text=km", timeout=30000)
+            except: pass
             time.sleep(random.uniform(3, 6))
 
-            # ══════════════════════════════════════════════════
-            # ★ DEBUG: Save full page HTML ★
-            # ══════════════════════════════════════════════════
-            print(f"   [{profile_name}] 📁 Saving full page HTML for debugging...")
-            try:
-                html = page.content()
-                filename = f"clicsante_debug_{profile_name.replace(' ', '_').replace('-', '_')}.html"
-                with open(filename, "w", encoding="utf-8") as f:
-                    f.write(html)
-                print(f"   [{profile_name}] 📁 Saved: {filename} ({len(html)} chars)")
-            except Exception as e:
-                print(f"   [{profile_name}] ⚠️ HTML save failed: {e}")
-
-            # ══════════════════════════════════════════════════
-            # ★ EXTRACT: Find booking links and their parent cards ★
-            # ══════════════════════════════════════════════════
-            print(f"   [{profile_name}] 🔍 Extracting clinic data...")
-
+            # ★ EXTRACT: Find booking links and get names ★
             book_links = page.locator("a[href*='take-appt']").all()
-            print(f"   [{profile_name}] 📎 Found {len(book_links)} 'Book appt.' links")
+            print(f"   [{profile_name}] 📎 {len(book_links)} booking links")
 
-            for i, link in enumerate(book_links):
+            for link in book_links:
                 try:
                     href = link.get_attribute("href") or ""
                     clinic_id_match = re.search(r'/(\d+)/take-appt', href)
-                    if not clinic_id_match:
-                        continue
+                    if not clinic_id_match: continue
                     clinic_id = clinic_id_match.group(1)
                     url = f"https://clients3.clicsante.ca/{clinic_id}/take-appt"
 
-                    # ══════════════════════════════════════════
-                    # ★ METHOD 1: Get parent card/row text ★
-                    # ══════════════════════════════════════════
-                    card_info = link.evaluate("""el => {
-                        let current = el;
-                        let result = { tagPath: [], texts: [] };
-                        
-                        // Walk up to find the card container
-                        for (let level = 0; level < 10; level++) {
-                            if (!current || !current.parentElement) break;
-                            current = current.parentElement;
-                            let tag = current.tagName;
-                            let cls = current.className || '';
-                            let id = current.id || '';
-                            result.tagPath.push(tag + (cls ? '.' + cls.split(' ')[0] : '') + (id ? '#' + id : ''));
-                            
-                            let text = current.innerText?.trim();
-                            if (text && text.length > 40 && text.length < 800) {
-                                result.texts.push({
-                                    level: level,
-                                    length: text.length,
-                                    text: text.substring(0, 400),
-                                    tagPath: [...result.tagPath]
-                                });
-                            }
-                        }
-                        return result;
-                    }""")
-
-                    # ══════════════════════════════════════════
-                    # ★ METHOD 2: Find heading/name near the link ★
-                    # ══════════════════════════════════════════
-                    nearby_heading = link.evaluate("""el => {
-                        // Look for h2, h3, h4, strong tags in the same container
+                    # Method 1: Nearby heading
+                    name = link.evaluate("""el => {
                         let parent = el.closest('li, article, div[class*="result"], div[class*="card"], div[class*="item"]');
                         if (!parent) parent = el.closest('div');
                         if (!parent) return '';
-                        
-                        let headings = parent.querySelectorAll('h1, h2, h3, h4, h5, strong, b, [class*="name"], [class*="title"], [class*="heading"]');
+                        let headings = parent.querySelectorAll('h1, h2, h3, h4, h5, strong, b, [class*="name"], [class*="title"]');
                         for (let h of headings) {
                             let text = h.innerText?.trim();
-                            if (text && text.length > 5 && text.length < 200 && text !== 'Book appt.') {
-                                return text;
-                            }
+                            if (text && text.length > 5 && text.length < 200 && text !== 'Book appt.') return text;
                         }
                         return '';
                     }""")
 
-                    # ══════════════════════════════════════════
-                    # ★ METHOD 3: Get ALL text in the row/li ★
-                    # ══════════════════════════════════════════
-                    row_text = link.evaluate("""el => {
-                        let row = el.closest('li, tr, [class*="row"], [class*="item"], [class*="result"]');
-                        if (row) return row.innerText?.trim()?.substring(0, 500);
-                        return '';
-                    }""")
-
-                    # ══════════════════════════════════════════
-                    # ★ METHOD 4: Get previous sibling text ★
-                    # ══════════════════════════════════════════
-                    prev_text = link.evaluate("""el => {
-                        let prev = el.previousElementSibling;
-                        let count = 0;
-                        while (prev && count < 5) {
-                            let text = prev.innerText?.trim();
-                            if (text && text.length > 5 && text.length < 200 && text !== 'Book appt.') {
-                                return text;
+                    # Method 2: Previous sibling
+                    if not name:
+                        name = link.evaluate("""el => {
+                            let prev = el.previousElementSibling;
+                            let count = 0;
+                            while (prev && count < 5) {
+                                let text = prev.innerText?.trim();
+                                if (text && text.length > 5 && text.length < 200 && text !== 'Book appt.') return text;
+                                prev = prev.previousElementSibling; count++;
                             }
-                            prev = prev.previousElementSibling;
-                            count++;
-                        }
-                        return '';
-                    }""")
+                            return '';
+                        }""")
 
-                    # ══════════════════════════════════════════
-                    # ★ DEBUG: Print all extracted info ★
-                    # ══════════════════════════════════════════
-                    print(f"\n   [{profile_name}] 📦 Link #{i+1} (ID: {clinic_id})")
-                    print(f"   [{profile_name}]    🔗 URL: {url}")
-                    print(f"   [{profile_name}]    📝 Nearby heading: {nearby_heading[:120] if nearby_heading else 'NONE'}")
-                    print(f"   [{profile_name}]    📝 Previous sibling: {prev_text[:120] if prev_text else 'NONE'}")
-                    print(f"   [{profile_name}]    📝 Row text (first 200): {row_text[:200] if row_text else 'NONE'}")
-
-                    if card_info and card_info.get('texts'):
-                        print(f"   [{profile_name}]    📦 Container texts found at levels:")
-                        for t in card_info['texts'][:3]:
-                            print(f"   [{profile_name}]       Level {t['level']} ({t['length']} chars): {t['text'][:150]}")
-
-                    # ══════════════════════════════════════════
-                    # ★ PICK THE BEST NAME ★
-                    # ══════════════════════════════════════════
-                    name = ""
-
-                    # Priority 1: Nearby heading
-                    if nearby_heading and len(nearby_heading) > 5:
-                        name = nearby_heading[:150]
-
-                    # Priority 2: Previous sibling
-                    if not name and prev_text and len(prev_text) > 5:
-                        name = prev_text[:150]
-
-                    # Priority 3: First meaningful line from row text
-                    if not name and row_text:
-                        lines = row_text.split('\n')
-                        for line in lines:
-                            line = line.strip()
-                            if line and line != "Book appt." and len(line) > 10 and len(line) < 200:
-                                if "km" not in line.lower() and "book" not in line.lower():
-                                    name = line[:150]
-                                    break
-
-                    # Priority 4: First meaningful text from container
-                    if not name and card_info and card_info.get('texts'):
-                        for t in card_info['texts']:
-                            text = t['text']
-                            lines = text.split('\n')
-                            for line in lines:
+                    # Method 3: Row text first line
+                    if not name:
+                        row_text = link.evaluate("""el => {
+                            let row = el.closest('li, tr, [class*="row"], [class*="item"], [class*="result"]');
+                            return row ? row.innerText?.trim()?.substring(0, 500) : '';
+                        }""")
+                        if row_text:
+                            for line in row_text.split('\n'):
                                 line = line.strip()
                                 if line and line != "Book appt." and len(line) > 10 and len(line) < 200:
-                                    if "km" not in line.lower() and "book" not in line.lower():
-                                        name = line[:150]
-                                        break
-                            if name:
-                                break
+                                    if "km" not in line.lower():
+                                        name = line; break
 
-                    # Fallback
+                    # Method 4: Walk up parents
+                    if not name:
+                        name = link.evaluate("""el => {
+                            let current = el;
+                            for (let i = 0; i < 8; i++) {
+                                if (!current || !current.parentElement) break;
+                                current = current.parentElement;
+                                let text = current.innerText?.trim();
+                                if (text && text.length > 40 && text.length < 600) {
+                                    let lines = text.split('\\n');
+                                    for (let line of lines) {
+                                        line = line.trim();
+                                        if (line && line !== 'Book appt.' && line.length > 10 && line.length < 200 && !line.toLowerCase().includes('km')) {
+                                            return line;
+                                        }
+                                    }
+                                }
+                            }
+                            return '';
+                        }""")
+
                     if not name:
                         name = f"Clinique #{clinic_id}"
-
-                    print(f"   [{profile_name}]    ✅ SELECTED NAME: {name[:120]}")
 
                     place = {"name": name[:150], "url": url}
                     if place not in places:
                         places.append(place)
+                        print(f"   [{profile_name}]    📍 {name[:80]}")
 
                     if len(places) >= 5:
                         break
+                except: pass
 
-                except Exception as e:
-                    print(f"   [{profile_name}]    ❌ Link #{i+1} error: {e}")
-
-            print(f"\n   [{profile_name}] ✅ Found {len(places)} places with debug info")
-
+            print(f"   [{profile_name}] ✅ Found {len(places)} places")
         except Exception as e:
             print(f"   [{profile_name}] ❌ Error: {e}")
-            import traceback
-            traceback.print_exc()
         finally:
             browser.close()
-
     return places[:5]
 
 
@@ -442,14 +371,12 @@ def check_availability():
     if is_peak_hours():
         print(f"\n{'='*60}")
         print(f"⏰ PEAK HOURS (8am-10am) — Request queued")
-        print(f"{'='*60}")
         add_to_queue(postal_code)
         return True
 
     print(f"\n{'='*60}")
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M')}] 📍 {postal_code} | {zone}")
-    print(f"🧑 5 human-like browsers (DEBUG MODE — saving HTML)...")
-    print(f"{'='*60}")
+    print(f"🧑 5 human-like browsers...")
 
     all_places = []
     seen_names = set()
@@ -463,14 +390,12 @@ def check_availability():
                     if p['name'] not in seen_names:
                         seen_names.add(p['name'])
                         all_places.append(p)
-            except Exception as e:
-                print(f"   ❌ Worker failed: {e}")
+            except: pass
 
     all_places = all_places[:5]
 
     print(f"\n{'='*60}")
     print(f"✅ FINAL RESULTS: {len(all_places)} places near {postal_code}")
-    print(f"{'='*60}")
     for i, p in enumerate(all_places):
         print(f"\n   {i+1}. 📍 {p.get('name')}")
         print(f"      🔗 {p.get('url')}")
@@ -478,7 +403,6 @@ def check_availability():
     save_to_firestore(postal_code, all_places)
     send_notification(postal_code, all_places)
     print(f"\n🎉 Done! {len(all_places)} choices saved + 1 notification sent.")
-    print(f"📁 HTML debug files saved as clicsante_debug_*.html")
     return True
 
 
