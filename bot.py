@@ -257,10 +257,11 @@ def add_to_queue(postal_code: str):
 
 
 # ══════════════════════════════════════════════════════════════
-# ★ SINGLE WORKER — Better name extraction + correct URL field
+# ★ SINGLE WORKER — Extracts REAL clinic names from page ★
 # ══════════════════════════════════════════════════════════════
 
 def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
+    """Navigate ClicSanté, extract REAL clinic/hospital/pharmacy names from the page"""
     profile_name = profile.get("name", f"User-{worker_id}")
     stagger_delay = profile.get("delay", worker_id * 15)
 
@@ -320,7 +321,7 @@ def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
                 except:
                     page.keyboard.press("Enter")
             time.sleep(random.uniform(2, 4))
-            print(f"   [{profile_name}] ⏳ Waiting...")
+            print(f"   [{profile_name}] ⏳ Waiting for results...")
             try:
                 page.wait_for_selector("text=km", timeout=30000)
                 print(f"   [{profile_name}] ✅ Results loaded")
@@ -328,98 +329,156 @@ def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
                 print(f"   [{profile_name}] ⚠️ Waiting anyway...")
             time.sleep(random.uniform(3, 6))
 
-            print(f"   [{profile_name}] 🔍 Extracting clinics...")
-            book_links = page.locator("a[href*='take-appt']").all()
-            print(f"   [{profile_name}] 📎 {len(book_links)} booking links")
+            # ★ NEW APPROACH: Extract names from the FULL results page ★
+            print(f"   [{profile_name}] 🔍 Extracting real clinic names...")
 
+            # Get ALL text from the results section of the page
+            full_text = page.inner_text("body")
+            lines = full_text.split('\n')
+
+            # Find the results section (starts after "Specimens and/or Blood Test")
+            results_started = False
+            name_buffer = []
+            current_distance = ""
+
+            for i, line in enumerate(lines):
+                line = line.strip()
+                if not line:
+                    continue
+
+                # Detect when results section starts
+                if "specimens" in line.lower() and "blood" in line.lower():
+                    results_started = True
+                    continue
+                if "skip to main" in line.lower() or "all services" in line.lower():
+                    continue
+                if "cancel an appointment" in line.lower() or "need help" in line.lower():
+                    continue
+
+                if not results_started:
+                    continue
+
+                # Stop when we hit the footer/end of results
+                if "source:" in line.lower() or "accessibilite" in line.lower() or "contact us" in line.lower():
+                    break
+
+                # Detect distance lines (contain "km")
+                if "km" in line.lower() and len(line) < 100:
+                    current_distance = line
+                    # If we have a name buffered, this is a place
+                    if name_buffer:
+                        full_name = " ".join(name_buffer).strip()
+                        if full_name and len(full_name) > 5 and "km" not in full_name.lower():
+                            # Clean up the name
+                            full_name = full_name.replace("Add to favorites", "").replace("Service", "").strip()
+                            if full_name:
+                                places.append({
+                                    "name": full_name[:150],
+                                    "distance": current_distance,
+                                    "url": "",  # Will be filled by booking link lookup
+                                })
+                        name_buffer = []
+                    continue
+
+                # Detect "Book appt." lines
+                if "book appt" in line.lower():
+                    continue
+
+                # Lines before "km" are likely place names
+                if not current_distance and len(line) > 10 and len(line) < 200:
+                    name_buffer.append(line)
+
+            # ★ SECOND PASS: Match booking links to places by proximity ★
+            print(f"   [{profile_name}] 📎 Matching booking links...")
+            book_links = page.locator("a[href*='take-appt']").all()
+            link_urls = []
             for link in book_links:
                 try:
                     href = link.get_attribute("href") or ""
                     clinic_id = re.search(r'/(\d+)/take-appt', href)
-                    if not clinic_id:
-                        continue
-                    clinic_id = clinic_id.group(1)
-                    name = ""
+                    if clinic_id:
+                        link_urls.append(f"https://clients3.clicsante.ca/{clinic_id.group(1)}/take-appt")
+                except:
+                    pass
 
-                    # Method 1: Go up parent elements to find meaningful text
+            # Assign links to places
+            for i in range(min(len(places), len(link_urls))):
+                places[i]["url"] = link_urls[i]
+
+            # Remove places without links
+            places = [p for p in places if p.get("url")]
+
+            # If we didn't find enough, try scraping the booking links with surrounding text
+            if len(places) < 3:
+                print(f"   [{profile_name}] ⚠️ Only {len(places)} places — trying link scraping...")
+                places = []
+                book_links = page.locator("a[href*='take-appt']").all()
+                for link in book_links:
                     try:
-                        container = link.evaluate("""el => {
-                            let current = el;
-                            for (let i = 0; i < 5; i++) {
-                                if (current.parentElement) {
-                                    current = current.parentElement;
-                                    let text = current.innerText;
-                                    if (text && text.length > 30 && text.length < 500) {
-                                        return text;
-                                    }
+                        href = link.get_attribute("href") or ""
+                        clinic_id = re.search(r'/(\d+)/take-appt', href)
+                        if not clinic_id:
+                            continue
+                        clinic_id = clinic_id.group(1)
+                        url = f"https://clients3.clicsante.ca/{clinic_id}/take-appt"
+
+                        # Get ALL text in the parent row/container
+                        parent_text = link.evaluate("""el => {
+                            let p = el.parentElement;
+                            for (let i = 0; i < 6; i++) {
+                                if (p && p.innerText && p.innerText.length > 30) {
+                                    return p.innerText;
                                 }
+                                p = p ? p.parentElement : null;
                             }
                             return '';
                         }""")
-                        if container:
-                            lines = container.strip().split('\n')
-                            for line in lines:
-                                line = line.strip()
-                                if line and line != "Book appt." and len(line) > 5 and len(line) < 200:
-                                    if "km" not in line.lower() and "book" not in line.lower() and "add to" not in line.lower():
-                                        name = line[:120]
+
+                        if parent_text:
+                            # Find the best name from the parent text
+                            plines = parent_text.strip().split('\n')
+                            best_name = ""
+                            for pline in plines:
+                                pline = pline.strip()
+                                # Skip buttons, distances, generic text
+                                if not pline or pline == "Book appt.":
+                                    continue
+                                if "km" in pline.lower() and len(pline) < 50:
+                                    continue
+                                if pline.lower() in ["add to favorites", "service", "book appt."]:
+                                    continue
+                                if len(pline) > 10 and len(pline) < 200:
+                                    # Take the first substantial line as the name
+                                    if not best_name:
+                                        best_name = pline
                                         break
+                            if best_name:
+                                places.append({
+                                    "name": best_name[:150],
+                                    "url": url,
+                                })
+                        if len(places) >= 5:
+                            break
                     except:
                         pass
 
-                    # Method 2: Find heading element nearby
-                    if not name:
-                        try:
-                            heading = link.evaluate("""el => {
-                                let parent = el.closest('div, li, article');
-                                if (parent) {
-                                    let h = parent.querySelector('h2, h3, h4, strong, [class*="name"], [class*="title"]');
-                                    return h ? h.innerText : '';
-                                }
-                                return '';
-                            }""")
-                            if heading and len(heading.strip()) > 5:
-                                name = heading.strip()[:120]
-                        except:
-                            pass
+            # Deduplicate by name
+            seen = set()
+            unique_places = []
+            for p in places:
+                if p['name'] not in seen:
+                    seen.add(p['name'])
+                    unique_places.append(p)
+            places = unique_places[:5]
 
-                    # Method 3: Get row/card text
-                    if not name:
-                        try:
-                            row_text = link.evaluate("""el => {
-                                let row = el.closest('li, tr, [class*="row"], [class*="item"], [class*="card"], [class*="result"]');
-                                return row ? row.innerText : '';
-                            }""")
-                            if row_text:
-                                lines = row_text.strip().split('\n')
-                                for line in lines:
-                                    line = line.strip()
-                                    if line and line != "Book appt." and len(line) > 5 and len(line) < 200:
-                                        if "km" not in line.lower():
-                                            name = line[:120]
-                                            break
-                        except:
-                            pass
-
-                    # Fallback
-                    if not name:
-                        name = f"Clinique #{clinic_id}"
-
-                    place = {
-                        "name": name[:120],
-                        "id": clinic_id,
-                        "url": f"https://clients3.clicsante.ca/{clinic_id}/take-appt",
-                    }
-                    if place not in places:
-                        places.append(place)
-                        print(f"   [{profile_name}]    📍 {name[:80]}")
-                    if len(places) >= 5:
-                        break
-                except:
-                    pass
             print(f"   [{profile_name}] ✅ Found {len(places)} places")
+            for p in places:
+                print(f"      📍 {p['name'][:80]}")
+
         except Exception as e:
             print(f"   [{profile_name}] ❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
         finally:
             browser.close()
     return places[:5]
@@ -442,7 +501,7 @@ def check_availability():
     print(f"{'='*60}")
 
     all_places = []
-    seen_ids = set()
+    seen_names = set()
 
     with ThreadPoolExecutor(max_workers=5) as executor:
         futures = {executor.submit(run_human_browser, profile, postal_code, i): i for i, profile in enumerate(BROWSER_PROFILES)}
@@ -450,9 +509,8 @@ def check_availability():
             try:
                 places = future.result()
                 for p in places:
-                    pid = p.get('id', p['name'])
-                    if pid not in seen_ids:
-                        seen_ids.add(pid)
+                    if p['name'] not in seen_names:
+                        seen_names.add(p['name'])
                         all_places.append(p)
             except Exception as e:
                 print(f"   ❌ Worker failed: {e}")
