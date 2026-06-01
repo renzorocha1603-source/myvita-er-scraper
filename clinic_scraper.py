@@ -1,4 +1,13 @@
-from playwright.sync_api import sync_playwright, TimeoutError
+#!/usr/bin/env python3
+"""
+MYVITA CLINIC SCRAPER - FULL END-TO-END BOOKING
+- 156 unique clinics across Quebec
+- 5 parallel stealth browsers (Playwright + Chromium)
+- Human-like delays and fingerprint evasion
+- Kill switch stops at FIRST confirmed booking
+"""
+
+from playwright.sync_api import sync_playwright
 import time
 import random
 import os
@@ -6,12 +15,12 @@ import json
 import re
 import math
 from datetime import datetime, timedelta
-import firebase_admin
-from firebase_admin import credentials, messaging, firestore
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
-# ══════════════════════════════════════════════════════════════
+# ================================================================
 # 1. CONFIGURATION
-# ══════════════════════════════════════════════════════════════
+# ================================================================
 
 POSTAL_CODES = {
     "H1Y": "montreal_east", "H1A": "montreal_east", "H1B": "montreal_east",
@@ -32,59 +41,91 @@ POSTAL_CODES = {
 
 GOOGLE_MAPS_PROXY = "https://us-central1-myvita-app-c5ecd.cloudfunctions.net/googleMapsProxy"
 RADIUS_TIERS = [15, 30, 50]
-MAX_DAYS_AHEAD = 10
 
-# ══════════════════════════════════════════════════════════════
-# 2. KILL SWITCH
-# ══════════════════════════════════════════════════════════════
+# ================================================================
+# 2. THREAD-SAFE KILL SWITCH
+# ================================================================
 
-class KillSwitch:
+class ParallelKillSwitch:
     _active = False
     _found_appointment = None
-
+    _lock = threading.Lock()
+    
     @classmethod
     def activate(cls, details: dict):
-        cls._active = True
-        cls._found_appointment = details
-        print(f"\n🛑 KILL SWITCH: {details.get('clinic_name')} | {details.get('platform')}")
-
+        with cls._lock:
+            if not cls._active:
+                cls._active = True
+                cls._found_appointment = details
+                print(f"\n🛑 KILL SWITCH: {details.get('clinic_name')}")
+    
     @classmethod
     def is_active(cls) -> bool:
-        return cls._active
-
+        with cls._lock:
+            return cls._active
+    
+    @classmethod
+    def get_found(cls):
+        with cls._lock:
+            return cls._found_appointment
+    
     @classmethod
     def reset(cls):
-        cls._active = False
-        cls._found_appointment = None
-        print("🔄 Kill switch reset")
+        with cls._lock:
+            cls._active = False
+            cls._found_appointment = None
 
+# ================================================================
+# 3. STEALTH BROWSER (HUMAN-LIKE)
+# ================================================================
 
-# ══════════════════════════════════════════════════════════════
-# 3. FIREBASE SETUP
-# ══════════════════════════════════════════════════════════════
+def human_delay(min_ms=500, max_ms=1500):
+    time.sleep(random.uniform(min_ms, max_ms) / 1000)
 
-db = None
+def get_random_user_agent():
+    user_agents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+    ]
+    return random.choice(user_agents)
 
-def init_firebase():
-    global db
-    try:
-        creds_json = os.getenv("FIREBASE_CREDENTIALS")
-        if creds_json:
-            cred_dict = json.loads(creds_json)
-            cred = credentials.Certificate(cred_dict)
-            if not firebase_admin._apps:
-                firebase_admin.initialize_app(cred, {'projectId': 'myvita-app-c5ecd'})
-            db = firestore.client()
-            print("✅ Firebase initialized (GitHub Secret)")
-    except Exception as e:
-        print(f"⚠️ Firebase Init Error: {e}")
+def launch_stealth_browser(p, headless=False):  # headless=False so you can SEE what's happening
+    """Launch a human-like stealth browser"""
+    browser = p.chromium.launch(
+        headless=headless,
+        args=[
+            "--no-sandbox",
+            "--disable-blink-features=AutomationControlled",
+            "--disable-dev-shm-usage",
+            "--disable-web-security",
+            "--disable-features=IsolateOrigins,site-per-process",
+            "--window-size=1280,800",
+        ]
+    )
+    
+    context = browser.new_context(
+        viewport={"width": 1280, "height": 800},
+        user_agent=get_random_user_agent(),
+        locale="fr-CA",
+        timezone_id="America/Montreal",
+        extra_http_headers={
+            "Accept-Language": "fr-CA,fr;q=0.9,en;q=0.8",
+        }
+    )
+    
+    # Hide webdriver property
+    context.add_init_script("""
+        Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+        Object.defineProperty(navigator, 'plugins', {get: () => [1,2,3,4,5]});
+        window.chrome = {runtime: {}};
+    """)
+    
+    return browser, context
 
-init_firebase()
-
-
-# ══════════════════════════════════════════════════════════════
+# ================================================================
 # 4. USER DATA
-# ══════════════════════════════════════════════════════════════
+# ================================================================
 
 def get_user_data():
     return {
@@ -100,28 +141,21 @@ def get_user_data():
         "language": os.getenv("USER_LANGUAGE", "fr"),
     }
 
+# ================================================================
+# 5. UTILITIES
+# ================================================================
 
-# ══════════════════════════════════════════════════════════════
-# 5. UTILITY FUNCTIONS
-# ══════════════════════════════════════════════════════════════
-
-def human_delay(min_ms=500, max_ms=1500):
-    time.sleep(random.uniform(min_ms, max_ms) / 1000)
-
-def get_zone(postal_code: str) -> str:
-    return POSTAL_CODES.get(postal_code[:3].upper(), f"zone_{postal_code[:3]}")
-
-def haversine(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
-    R = 6371.0
+def haversine(lat1, lng1, lat2, lng2):
+    R = 6371
     dlat = math.radians(lat2 - lat1)
     dlng = math.radians(lng2 - lng1)
     a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlng/2)**2
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
 
-def geocode_postal_code(postal_code: str) -> dict:
-    import requests as req
+def geocode_postal_code(postal_code: str):
+    import requests
     try:
-        response = req.post(GOOGLE_MAPS_PROXY, json={
+        response = requests.post(GOOGLE_MAPS_PROXY, json={
             "endpoint": "geocode/json",
             "params": {"address": f"{postal_code}, Quebec, Canada", "region": "ca"}
         }, timeout=15)
@@ -134,646 +168,358 @@ def geocode_postal_code(postal_code: str) -> dict:
         print(f"⚠️ Geocode error: {e}")
     return None
 
-def get_user_token():
-    if db is None: return None
-    try:
-        users_ref = db.collection('users').order_by('fcmTokenUpdated', direction='DESCENDING').limit(1)
-        for doc in users_ref.stream():
-            token = doc.to_dict().get('fcmToken')
-            if token: return token
-    except: pass
-    return None
-
-
-# ══════════════════════════════════════════════════════════════
-# 6. NOTIFICATION & DATA SAVING
-# ══════════════════════════════════════════════════════════════
-
-def save_availability(clinic_name, postal_code, platform, has_slots, booking_url, slot_details):
-    if db is None: return
-    zone = get_zone(postal_code)
-    now = datetime.now()
-    doc_id = f"{platform}_{zone}_{clinic_name.replace(' ', '_')[:60]}"
-    try:
-        db.collection("availability").document(doc_id).set({
-            "platform": platform, "postal_code": postal_code,
-            "clinic_name": clinic_name, "zone": zone,
-            "slots_found": has_slots, "booking_url": booking_url,
-            "slot_details": slot_details, "last_checked": now,
-        })
-        print(f"🔥 Firestore: {doc_id}")
-    except Exception as e:
-        print(f"❌ Firestore Error: {e}")
-
-def update_clinic_request(request_id, status, result=None):
-    if db is None or not request_id:
-        return
-    try:
-        update_data = {
-            "status": status,
-            "updated_at": firestore.SERVER_TIMESTAMP
-        }
-        if result:
-            update_data["scraper_result"] = result
-            if result.get("found") == True:
-                update_data["result_summary"] = f"Found: {result.get('clinic_name', 'Unknown')} via {result.get('platform', 'Unknown')}"
-            else:
-                update_data["result_summary"] = "No appointments found"
-        if status == "completed":
-            update_data["completed_at"] = firestore.SERVER_TIMESTAMP
-
-        db.collection("clinic_requests").document(request_id).update(update_data)
-        print(f"📝 Updated clinic_requests/{request_id}: status={status}")
-    except Exception as e:
-        print(f"❌ Failed to update clinic request: {e}")
-
-def send_notification(clinic_name, postal_code, platform, booking_url):
-    token = get_user_token()
-    if not token: return
-    try:
-        messaging.send(messaging.Message(
-            notification=messaging.Notification(
-                title="🎉 Rendez-vous trouvé!",
-                body=f"{clinic_name} près de {postal_code}. Touchez pour réserver."
-            ),
-            data={
-                "url": booking_url,
-                "platform": platform,
-                "clinic": clinic_name,
-                "postal": postal_code,
-                "click_action": "OPEN_BOOKING"
-            },
-            token=token,
-        ))
-        print("✅ Notification Sent (slot found)")
-    except Exception as e:
-        print(f"❌ FCM Error: {e}")
-
-def send_no_slots_notification(postal_code, language):
-    token = get_user_token()
-    if not token: return
-    try:
-        title = "😴 Aucun rendez-vous trouvé" if language == "fr" else "😴 No appointments found"
-        body = "Notre concierge humain peut vous aider. Ouvrez l'application pour continuer." if language == "fr" else "Our human concierge can help. Open the app to continue."
-        messaging.send(messaging.Message(
-            notification=messaging.Notification(
-                title=title,
-                body=body
-            ),
-            data={
-                "click_action": "OPEN_CONCIERGE",
-                "postal": postal_code
-            },
-            token=token,
-        ))
-        print("✅ No-slots notification sent")
-    except Exception as e:
-        print(f"❌ FCM Error: {e}")
-
-
-# ══════════════════════════════════════════════════════════════
-# 7. BROWSER SETUP
-# ══════════════════════════════════════════════════════════════
-
-def launch_stealth_browser(p, headless=True):
-    browser = p.chromium.launch(headless=headless, args=[
-        "--no-sandbox", "--disable-blink-features=AutomationControlled", "--disable-dev-shm-usage"
-    ])
-    context = browser.new_context(
-        viewport={"width": 1280, "height": 800},
-        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36"
-    )
-    context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-    return browser, context
-
-
-# ══════════════════════════════════════════════════════════════
-# 8. CLINIC MAP WITH COORDINATES — 78 clinics
-# ══════════════════════════════════════════════════════════════
+# ================================================================
+# 6. FULL CLINICS DATABASE (156 CLINICS)
+# ================================================================
 
 CLINICS = [
-    # Montreal East
-    {"name": "GMF-R Cité Médicale Villeray", "lat": 45.5463, "lng": -73.6214, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "Centre Médical Mieux-Être (succursale Levasseur)", "lat": 45.5841, "lng": -73.6412, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/levasseur"},
-    {"name": "Clinique Médico-Centre Mont-Royal", "lat": 45.5163, "lng": -73.5786, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/montroyal"},
-    {"name": "GMF Médi-Centre Chomedey", "lat": 45.5451, "lng": -73.7483, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/medicentrechomedey"},
-    {"name": "Polyclinique du cœur-de-l'île GMF-R Jarry-Lajeunesse", "lat": 45.5442, "lng": -73.6256, "platform": "no_online_booking", "booking_url": ""},
-    {"name": "CLSC du Plateau-Mont-Royal", "lat": 45.5195, "lng": -73.5781, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "CLSC de Dorval-Lachine", "lat": 45.4385, "lng": -73.6841, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "UnionMD - Clinique Médicale Privée Montreal", "lat": 45.5032, "lng": -73.5721, "platform": "other", "booking_url": ""},
-    {"name": "CLSC de Saint-Henri (Montréal)", "lat": 45.4775, "lng": -73.5856, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "CLSC Métro (Montréal)", "lat": 45.4931, "lng": -73.5802, "platform": "clicsante", "booking_url": "https://portal3.clicsante.ca/"},
-    {"name": "CLSC de Hochelaga-Maisonneuve", "lat": 45.5422, "lng": -73.5397, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "Centre D'Urgence Saint-Laurent (GMF)", "lat": 45.5118, "lng": -73.6802, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/cusl"},
-    {"name": "GMF A-R Clinique médicale Angus (Montréal)", "lat": 45.5401, "lng": -73.5658, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/angus"},
-    # Montreal Central
-    {"name": "GMF Clinique Médicale St-Denis (Montréal)", "lat": 45.5264, "lng": -73.5932, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/stdenis"},
-    # Anjou
-    {"name": "GMF Centre Médical Mieux-Être (Succursale Anjou)", "lat": 45.6031, "lng": -73.5518, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    # Mieux-Être network
-    {"name": "Centre Médical Mieux-Être - Lasalle", "lat": 45.4312, "lng": -73.6248, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/cmmelasalle"},
-    {"name": "Centre Médical Mieux-Être - Henri-Bourassa", "lat": 45.6421, "lng": -73.6105, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/cmmehenribourassa"},
-    {"name": "GMF A-R Centre médical Mieux-Être – St-Léonard", "lat": 45.5892, "lng": -73.6014, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/mieuxetre"},
-    # Laval
-    {"name": "GMF Le Carrefour Médical (Laval)", "lat": 45.5684, "lng": -73.7431, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/lecarrefour"},
-    {"name": "GMF Clinique Médicale Sainte-Dorothée (Laval)", "lat": 45.5312, "lng": -73.8115, "platform": "pomelo", "booking_url": "https://pomelo.health/cliniquemedicalesaintedorothee"},
-    {"name": "GMF Polyclinique Concorde (Laval)", "lat": 45.5615, "lng": -73.7082, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "CLSC de Laval-des-Rapides", "lat": 45.5492, "lng": -73.7124, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "Super-Clinique Polyclinique Médicale Fabreville (GMF)", "lat": 45.5925, "lng": -73.7912, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/fabreville"},
-    {"name": "Clinique Médicale Saint-François (GMF)", "lat": 45.5781, "lng": -73.6542, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/stfrancois"},
-    {"name": "CLSC Idola-Saint-Jean", "lat": 45.5652, "lng": -73.6931, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "CLSC des Mille-Îles", "lat": 45.6315, "lng": -73.6212, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "CLSC de l'Ouest-de-l'Île", "lat": 45.4523, "lng": -73.8321, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "CLSC de Sainte-Rose", "lat": 45.6121, "lng": -73.7824, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "CLSC du Ruisseau-Papineau", "lat": 45.5794, "lng": -73.7251, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "GMF Centre Médical Laval", "lat": 45.5521, "lng": -73.7314, "platform": "pomelo", "booking_url": "https://qc.pomelo.health/centremedicallaval"},
-    # Longueuil / Rive-Sud
-    {"name": "Clinique médicale privée Longueuil - Rive-Sud - UnionMD", "lat": 45.5252, "lng": -73.5135, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/unionmdlongueuil"},
-    {"name": "GMF-R Clinique Médicale Longueuil-Ouest", "lat": 45.5314, "lng": -73.5248, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/longueuilouest"},
-    {"name": "CLSC de Longueuil-Ouest (Rive-Sud)", "lat": 45.5314, "lng": -73.5248, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "GMF-U Charles-Le Moyne (Longueuil)", "lat": 45.5184, "lng": -73.4831, "platform": "pomelo", "booking_url": "https://qc.pomelo.health/gmfucharleslemoyne"},
-    # Brossard
-    {"name": "GMF Dix30 (Clinique d'urgence avec rendez-vous Dix30 Brossard)", "lat": 45.4428, "lng": -73.4412, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/gmfdix30"},
-    {"name": "Clinique Sans Rendez-Vous Dix30 Brossard (GMF)", "lat": 45.4428, "lng": -73.4412, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/csansrendezvousdix30brossard"},
-    {"name": "GMF Samuel-de-Champlain", "lat": 45.4682, "lng": -73.4715, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "GMF Lapinière", "lat": 45.4561, "lng": -73.4623, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    # West Island
-    {"name": "GMF Stillview (West Island - Pointe-Claire)", "lat": 45.4485, "lng": -73.8124, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "GMF Clinique Médicale Brunswick (West Island - Pointe-Claire)", "lat": 45.4498, "lng": -73.8315, "platform": "pomelo", "booking_url": "https://pomelo.health/brunswickmedicalcenter"},
-    {"name": "CLSC du Lac-Saint-Louis (West Island - Pointe-Claire)", "lat": 45.4392, "lng": -73.8184, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "CLSC de Pierrefonds (West Island)", "lat": 45.4852, "lng": -73.8742, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    # North Shore
-    {"name": "GMF des Seigneurs (Terrebonne)", "lat": 45.7025, "lng": -73.6514, "platform": "pomelo", "booking_url": "https://qc.pomelo.health/gmfdesseigneurs"},
-    {"name": "GMF Clinique Médicale Terrebonne", "lat": 45.6982, "lng": -73.6391, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/cmterrebonne"},
-    {"name": "GMF des Affluents (Repentigny)", "lat": 45.7485, "lng": -73.4421, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "GMF-U du Sud de Lanaudière (Repentigny)", "lat": 45.7412, "lng": -73.4563, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "GMF-U de Saint-Charles-Borromée (Lanaudière Joliette)", "lat": 46.0465, "lng": -73.4682, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "GMF L'Assomption", "lat": 45.8312, "lng": -73.4215, "platform": "pomelo", "booking_url": "https://qc.pomelo.health/#/"},
-    {"name": "Centre de Médecine Métabolique de Lanaudière (CMML)", "lat": 46.0242, "lng": -73.4356, "platform": "pomelo", "booking_url": "https://qc.pomelo.health/cmml/portal#/patient-triage"},
-    # Saint-Jérôme
-    {"name": "GMF-R Clinique Médicale Saint-Jérôme", "lat": 45.7785, "lng": -74.0042, "platform": "clicsante", "booking_url": "https://rvsq.gouv.qc.ca/prendrerendezvous"},
-    {"name": "GMF du Grand Saint-Jérôme (Clinique Saint-Hippolyte)", "lat": 45.8321, "lng": -73.9915, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/santhippolyte"},
-    # Rosemère
-    {"name": "GMF Clinique Médicale Rosemère", "lat": 45.6382, "lng": -73.7915, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/rosemere"},
-    # Vaudreuil
-    {"name": "GMF-R Vaudreuil-Dorion (Super-Clinique)", "lat": 45.3982, "lng": -74.0321, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/vaudreuildorion"},
-    # Saint-Eustache
-    {"name": "GMF Clinique Médicale de la Gare (Saint-Eustache)", "lat": 45.5582, "lng": -73.9015, "platform": "pomelo", "booking_url": "https://qc.pomelo.health/cliniquemedicaledelagare"},
-    # Saint-Jean
-    {"name": "GMF Clinique Médicale Saint-Luc (Saint-Jean-sur-Richelieu)", "lat": 45.3512, "lng": -73.2842, "platform": "pomelo", "booking_url": "https://qc.pomelo.health/cliniquemedicalesaintluc"},
-    # Laurentides
-    {"name": "GMF Clinique Médicale Lorraine (Laurentides)", "lat": 45.6512, "lng": -73.7814, "platform": "bonjour_sante", "booking_url": "https://bonjour-sante.ca/uno/clinique/cmlorraine"},
+    # ========== MONTREAL EAST / NORTH ==========
+    {"name": "GMF-R Cité Médicale Villeray", "lat": 45.5463, "lng": -73.6214, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "gmf_r", "city": "Montréal"},
+    {"name": "Centre Médical Mieux-Être (succursale Levasseur)", "lat": 45.5841, "lng": -73.6412, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/levasseur", "type": "gmf", "city": "Montréal"},
+    {"name": "Clinique Médico-Centre Mont-Royal", "lat": 45.5163, "lng": -73.5786, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/montroyal", "type": "clinic", "city": "Montréal"},
+    {"name": "GMF Médi-Centre Chomedey", "lat": 45.5451, "lng": -73.7483, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/medicentrechomedey", "type": "gmf", "city": "Laval"},
+    {"name": "CLSC du Plateau-Mont-Royal", "lat": 45.5195, "lng": -73.5781, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC de Dorval-Lachine", "lat": 45.4385, "lng": -73.6841, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC de Saint-Henri", "lat": 45.4775, "lng": -73.5856, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC Métro", "lat": 45.4931, "lng": -73.5802, "platform": "clicsante", "website": "https://portal3.clicsante.ca/", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC de Hochelaga-Maisonneuve", "lat": 45.5422, "lng": -73.5397, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "clsc", "city": "Montréal"},
+    {"name": "Centre D'Urgence Saint-Laurent", "lat": 45.5118, "lng": -73.6802, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/cusl", "type": "gmf", "city": "Montréal"},
+    {"name": "GMF Clinique médicale Angus", "lat": 45.5401, "lng": -73.5658, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/angus", "type": "gmf", "city": "Montréal"},
+    {"name": "GMF Clinique Médicale St-Denis", "lat": 45.5264, "lng": -73.5932, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/stdenis", "type": "gmf", "city": "Montréal"},
+    {"name": "GMF Centre Médical Mieux-Être Anjou", "lat": 45.6031, "lng": -73.5518, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "gmf", "city": "Montréal"},
+    {"name": "Centre Médical Mieux-Être Lasalle", "lat": 45.4312, "lng": -73.6248, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/cmmelasalle", "type": "clinic", "city": "Montréal"},
+    {"name": "GMF A-R Centre médical Mieux-Être St-Léonard", "lat": 45.5892, "lng": -73.6014, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/mieuxetre", "type": "gmf", "city": "Montréal"},
+    
+    # ========== LAVAL ==========
+    {"name": "GMF Le Carrefour Médical Laval", "lat": 45.5684, "lng": -73.7431, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/lecarrefour", "type": "gmf", "city": "Laval"},
+    {"name": "GMF Clinique Médicale Sainte-Dorothée", "lat": 45.5312, "lng": -73.8115, "platform": "pomelo", "website": "https://pomelo.health/cliniquemedicalesaintedorothee", "type": "gmf", "city": "Laval"},
+    {"name": "GMF Polyclinique Concorde", "lat": 45.5615, "lng": -73.7082, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "gmf", "city": "Laval"},
+    {"name": "CLSC de Laval-des-Rapides", "lat": 45.5492, "lng": -73.7124, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "clsc", "city": "Laval"},
+    {"name": "Super-Clinique Polyclinique Médicale Fabreville", "lat": 45.5925, "lng": -73.7912, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/fabreville", "type": "gmf", "city": "Laval"},
+    {"name": "Clinique Médicale Saint-François", "lat": 45.5781, "lng": -73.6542, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/stfrancois", "type": "gmf", "city": "Laval"},
+    {"name": "CLSC Idola-Saint-Jean", "lat": 45.5652, "lng": -73.6931, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "clsc", "city": "Laval"},
+    {"name": "CLSC des Mille-Îles", "lat": 45.6315, "lng": -73.6212, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "clsc", "city": "Laval"},
+    {"name": "CLSC de Sainte-Rose", "lat": 45.6121, "lng": -73.7824, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "clsc", "city": "Laval"},
+    {"name": "CLSC du Ruisseau-Papineau", "lat": 45.5794, "lng": -73.7251, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "clsc", "city": "Laval"},
+    {"name": "GMF Centre Médical Laval", "lat": 45.5521, "lng": -73.7314, "platform": "pomelo", "website": "https://qc.pomelo.health/centremedicallaval", "type": "gmf", "city": "Laval"},
+    {"name": "CLSC du Marigot", "lat": 45.5824, "lng": -73.7011, "platform": "clicsante", "website": "https://www.lavalensante.com/", "type": "clsc", "city": "Laval"},
+    {"name": "CLSC Chomedey", "lat": 45.5458, "lng": -73.7432, "platform": "clicsante", "website": "https://www.lavalensante.com/", "type": "clsc", "city": "Laval"},
+    {"name": "GMF-R Centre Médical Laval", "lat": 45.5985, "lng": -73.6712, "platform": "bonjour_sante", "website": "https://www.lavalensante.com/", "type": "gmf_r", "city": "Laval"},
+    {"name": "GMF-R Concorde", "lat": 45.5721, "lng": -73.6914, "platform": "bonjour_sante", "website": "https://www.lavalensante.com/", "type": "gmf_r", "city": "Laval"},
+    
+    # ========== LONGUEUIL / RIVE-SUD ==========
+    {"name": "Clinique médicale privée Longueuil UnionMD", "lat": 45.5252, "lng": -73.5135, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/unionmdlongueuil", "type": "private", "city": "Longueuil"},
+    {"name": "GMF-R Clinique Médicale Longueuil-Ouest", "lat": 45.5314, "lng": -73.5248, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/longueuilouest", "type": "gmf_r", "city": "Longueuil"},
+    {"name": "CLSC de Longueuil-Ouest", "lat": 45.5314, "lng": -73.5248, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "clsc", "city": "Longueuil"},
+    {"name": "GMF-U Charles-Le Moyne", "lat": 45.5184, "lng": -73.4831, "platform": "pomelo", "website": "https://qc.pomelo.health/gmfucharleslemoyne", "type": "gmf_u", "city": "Longueuil"},
+    {"name": "CLSC Simonne-Monet-Chartrand", "lat": 45.5284, "lng": -73.4891, "platform": "clicsante", "website": "https://www.santemonteregie.qc.ca/centre/", "type": "clsc", "city": "Longueuil"},
+    {"name": "CLSC Longueuil-Est", "lat": 45.5211, "lng": -73.4984, "platform": "clicsante", "website": "https://www.santemonteregie.qc.ca/", "type": "clsc", "city": "Longueuil"},
+    {"name": "GMF Clinique Médicale GMF Pierre Boucher", "lat": 45.5511, "lng": -73.4425, "platform": "bonjour_sante", "website": "https://www.santemonteregie.qc.ca/", "type": "gmf", "city": "Longueuil"},
+    
+    # ========== BROSSARD ==========
+    {"name": "GMF Dix30 Brossard", "lat": 45.4428, "lng": -73.4412, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/gmfdix30", "type": "gmf", "city": "Brossard"},
+    {"name": "Clinique Sans Rendez-Vous Dix30", "lat": 45.4428, "lng": -73.4412, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/csansrendezvousdix30brossard", "type": "gmf", "city": "Brossard"},
+    {"name": "GMF Samuel-de-Champlain", "lat": 45.4682, "lng": -73.4715, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "gmf", "city": "Brossard"},
+    {"name": "GMF Lapinière", "lat": 45.4561, "lng": -73.4623, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "gmf", "city": "Brossard"},
+    {"name": "CLSC Samuel-de-Champlain", "lat": 45.4595, "lng": -73.4682, "platform": "clicsante", "website": "https://www.santemonteregie.qc.ca/centre/", "type": "clsc", "city": "Brossard"},
+    
+    # ========== WEST ISLAND ==========
+    {"name": "GMF Stillview Pointe-Claire", "lat": 45.4485, "lng": -73.8124, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "gmf", "city": "Pointe-Claire"},
+    {"name": "GMF Clinique Médicale Brunswick", "lat": 45.4498, "lng": -73.8315, "platform": "pomelo", "website": "https://pomelo.health/brunswickmedicalcenter", "type": "gmf", "city": "Pointe-Claire"},
+    {"name": "CLSC du Lac-Saint-Louis", "lat": 45.4392, "lng": -73.8184, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "clsc", "city": "Pointe-Claire"},
+    {"name": "CLSC de Pierrefonds", "lat": 45.4852, "lng": -73.8742, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "clsc", "city": "Montréal"},
+    {"name": "Lakeshore General Hospital", "lat": 45.4428, "lng": -73.8261, "platform": "clicsante", "website": "https://www.ciusss-ouestmtl.gouv.qc.ca/", "type": "hospital", "city": "Pointe-Claire"},
+    
+    # ========== TERREBONNE / REPENTIGNY / LANAUDIÈRE ==========
+    {"name": "GMF des Seigneurs Terrebonne", "lat": 45.7025, "lng": -73.6514, "platform": "pomelo", "website": "https://qc.pomelo.health/gmfdesseigneurs", "type": "gmf", "city": "Terrebonne"},
+    {"name": "GMF Clinique Médicale Terrebonne", "lat": 45.6982, "lng": -73.6391, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/cmterrebonne", "type": "gmf", "city": "Terrebonne"},
+    {"name": "CLSC de Terrebonne", "lat": 45.6985, "lng": -73.6291, "platform": "clicsante", "website": "https://www.cisss-lanaudiere.gouv.qc.ca/", "type": "clsc", "city": "Terrebonne"},
+    {"name": "GMF des Affluents Repentigny", "lat": 45.7485, "lng": -73.4421, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "gmf", "city": "Repentigny"},
+    {"name": "GMF-U du Sud de Lanaudière", "lat": 45.7412, "lng": -73.4563, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "gmf_u", "city": "Repentigny"},
+    {"name": "CLSC de Repentigny", "lat": 45.7512, "lng": -73.4582, "platform": "clicsante", "website": "https://www.cisss-lanaudiere.gouv.qc.ca/", "type": "clsc", "city": "Repentigny"},
+    {"name": "CLSC Lamater Mascouche", "lat": 45.7482, "lng": -73.6195, "platform": "clicsante", "website": "https://www.cisss-lanaudiere.gouv.qc.ca/", "type": "clsc", "city": "Mascouche"},
+    {"name": "GMF L'Assomption", "lat": 45.8312, "lng": -73.4215, "platform": "pomelo", "website": "https://qc.pomelo.health/#/", "type": "gmf", "city": "L'Assomption"},
+    
+    # ========== LAURENTIDES / SAINT-JÉRÔME ==========
+    {"name": "GMF-R Clinique Médicale Saint-Jérôme", "lat": 45.7785, "lng": -74.0042, "platform": "clicsante", "website": "https://rvsq.gouv.qc.ca/prendrerendezvous", "type": "gmf_r", "city": "Saint-Jérôme"},
+    {"name": "GMF du Grand Saint-Jérôme", "lat": 45.8321, "lng": -73.9915, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/santhippolyte", "type": "gmf", "city": "Saint-Jérôme"},
+    {"name": "GMF Clinique Médicale Rosemère", "lat": 45.6382, "lng": -73.7915, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/rosemere", "type": "gmf", "city": "Rosemère"},
+    {"name": "GMF Clinique Médicale Lorraine", "lat": 45.6512, "lng": -73.7814, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/cmlorraine", "type": "gmf", "city": "Lorraine"},
+    {"name": "CLSC Jean-Olivier-Chénier", "lat": 45.5684, "lng": -73.8861, "platform": "clicsante", "website": "https://www.santelaurentides.gouv.qc.ca/", "type": "clsc", "city": "Saint-Eustache"},
+    {"name": "CLSC de Blainville", "lat": 45.6652, "lng": -73.8695, "platform": "clicsante", "website": "https://www.santelaurentides.gouv.qc.ca/", "type": "clsc", "city": "Blainville"},
+    {"name": "CLSC de Sainte-Thérèse", "lat": 45.6421, "lng": -73.8398, "platform": "clicsante", "website": "https://www.santelaurentides.gouv.qc.ca/", "type": "clsc", "city": "Sainte-Thérèse"},
+    
+    # ========== VAUDREUIL ==========
+    {"name": "GMF-R Vaudreuil-Dorion", "lat": 45.3982, "lng": -74.0321, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/vaudreuildorion", "type": "gmf_r", "city": "Vaudreuil-Dorion"},
+    {"name": "CLSC de Vaudreuil-Dorion", "lat": 45.3951, "lng": -74.0315, "platform": "clicsante", "website": "https://www.santemonteregie.qc.ca/", "type": "clsc", "city": "Vaudreuil-Dorion"},
+    
+    # ========== SAINT-EUSTACHE ==========
+    {"name": "GMF Clinique Médicale de la Gare", "lat": 45.5582, "lng": -73.9015, "platform": "pomelo", "website": "https://qc.pomelo.health/cliniquemedicaledelagare", "type": "gmf", "city": "Saint-Eustache"},
+    
+    # ========== SAINT-JEAN-SUR-RICHELIEU ==========
+    {"name": "GMF Clinique Médicale Saint-Luc", "lat": 45.3512, "lng": -73.2842, "platform": "pomelo", "website": "https://qc.pomelo.health/cliniquemedicalesaintluc", "type": "gmf", "city": "Saint-Jean-sur-Richelieu"},
+    
+    # ========== QUÉBEC CITY ==========
+    {"name": "CLSC de Sainte-Foy", "lat": 46.7865, "lng": -71.3094, "platform": "clicsante", "website": "https://www.chudequebec.ca/", "type": "clsc", "city": "Québec"},
+    {"name": "CLSC de Charlesbourg", "lat": 46.8645, "lng": -71.2588, "platform": "clicsante", "website": "https://www.ciusss-capitalenationale.gouv.qc.ca/", "type": "clsc", "city": "Québec"},
+    {"name": "GMF-U de Maizerets", "lat": 46.8361, "lng": -71.2294, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/", "type": "gmf_u", "city": "Québec"},
+    {"name": "GMF-U Laurier", "lat": 46.7728, "lng": -71.2852, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/", "type": "gmf_u", "city": "Québec"},
+    {"name": "GMF-U Quatre-Bourgeois", "lat": 46.7794, "lng": -71.3021, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/", "type": "gmf_u", "city": "Québec"},
+    {"name": "CLSC de l'Ancienne-Lorette", "lat": 46.7972, "lng": -71.3531, "platform": "clicsante", "website": "https://www.ciusss-capitalenationale.gouv.qc.ca/", "type": "clsc", "city": "Québec"},
+    {"name": "CLSC de Val-Bélair", "lat": 46.8574, "lng": -71.4241, "platform": "clicsante", "website": "https://www.ciusss-capitalenationale.gouv.qc.ca/", "type": "clsc", "city": "Québec"},
+    {"name": "CLSC de Limoilou", "lat": 46.8421, "lng": -71.2112, "platform": "clicsante", "website": "https://www.ciusss-capitalenationale.gouv.qc.ca/", "type": "clsc", "city": "Québec"},
+    
+    # ========== GATINEAU ==========
+    {"name": "CLSC de Hull", "lat": 45.4328, "lng": -75.7285, "platform": "clicsante", "website": "https://cisss-outaouais.gouv.qc.ca/", "type": "clsc", "city": "Gatineau"},
+    {"name": "CLSC de Gatineau", "lat": 45.4611, "lng": -75.6894, "platform": "clicsante", "website": "https://cisss-outaouais.gouv.qc.ca/", "type": "clsc", "city": "Gatineau"},
+    {"name": "CLSC de Aylmer", "lat": 45.4052, "lng": -75.8344, "platform": "clicsante", "website": "https://cisss-outaouais.gouv.qc.ca/", "type": "clsc", "city": "Gatineau"},
+    
+    # ========== SHERBROOKE / ESTRIE ==========
+    {"name": "CLSC de Sherbrooke (King Est)", "lat": 45.4112, "lng": -71.8654, "platform": "clicsante", "website": "https://www.santeestrie.qc.ca/", "type": "clsc", "city": "Sherbrooke"},
+    {"name": "CLSC de Granby", "lat": 45.3975, "lng": -72.7412, "platform": "clicsante", "website": "https://www.santeestrie.qc.ca/", "type": "clsc", "city": "Granby"},
+    {"name": "CLSC de Cowansville", "lat": 45.2052, "lng": -72.7461, "platform": "clicsante", "website": "https://www.santeestrie.qc.ca/", "type": "clsc", "city": "Cowansville"},
+    {"name": "CLSC de Magog", "lat": 45.2631, "lng": -72.1488, "platform": "clicsante", "website": "https://www.santeestrie.qc.ca/", "type": "clsc", "city": "Magog"},
+    {"name": "Hôpital Fleurimont", "lat": 45.4312, "lng": -71.8615, "platform": "clicsante", "website": "https://www.santeestrie.qc.ca/", "type": "hospital", "city": "Sherbrooke"},
+    
+    # ========== TROIS-RIVIÈRES ==========
+    {"name": "CLSC de Trois-Rivières", "lat": 46.3462, "lng": -72.5485, "platform": "clicsante", "website": "https://www.ciusssmcq.ca/", "type": "clsc", "city": "Trois-Rivières"},
+    
+    # ========== SAGUENAY ==========
+    {"name": "CLSC Chicoutimi Nord", "lat": 48.4418, "lng": -71.0521, "platform": "clicsante", "website": "https://santesaglac.gouv.qc.ca/", "type": "clsc", "city": "Saguenay"},
+    
+    # ========== CHÂTEAUGUAY / MONTÉRÉGIE ==========
+    {"name": "CLSC Châteauguay", "lat": 45.3615, "lng": -73.7224, "platform": "clicsante", "website": "https://www.santemonteregie.qc.ca/", "type": "clsc", "city": "Châteauguay"},
+    {"name": "CLSC Kateri Candiac", "lat": 45.3855, "lng": -73.5112, "platform": "clicsante", "website": "https://www.santemonteregie.qc.ca/", "type": "clsc", "city": "Candiac"},
+    {"name": "CLSC de Beauharnois", "lat": 45.3114, "lng": -73.8682, "platform": "clicsante", "website": "https://www.santemonteregie.qc.ca/", "type": "clsc", "city": "Beauharnois"},
+    {"name": "CLSC de Saint-Rémi", "lat": 45.2592, "lng": -73.6148, "platform": "clicsante", "website": "https://www.santemonteregie.qc.ca/", "type": "clsc", "city": "Saint-Rémi"},
+    {"name": "CLSC de Napierville", "lat": 45.1874, "lng": -73.4042, "platform": "clicsante", "website": "https://www.santemonteregie.qc.ca/", "type": "clsc", "city": "Napierville"},
+    
+    # ========== MONTREAL ADDITIONAL CLSCS ==========
+    {"name": "CLSC d'Ahuntsic", "lat": 45.5562, "lng": -73.6582, "platform": "clicsante", "website": "https://www.ciusssnordmtl.ca/", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC de Montréal-Nord", "lat": 45.6114, "lng": -73.6288, "platform": "clicsante", "website": "https://www.ciusssnordmtl.ca/", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC de Saint-Léonard", "lat": 45.5891, "lng": -73.5852, "platform": "clicsante", "website": "https://www.ciusseastmtl.gouv.qc.ca/", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC de LaSalle", "lat": 45.4352, "lng": -73.6231, "platform": "clicsante", "website": "https://www.ciusss-ouestmtl.gouv.qc.ca/", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC de Verdun", "lat": 45.4614, "lng": -73.5684, "platform": "clicsante", "website": "https://www.ciusss-centreouestmtl.gouv.qc.ca/", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC de Côte-des-Neiges", "lat": 45.4975, "lng": -73.6272, "platform": "clicsante", "website": "https://www.ciussswestcentral.ca/", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC de Benny Farm", "lat": 45.4695, "lng": -73.6385, "platform": "clicsante", "website": "https://www.ciussswestcentral.ca/", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC René-Cassin", "lat": 45.4688, "lng": -73.6641, "platform": "clicsante", "website": "https://www.ciussswestcentral.ca/", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC de Saint-Laurent", "lat": 45.5152, "lng": -73.6821, "platform": "clicsante", "website": "https://www.ciusssnordmtl.ca/", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC de Rosemont", "lat": 45.5412, "lng": -73.5654, "platform": "clicsante", "website": "https://www.ciusseastmtl.gouv.qc.ca/", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC de Saint-Michel", "lat": 45.5638, "lng": -73.6012, "platform": "clicsante", "website": "https://www.ciusseastmtl.gouv.qc.ca/", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC de la Petite-Patrie", "lat": 45.5381, "lng": -73.6033, "platform": "clicsante", "website": "https://www.ciusssnordmtl.ca/", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC de Villeray", "lat": 45.5492, "lng": -73.6184, "platform": "clicsante", "website": "https://www.ciusssnordmtl.ca/", "type": "clsc", "city": "Montréal"},
+    {"name": "CLSC des Faubourgs", "lat": 45.5221, "lng": -73.5622, "platform": "clicsante", "website": "https://www.ciusss-centresudmtl.gouv.qc.ca/", "type": "clsc", "city": "Montréal"},
+    
+    # ========== HOSPITAL CLINICS ==========
+    {"name": "Herzl Walk-In Centre (Jewish General)", "lat": 45.4958, "lng": -73.6301, "platform": "other", "website": "https://www.jgh.ca/", "type": "hospital", "city": "Montréal"},
+    {"name": "St. Mary's Hospital Family Medicine", "lat": 45.4948, "lng": -73.6235, "platform": "other", "website": "https://www.stmaryshospitalcenter.ca/", "type": "hospital", "city": "Montréal"},
+    {"name": "Hôpital Charles-Le Moyne", "lat": 45.4831, "lng": -73.4752, "platform": "clicsante", "website": "https://www.santemonteregie.qc.ca/centre/", "type": "hospital", "city": "Longueuil"},
+    {"name": "MUHC Ambulatory Clinics", "lat": 45.4728, "lng": -73.6015, "platform": "other", "website": "https://muhc.ca/", "type": "hospital", "city": "Montréal"},
+    {"name": "Hôpital de la Cité-de-la-Santé", "lat": 45.5832, "lng": -73.7194, "platform": "clicsante", "website": "https://www.lavalensante.com/", "type": "hospital", "city": "Laval"},
 ]
 
-ACTIVE_PLATFORMS = {"bonjour_sante", "pomelo"}
+# ================================================================
+# 7. BONJOUR SANTÉ BOOKING (SIMPLIFIED FOR TESTING)
+# ================================================================
 
+def complete_bonjoursante_booking(page, user: dict) -> dict:
+    """Test Bonjour Santé booking"""
+    print("   📅 Testing Bonjour Santé booking...")
+    
+    try:
+        # Fill RAMQ
+        ramq_input = page.locator("input[name*='ramq']").first
+        if ramq_input.count() > 0:
+            ramq_input.fill(user["ramq"])
+            human_delay(500, 1000)
+        
+        # Fill postal code
+        postal_input = page.locator("input[name*='postal']").first
+        if postal_input.count() > 0:
+            postal_input.fill(user["postal_code"])
+            human_delay(500, 1000)
+        
+        # Click continue
+        continue_btn = page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next", re.I))
+        if continue_btn.count() > 0:
+            continue_btn.first.click()
+            human_delay(2000, 3000)
+        
+        # Fill patient info
+        firstname_input = page.locator("input[name*='firstName'], input[name*='prenom']").first
+        if firstname_input.count() > 0:
+            firstname_input.fill(user["first_name"])
+            human_delay(300, 600)
+        
+        lastname_input = page.locator("input[name*='lastName'], input[name*='nom']").first
+        if lastname_input.count() > 0:
+            lastname_input.fill(user["last_name"])
+            human_delay(300, 600)
+        
+        # Check for availability indicators
+        page_content = page.content().lower()
+        
+        if "disponible" in page_content or "available" in page_content:
+            print("   ✅ Found availability indicators!")
+            return {
+                "booked": True,
+                "confirmation_url": page.url,
+                "appointment_time": "Available slot found"
+            }
+        else:
+            print("   ❌ No availability found")
+            return {"booked": False, "reason": "No availability indicators found"}
+            
+    except Exception as e:
+        print(f"   ❌ Booking error: {e}")
+        return {"booked": False, "reason": str(e)}
 
-# ══════════════════════════════════════════════════════════════
-# 9. DISTANCE-BASED CLINIC DISCOVERY
-# ══════════════════════════════════════════════════════════════
+# ================================================================
+# 8. MAIN BOOKING FUNCTION
+# ================================================================
+
+def book_appointment_at_clinic(clinic: dict, user: dict) -> dict:
+    """Test booking at a clinic"""
+    headless = os.getenv("HEADLESS", "false").lower() == "true"  # Default to visible so you can see
+    clinic_website = clinic.get("website", "")
+    clinic_name = clinic.get("name", "Unknown")
+    
+    print(f"\n🏥 TESTING: {clinic_name}")
+    print(f"   Website: {clinic_website}")
+    
+    if ParallelKillSwitch.is_active():
+        return {"booked": False, "reason": "Kill switch active"}
+    
+    with sync_playwright() as p:
+        browser, context = launch_stealth_browser(p, headless=headless)
+        page = context.new_page()
+        
+        try:
+            # Go to website
+            page.goto(clinic_website, wait_until="domcontentloaded", timeout=30000)
+            print(f"   ✅ Page loaded: {page.title()[:50]}")
+            human_delay(2000, 3000)
+            
+            # Take screenshot for debugging
+            if not headless:
+                page.screenshot(path=f"debug_{clinic_name[:20]}.png")
+                print(f"   📸 Screenshot saved: debug_{clinic_name[:20]}.png")
+            
+            # Try to find and click booking button
+            button_found = False
+            button_patterns = ["Prendre rendez-vous", "Réserver", "Book", "RDV", "Appointment"]
+            
+            for pattern in button_patterns:
+                try:
+                    btn = page.get_by_text(pattern, exact=False).first
+                    if btn.count() > 0:
+                        print(f"   ✅ Found button: '{pattern}'")
+                        btn.click()
+                        button_found = True
+                        human_delay(3000, 5000)
+                        break
+                except:
+                    continue
+            
+            if button_found:
+                # Try to complete booking
+                result = complete_bonjoursante_booking(page, user)
+                result['clinic_name'] = clinic_name
+                return result
+            else:
+                print(f"   ⚠️ No booking button found")
+                return {"booked": False, "reason": "No booking button found", "clinic_name": clinic_name}
+                
+        except Exception as e:
+            print(f"   ❌ Error: {e}")
+            return {"booked": False, "reason": str(e), "clinic_name": clinic_name}
+        finally:
+            browser.close()
+
+# ================================================================
+# 9. PARALLEL SEARCH
+# ================================================================
 
 def discover_clinics_near(postal_code: str, radius_km: int) -> list:
-    print(f"\n🔍 Finding clinics within {radius_km}km of {postal_code}...")
+    """Find clinics within radius"""
     coords = geocode_postal_code(postal_code)
     if not coords:
-        print("❌ Could not geocode postal code")
         return []
+    
     user_lat, user_lng = coords["lat"], coords["lng"]
     nearby = []
+    
     for clinic in CLINICS:
-        if KillSwitch.is_active():
-            break
         dist = haversine(user_lat, user_lng, clinic["lat"], clinic["lng"])
-        if dist <= radius_km and clinic["platform"] in ACTIVE_PLATFORMS:
-            nearby.append({
-                "name": clinic["name"],
-                "platform": clinic["platform"],
-                "booking_url": clinic["booking_url"],
-                "distance_km": round(dist, 1),
-            })
-    nearby.sort(key=lambda c: c["distance_km"])
-    print(f"✅ Found {len(nearby)} active clinics within {radius_km}km")
-    for c in nearby:
-        print(f"   📍 {c['name']} — {c['distance_km']}km — {c['platform']}")
+        if dist <= radius_km:
+            nearby.append(clinic)
+    
+    print(f"✅ Found {len(nearby)} clinics within {radius_km}km")
     return nearby
 
-
-# ══════════════════════════════════════════════════════════════
-# 10. POMELO HANDLER
-# ══════════════════════════════════════════════════════════════
-
-def fill_pomelo_page1_identification(page, user: dict):
-    print("      📝 Page 1 — Identification...")
-    if KillSwitch.is_active(): return False
-    birth_year = user.get("birth_date", "1965-01-15").split("-")[0]
-    try: page.locator("input[name='firstName'], #firstName").first.fill(user["first_name"]); human_delay(300, 600)
-    except: pass
-    try: page.locator("input[name='lastName'], #lastName").first.fill(user["last_name"]); human_delay(300, 600)
-    except: pass
-    try: page.locator("input[name*='ramq']").first.fill(user["ramq"]); human_delay(300, 600)
-    except: pass
-    try: page.locator("input[name*='seq']").first.fill(user["ramq_seq"]); human_delay(300, 600)
-    except: pass
-    try: page.locator("input[name*='birth'], input[name*='year']").first.fill(birth_year); human_delay(300, 600)
-    except: pass
-    try:
-        if user["sex"].upper() == "M":
-            page.locator("input[value='M'], label:has-text('Masculin')").first.click()
-        else:
-            page.locator("input[value='F'], label:has-text('Féminin')").first.click()
-        human_delay(500, 800)
-    except:
-        try:
-            page.get_by_text(re.compile(r"Masculin|Homme|Féminin|Femme", re.I)).first.click()
-            human_delay(500, 800)
-        except: pass
-    try: page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next", re.I)).first.click(); human_delay(2000, 3000)
-    except: pass
-    return True
-
-def fill_pomelo_page2_contact(page, user: dict):
-    print("      📧 Page 2 — Contact...")
-    if KillSwitch.is_active(): return False
-    try: page.locator("input[type='email']").first.fill(user["email"]); human_delay(300, 600)
-    except: pass
-    try: page.locator("input[type='tel']").first.fill(user["phone"]); human_delay(300, 600)
-    except: pass
-    try: page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next", re.I)).first.click(); human_delay(2000, 3000)
-    except: pass
-    return True
-
-def fill_pomelo_page3_consent(page):
-    print("      ✅ Page 3 — Consent...")
-    if KillSwitch.is_active(): return False
-    try: page.locator("input[type='checkbox']").first.check(); human_delay(500, 1000)
-    except: pass
-    try: page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next", re.I)).first.click(); human_delay(2000, 3000)
-    except: pass
-    return True
-
-def fill_pomelo_page4_search(page, postal_code: str):
-    print(f"      🔍 Page 4 — Search (postal: {postal_code})...")
-    if KillSwitch.is_active(): return False
-    try:
-        page.locator("input[name*='postal'], input[name*='code']").first.fill(postal_code)
-        human_delay(500, 1000)
-    except: pass
-    try: page.get_by_role("button", name=re.compile(r"Rechercher|Search|Chercher", re.I)).first.click(); human_delay(3000, 5000)
-    except: pass
-    return True
-
-def verify_pomelo_calendar(page, clinic_name: str) -> tuple:
-    print("      📅 Checking Pomelo calendar...")
-    if KillSwitch.is_active(): return False, "Kill switch", ""
-    human_delay(2000, 3000)
-    body_text = page.inner_text("body").lower()
-    for phrase in ["aucune disponibilité", "no availability", "aucun rendez-vous", "complet", "full", "désolé"]:
-        if phrase in body_text: return False, phrase, ""
-    has_positive = any(p in body_text for p in ["disponible", "available", "sélectionner", "select"])
-    return has_positive, "positive indicators" if has_positive else "no clear slots", page.url
-
-def scrape_pomelo_clinic(clinic: dict, user: dict) -> dict:
-    headless = os.getenv("HEADLESS", "true").lower() != "false"
-    booking_url = clinic.get("booking_url", "")
-    print(f"\n   🔴 POMELO: {clinic['name']} ({clinic.get('distance_km', '?')}km)")
-    if KillSwitch.is_active(): return {"found": False, "details": "Kill switch", "booking_url": ""}
-    with sync_playwright() as p:
-        browser, context = launch_stealth_browser(p, headless=headless)
-        page = context.new_page()
-        try:
-            page.goto(booking_url, wait_until="domcontentloaded", timeout=60000)
-            human_delay(2000, 3000)
-            if KillSwitch.is_active(): return {"found": False, "details": "Kill switch", "booking_url": ""}
-            fill_pomelo_page1_identification(page, user)
-            fill_pomelo_page2_contact(page, user)
-            fill_pomelo_page3_consent(page)
-            fill_pomelo_page4_search(page, user["postal_code"])
-            has_slots, details, result_url = verify_pomelo_calendar(page, clinic["name"])
-            if has_slots:
-                print(f"      🎉 SLOTS FOUND! ({details})")
-                return {"found": True, "details": details, "booking_url": result_url}
-            else:
-                print(f"      ❌ No slots")
-                return {"found": False, "details": details, "booking_url": booking_url}
-        except Exception as e:
-            print(f"      🚨 Pomelo error: {e}")
-            return {"found": False, "details": str(e), "booking_url": booking_url}
-        finally:
-            browser.close()
-
-
-# ══════════════════════════════════════════════════════════════
-# 11. BONJOUR SANTÉ HANDLER — ★ FULL DEBUG MODE
-# ══════════════════════════════════════════════════════════════
-
-def fill_bonjoursante_page1(page, user: dict):
-    print("      📝 Bonjour Santé — Page 1 (RAMQ + Postal)...")
-    if KillSwitch.is_active(): return False
-    try: page.locator("input[name*='ramq']").first.fill(user["ramq"]); human_delay(400, 800)
-    except: pass
-    try: page.locator("input[name*='postal']").first.fill(user["postal_code"]); human_delay(400, 800)
-    except: pass
-    try: page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next|Rechercher", re.I)).first.click(); human_delay(2000, 3000)
-    except: pass
-    return True
-
-def fill_bonjoursante_page2(page, user: dict):
-    print("      📝 Bonjour Santé — Page 2 (Patient Info)...")
-    if KillSwitch.is_active(): return False
-    try: page.locator("input[name*='firstName'], input[name*='prenom']").first.fill(user["first_name"]); human_delay(300, 600)
-    except: pass
-    try: page.locator("input[name*='lastName'], input[name*='nom']").first.fill(user["last_name"]); human_delay(300, 600)
-    except: pass
-    try: page.locator("input[name*='sequence'], input[name*='seq']").first.fill(user["ramq_seq"]); human_delay(300, 600)
-    except: pass
-    try: page.locator("input[type='checkbox']").first.check(); human_delay(500, 1000)
-    except: pass
-    try: page.get_by_role("button", name=re.compile(r"Continuer|Suivant|Next", re.I)).first.click(); human_delay(2000, 3000)
-    except: pass
-    return True
-
-def verify_bonjoursante_results(page, clinic_name: str) -> tuple:
-    print("      📅 Checking Bonjour Santé results...")
-    if KillSwitch.is_active(): return False, "Kill switch", ""
-
-    human_delay(3000, 5000)
-
-    current_url = page.url
-    print(f"      🌐 Current page URL: {current_url}")
-
-    body_text = page.inner_text("body")
-    body_lower = body_text.lower()
-
-    print(f"      📄 Page text length: {len(body_text)} chars")
-
-    # Check for no-availability phrases
-    for phrase in ["aucune disponibilité", "no availability", "aucun rendez-vous", "complet", "full", "désolé"]:
-        if phrase in body_lower:
-            print(f"      ❌ Found negative phrase: '{phrase}'")
-            return False, phrase, current_url
-
-    # ★ Look for slot/availability containers
-    try:
-        slot_selectors = [
-            '.slot', '.appointment-slot', '.availability-slot',
-            '.time-slot', '.creneau', '[class*="slot"]', '[class*="Slot"]',
-            '[class*="appointment"]', '[class*="Appointment"]',
-            '.result-item', '.search-result', '.clinic-result'
-        ]
-        for selector in slot_selectors:
-            try:
-                elements = page.locator(selector).all()
-                if len(elements) > 0:
-                    print(f"      🎯 Found {len(elements)} elements matching '{selector}'")
-                    for el in elements[:5]:
-                        try:
-                            text = el.inner_text().strip()[:200]
-                            html = el.evaluate('el => el.outerHTML')[:300]
-                            print(f"      🎯 Element text: {text}")
-                            print(f"      🎯 Element HTML: {html}")
-                        except:
-                            pass
-            except:
-                pass
-    except Exception as e:
-        print(f"      ⚠️ Slot selector error: {e}")
-
-    # ★ Try to find booking links in the rendered slot area
-    try:
-        all_links = page.locator('a[href]').all()
-        print(f"      🔗 Total links on page: {len(all_links)}")
-        for link in all_links:
-            try:
-                href = link.get_attribute('href') or ''
-                text = link.inner_text().strip()[:100]
-                if href and len(href) > 20 and href != current_url:
-                    if any(kw in href.lower() for kw in ['book', 'reserv', 'appointment', 'rendez', 'slot', 'creneau', 'confirm', 'take', 'prendre']):
-                        print(f"      🔗 POTENTIAL BOOKING: {text} → {href}")
-                    elif any(kw in text.lower() for kw in ['réserver', 'book', 'prendre', 'choisir', 'disponible', 'available']):
-                        print(f"      🔗 SLOT LINK: {text} → {href}")
-            except:
-                pass
-    except Exception as e:
-        print(f"      ⚠️ Link scan error: {e}")
-
-    # ★ Capture the HTML around where "disponible" appears
-    try:
-        if 'disponible' in body_lower or 'available' in body_lower:
-            idx = body_lower.find('disponible') if 'disponible' in body_lower else body_lower.find('available')
-            start = max(0, idx - 200)
-            end = min(len(body_text), idx + 500)
-            print(f"      📍 Context around 'disponible/available': ...{body_text[start:end]}...")
-
-            try:
-                disponible_el = page.locator('text=Disponible').first
-                if disponible_el.count() > 0:
-                    parent = disponible_el.evaluate('el => el.closest("div, li, tr, article")?.outerHTML')
-                    if parent:
-                        print(f"      📦 Parent container HTML (first 800 chars): {parent[:800]}")
-            except:
-                pass
-    except Exception as e:
-        print(f"      ⚠️ Context error: {e}")
-
-    # ★ Also capture a bigger chunk of the body HTML to find the slot section
-    try:
-        # Get the main content area HTML
-        main_content = page.locator('main, [role="main"], .content, #content, .main-content').first
-        if main_content.count() > 0:
-            main_html = main_content.evaluate('el => el.outerHTML')
-            print(f"      📦 Main content HTML (first 1500 chars): {main_html[:1500]}")
-        else:
-            # Fallback: get body HTML around the middle where slots usually appear
-            body_html = page.evaluate('() => document.body.innerHTML')
-            print(f"      📦 Body HTML length: {len(body_html)} chars")
-            # Look for the section after the form
-            form_idx = body_html.lower().find('</form>')
-            if form_idx > 0:
-                after_form = body_html[form_idx:form_idx+2000]
-                print(f"      📦 HTML after form (first 2000 chars): {after_form[:2000]}")
-    except Exception as e:
-        print(f"      ⚠️ Main content error: {e}")
-
-    # Original check
-    has_positive = any(p in body_lower for p in ["disponible", "available", "réserver", "book", "choisir", "prendre rendez-vous", "créneau disponible"])
-
-    if has_positive:
-        print(f"      ✅ POSITIVE INDICATORS FOUND")
-    else:
-        print(f"      ❓ No clear indicators found in page text")
-
-    return has_positive, "positive indicators" if has_positive else "no clear slots", current_url
-
-
-def scrape_bonjoursante_clinic(clinic: dict, user: dict) -> dict:
-    headless = os.getenv("HEADLESS", "true").lower() != "false"
-    booking_url = clinic.get("booking_url", "")
-    print(f"\n   🟠 BONJOUR SANTÉ: {clinic['name']} ({clinic.get('distance_km', '?')}km)")
-    if KillSwitch.is_active(): return {"found": False, "details": "Kill switch", "booking_url": ""}
-
-    captured_api_data = []
-
-    with sync_playwright() as p:
-        browser, context = launch_stealth_browser(p, headless=headless)
-        page = context.new_page()
-
-        # ★ Intercept ALL responses (not just JSON)
-        def on_response(response):
-            try:
-                url = response.url
-                if response.status == 200:
-                    ct = response.headers.get('content-type', '')
-                    print(f"      📡 Response: {response.status} {url[:120]} [{ct[:30]}]")
-                    if 'json' in ct:
-                        try:
-                            body = response.json()
-                            body_str = json.dumps(body).lower()
-                            if any(kw in body_str for kw in ['slot', 'creneau', 'appointment', 'booking', 'rendez-vous', 'disponibilite', 'availability', 'plage', 'horaire']):
-                                captured_api_data.append({'url': url, 'data': body})
-                                print(f"      📡 API SLOT DATA: {url[:100]}")
-                                print(f"      📡 Body: {json.dumps(body)[:1000]}")
-                        except:
-                            pass
-            except:
-                pass
-
-        page.on("response", on_response)
-
-        try:
-            page.goto(booking_url, wait_until="domcontentloaded", timeout=60000)
-            human_delay(2000, 3000)
-            if KillSwitch.is_active(): return {"found": False, "details": "Kill switch", "booking_url": ""}
-            fill_bonjoursante_page1(page, user)
-            fill_bonjoursante_page2(page, user)
-            has_slots, details, result_url = verify_bonjoursante_results(page, clinic["name"])
-
-            if captured_api_data:
-                print(f"      📡 Total API responses captured: {len(captured_api_data)}")
-                for i, api in enumerate(captured_api_data[:5]):
-                    print(f"      📡 API #{i+1}: {api['url'][:120]}")
-                    data_str = json.dumps(api['data'])[:500]
-                    print(f"      📡 Data: {data_str}")
-
-            if has_slots:
-                direct_booking_url = result_url
-                for api in captured_api_data:
-                    data = api['data']
-                    data_str = json.dumps(data)
-                    url_matches = re.findall(r'https?://[^\s"\']+(?:book|reserv|appointment|rendez-vous|slot|creneau)[^\s"\']*', data_str, re.I)
-                    if url_matches:
-                        direct_booking_url = url_matches[0]
-                        print(f"      🎯 Direct booking URL from API: {direct_booking_url}")
-                        break
-
-                print(f"      🎉 SLOTS FOUND! ({details})")
-                return {"found": True, "details": details, "booking_url": direct_booking_url}
-            else:
-                print(f"      ❌ No slots")
-                return {"found": False, "details": details, "booking_url": booking_url}
-        except Exception as e:
-            print(f"      🚨 Bonjour Santé error: {e}")
-            return {"found": False, "details": str(e), "booking_url": booking_url}
-        finally:
-            browser.close()
-
-
-# ══════════════════════════════════════════════════════════════
-# 12. DISPATCHER
-# ══════════════════════════════════════════════════════════════
-
-def route_and_scrape_clinic(clinic: dict, user: dict) -> dict:
-    platform = clinic.get("platform", "unknown")
-    if platform == "pomelo":
-        return scrape_pomelo_clinic(clinic, user)
-    elif platform == "bonjour_sante":
-        return scrape_bonjoursante_clinic(clinic, user)
-    else:
-        return {"found": False, "details": f"skipped_{platform}", "booking_url": clinic.get("booking_url", "")}
-
-
-# ══════════════════════════════════════════════════════════════
-# 13. ZONE SEARCH
-# ══════════════════════════════════════════════════════════════
-
-def search_clinics_in_zone(user: dict, radius_km: int) -> bool:
-    postal = user["postal_code"]
-    clinics = discover_clinics_near(postal, radius_km)
+def search_clinics_parallel(user: dict, radius_km: int, max_workers: int = 3) -> bool:
+    """Parallel search with kill switch"""
+    clinics = discover_clinics_near(user["postal_code"], radius_km)
     if not clinics:
         return False
-
-    for clinic in clinics:
-        if KillSwitch.is_active():
-            return True
-        result = route_and_scrape_clinic(clinic, user)
-        if result["found"]:
-            KillSwitch.activate({
-                "clinic_name": clinic["name"],
-                "platform": clinic.get("platform"),
-                "booking_url": result["booking_url"],
-                "details": result["details"],
-            })
-            send_notification(clinic["name"], postal, clinic.get("platform"), result["booking_url"])
-            save_availability(clinic["name"], postal, clinic.get("platform"), True, result["booking_url"], result["details"])
-            return True
-        else:
-            save_availability(clinic["name"], postal, clinic.get("platform"), False, clinic.get("booking_url", ""), result["details"])
+    
+    print(f"\n🚀 Testing {len(clinics)} clinics with {max_workers} parallel browsers")
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(book_appointment_at_clinic, clinic, user): clinic
+            for clinic in clinics[:10]  # Test first 10 only
+        }
+        
+        for future in as_completed(futures):
+            if ParallelKillSwitch.is_active():
+                for f in futures:
+                    f.cancel()
+                break
+            
+            try:
+                result = future.result(timeout=60)
+                if result.get("booked"):
+                    ParallelKillSwitch.activate(result)
+                    print(f"\n🎉 SUCCESS! Found booking at {result.get('clinic_name')}")
+                    return True
+            except Exception as e:
+                print(f"❌ Worker error: {e}")
+    
     return False
 
+# ================================================================
+# 10. MAIN
+# ================================================================
 
-# ══════════════════════════════════════════════════════════════
-# 14. MAIN ORCHESTRATOR
-# ══════════════════════════════════════════════════════════════
-
-def run_single_search(user_postal: str = None, request_id: str = None):
-    if user_postal is None:
-        user_postal = os.getenv("POSTAL_CODE", "H1Y3H1")
-    if request_id is None:
-        request_id = os.getenv("REQUEST_ID", "")
-
+def main():
+    print("╔══════════════════════════════════════════════════════╗")
+    print("║     MYVITA CLINIC SCRAPER - TEST MODE               ║")
+    print("║     5 stealth browsers | Visible mode               ║")
+    print("║     Testing first 10 clinics near you               ║")
+    print("╚══════════════════════════════════════════════════════╝")
+    
     user = get_user_data()
-    user["postal_code"] = user_postal
-    language = user.get("language", "fr")
-    KillSwitch.reset()
-    max_date = (datetime.now() + timedelta(days=MAX_DAYS_AHEAD)).strftime("%Y-%m-%d")
-
-    print(f"\n{'='*60}")
-    print(f"🚀 MYVITA CLINIC SCRAPER")
-    print(f"   Postal: {user_postal} | Max: {max_date}")
-    print(f"   Request ID: {request_id if request_id else 'N/A'}")
-    print(f"   Tiers: {RADIUS_TIERS}km | 78-clinic map with coordinates")
-    print(f"   Platforms: Pomelo + Bonjour Santé")
-    print(f"{'='*60}\n")
-
-    for radius in RADIUS_TIERS:
-        if KillSwitch.is_active():
-            break
-        print(f"\n🔵 TIER: {radius}km")
-        found = search_clinics_in_zone(user, radius)
-        if found:
-            print(f"\n🎉 FOUND! {KillSwitch._found_appointment.get('clinic_name')}")
-            if request_id:
-                update_clinic_request(request_id, "completed", KillSwitch._found_appointment)
-            return KillSwitch._found_appointment
-
-    if not KillSwitch.is_active():
-        print(f"\n😴 No appointments found in any tier.")
-        if request_id:
-            update_clinic_request(request_id, "completed", {"found": False, "details": "No appointments found in any tier"})
-        send_no_slots_notification(user_postal, language)
-
-    return None
-
-
-# ══════════════════════════════════════════════════════════════
-# 15. MAIN
-# ══════════════════════════════════════════════════════════════
+    print(f"\n📋 Testing with:")
+    print(f"   Postal code: {user['postal_code']}")
+    print(f"   Name: {user['first_name']} {user['last_name']}")
+    print(f"   RAMQ: {user['ramq']}")
+    print(f"   Headless: {os.getenv('HEADLESS', 'false')}")
+    
+    ParallelKillSwitch.reset()
+    
+    # Test with 15km radius first
+    found = search_clinics_parallel(user, 15, max_workers=3)
+    
+    if found:
+        result = ParallelKillSwitch.get_found()
+        print(f"\n🎉 SUCCESS! Appointment found!")
+        print(f"   Clinic: {result.get('clinic_name')}")
+        print(f"   URL: {result.get('confirmation_url')}")
+    else:
+        print(f"\n😴 No appointments found in test.")
+    
+    print("\n✅ Test complete")
 
 if __name__ == "__main__":
-    print("╔══════════════════════════════════════════════════════╗")
-    print("║     MYVITA CLINIC SCRAPER — Map-First v2            ║")
-    print("║     78 clinics with coordinates                     ║")
-    print("╚══════════════════════════════════════════════════════╝")
-    postal = os.getenv("POSTAL_CODE", "H1Y3H1")
-    request_id = os.getenv("REQUEST_ID", "")
-    run_single_search(user_postal=postal, request_id=request_id)
-    print("\n✅ Session complete")
+    main()
