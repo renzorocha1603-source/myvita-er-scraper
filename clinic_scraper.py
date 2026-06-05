@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-MYVITA UNIFIED SCRAPER — FIRESTORE UPSERT
-- Creates request document if it doesn't exist
-- Searches by postal code if REQUEST_ID not found
+MYVITA UNIFIED SCRAPER — COMPLETE
+- Creates Firestore document properly with .add()
+- Checks for cancellation before running
+- Updates dashboard with results (found slots or no slots)
 - ClicSanté + Bonjour Santé + TELUS Santé
-- 5 parallel headless browsers
+- 5 parallel headless browsers with unique fingerprints
+- 7-day search per clinic
 """
 
 from playwright.sync_api import sync_playwright
@@ -190,78 +192,72 @@ def click_button(page, texts: list):
     return False
 
 # ================================================================
-# 7. FIRESTORE — UPSERT (create if not exists)
+# 7. FIRESTORE HELPERS
 # ================================================================
 
+def is_request_cancelled(request_id: str) -> bool:
+    """Check if the request was cancelled"""
+    if db is None or not request_id:
+        return False
+    try:
+        doc = db.collection(REQUEST_COLLECTION).document(request_id).get()
+        if doc.exists:
+            status = doc.to_dict().get("status", "")
+            return status in ["cancelled", "completed"]
+    except:
+        pass
+    return False
+
 def get_or_create_request(user: dict) -> str:
-    """Find pending request or create a new one"""
+    """Find pending request or create a new one using .add()"""
     if db is None:
-        return os.getenv("REQUEST_ID", "")
+        return ""
     
     request_id = os.getenv("REQUEST_ID", "")
     postal = user["postal_code"][:3].upper()
     
     try:
-        # First check if the passed ID exists
         if request_id:
             doc = db.collection(REQUEST_COLLECTION).document(request_id).get()
             if doc.exists:
-                print(f"📝 Found request: {request_id[:8]}")
                 return request_id
         
-        # Search by postal code for pending requests
         docs = db.collection(REQUEST_COLLECTION)\
-            .where("postal_code", ">=", postal)\
-            .where("postal_code", "<=", postal + "z")\
-            .where("status", "in", ["pending", "scraper_running"])\
+            .where(filter=firestore.FieldFilter("postal_code", ">=", postal))\
+            .where(filter=firestore.FieldFilter("postal_code", "<=", postal + "z"))\
+            .where(filter=firestore.FieldFilter("status", "in", ["pending", "scraper_running"]))\
             .order_by("postal_code")\
             .order_by("created_at", direction="DESCENDING")\
             .limit(1)\
             .stream()
         
         for doc in docs:
-            print(f"📝 Found pending: {doc.id[:8]}")
             return doc.id
         
-        # Create new request document
-        if request_id:
-            db.collection(REQUEST_COLLECTION).document(request_id).set({
-                "status": "scraper_running",
-                "scraper_status": "running",
-                "postal_code": postal,
-                "first_name": user["first_name"],
-                "last_name": user["last_name"],
-                "email": user["email"],
-                "phone": user["phone"],
-                "ramq": user["ramq"],
-                "ramq_seq": user["ramq_seq"],
-                "birth_date": user["birth_date"],
-                "sex": user["sex"],
-                "created_at": firestore.SERVER_TIMESTAMP,
-                "updated_at": firestore.SERVER_TIMESTAMP,
-            })
-            print(f"📝 Created request: {request_id[:8]}")
-            return request_id
-        
-        # No ID provided, create anonymous
-        new_ref = db.collection(REQUEST_COLLECTION).document()
-        new_ref.set({
+        new_data = {
             "status": "scraper_running",
             "scraper_status": "running",
             "postal_code": postal,
             "first_name": user["first_name"],
             "last_name": user["last_name"],
+            "email": user["email"],
+            "phone": user["phone"],
+            "ramq": user["ramq"],
+            "ramq_seq": user["ramq_seq"],
+            "birth_date": user["birth_date"],
+            "gender": user["sex"],
             "created_at": firestore.SERVER_TIMESTAMP,
-        })
-        print(f"📝 Created anonymous request: {new_ref.id[:8]}")
-        return new_ref.id
+        }
+        result = db.collection(REQUEST_COLLECTION).add(new_data)
+        print(f"📝 Created request: {result[1].id[:8]}")
+        return result[1].id
         
     except Exception as e:
         print(f"⚠️ Firestore error: {e}")
-        return request_id
+        return ""
 
 def save_results(request_id: str, slots: list, user: dict):
-    """Save scraper results to Firestore"""
+    """Save scraper results to Firestore for dashboard popup"""
     if db is None or not request_id:
         return
     try:
@@ -284,6 +280,7 @@ def save_results(request_id: str, slots: list, user: dict):
                 "scraper_result": {
                     "found": False,
                     "slots": [],
+                    "message": "No slots found — use MiniClaw to call clinics",
                     "completed_at": datetime.now().isoformat(),
                 },
                 "scraper_status": "completed",
@@ -357,28 +354,21 @@ def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
                         continue
                     clinic_id = clinic_id_match.group(1)
                     url = f"https://clients3.clicsante.ca/{clinic_id}/take-appt"
-                    
                     name = link.evaluate("""el => {
                         let parent = el.closest('li, article, div');
                         if (!parent) return '';
                         let headings = parent.querySelectorAll('h1, h2, h3, h4, strong, b');
-                        for (let h of headings) {
-                            let text = h.innerText?.trim();
-                            if (text && text.length > 5 && text.length < 200) return text;
-                        }
+                        for (let h of headings) { let t = h.innerText?.trim(); if (t && t.length > 5 && t.length < 200) return t; }
                         return '';
                     }""") or f"Clinique #{clinic_id}"
-                    
                     found.append({"name": name[:150], "platform": "clicsante", "url": url})
                     KillSwitch.add_slot(found[-1])
                 except:
                     pass
-        
-        except Exception as e:
+        except:
             pass
         finally:
             browser.close()
-    
     return found
 
 # ================================================================
@@ -392,7 +382,6 @@ def scrape_bonjoursante(profile: dict, clinic: dict, user: dict, worker_id: int)
     stagger = profile.get("delay", 0)
     if stagger > 0:
         time.sleep(stagger)
-    
     if KillSwitch.is_active():
         return []
     
@@ -433,54 +422,37 @@ def scrape_bonjoursante(profile: dict, clinic: dict, user: dict, worker_id: int)
             
             cb = page.locator("input[type='checkbox']").first
             if cb.count() > 0:
-                try:
-                    cb.check()
-                except:
-                    pass
+                try: cb.check()
+                except: pass
             
             click_button(page, ["Continuer", "Suivant", "Next"])
             human_delay(2000, 4000)
-            
             fill_field(page, ["input[name*='postal']", "input[placeholder*='code postal']"], user["postal_code"])
             
             for day_offset in range(SEARCH_DAYS):
-                if KillSwitch.is_active():
-                    break
-                
+                if KillSwitch.is_active(): break
                 target_date = datetime.now() + timedelta(days=day_offset)
                 date_str = target_date.strftime("%Y-%m-%d")
-                
                 date_input = page.locator("input[type='date']").first
                 if date_input.count() > 0:
-                    try:
-                        date_input.fill(date_str)
-                        human_delay(500, 1000)
-                    except:
-                        pass
-                
-                if click_button(page, ["Rechercher", "Search", "Chercher"]):
-                    human_delay(2000, 4000)
-                
+                    try: date_input.fill(date_str); human_delay(500, 1000)
+                    except: pass
+                if click_button(page, ["Rechercher", "Search", "Chercher"]): human_delay(2000, 4000)
                 if check_page_for_slots(page):
                     found.append({"clinic_name": clinic_name, "platform": "bonjour_sante", "date": target_date.strftime("%d/%m/%Y"), "url": page.url, "city": clinic.get("city", "")})
                     KillSwitch.add_slot(found[-1])
                     return found
-                
                 for cycle in range(3):
-                    if KillSwitch.is_active():
-                        break
-                    page.reload(wait_until="domcontentloaded")
-                    human_delay(5000, 8000)
+                    if KillSwitch.is_active(): break
+                    page.reload(wait_until="domcontentloaded"); human_delay(5000, 8000)
                     if check_page_for_slots(page):
                         found.append({"clinic_name": clinic_name, "platform": "bonjour_sante", "date": target_date.strftime("%d/%m/%Y"), "url": page.url, "city": clinic.get("city", "")})
                         KillSwitch.add_slot(found[-1])
                         return found
-        
         except:
             pass
         finally:
             browser.close()
-    
     return found
 
 # ================================================================
@@ -492,11 +464,8 @@ def scrape_telussante(profile: dict, clinic: dict, user: dict, worker_id: int) -
     clinic_name = clinic.get("name", "Unknown")
     profile_name = profile.get("name", f"Worker-{worker_id}")
     stagger = profile.get("delay", 0)
-    if stagger > 0:
-        time.sleep(stagger)
-    
-    if KillSwitch.is_active():
-        return []
+    if stagger > 0: time.sleep(stagger)
+    if KillSwitch.is_active(): return []
     
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=HEADLESS)
@@ -512,79 +481,52 @@ def scrape_telussante(profile: dict, clinic: dict, user: dict, worker_id: int) -
         try:
             page.goto(clinic["website"], wait_until="domcontentloaded", timeout=30000)
             human_delay(1000, 2000)
-            
             rdv_btn = page.get_by_text("Prendre rendez-vous", exact=False).first
-            if rdv_btn.count() > 0:
-                rdv_btn.click()
-                human_delay(2000, 4000)
+            if rdv_btn.count() > 0: rdv_btn.click(); human_delay(2000, 4000)
             
             fill_field(page, ["input[placeholder*='Prenom']", "input[name*='firstName']"], user["first_name"])
             fill_field(page, ["input[placeholder*='Nom']", "input[name*='lastName']"], user["last_name"])
             fill_field(page, ["input[placeholder*='ABCD']", "input[name*='ramq']"], user["ramq"])
             fill_field(page, ["input[placeholder*='00']", "input[name*='seq']"], user["ramq_seq"])
-            
             email_el = page.locator("input[type='email']").first
-            if email_el.count() > 0:
-                email_el.fill(user["email"])
-            
+            if email_el.count() > 0: email_el.fill(user["email"])
             phone_el = page.locator("input[type='tel'], input[name*='phone']").first
-            if phone_el.count() > 0:
-                phone_el.fill(user["phone"])
-            
+            if phone_el.count() > 0: phone_el.fill(user["phone"])
             cb = page.locator("input[type='checkbox']").first
             if cb.count() > 0:
-                try:
-                    cb.check()
-                except:
-                    pass
-            
-            click_button(page, ["Continuer", "Suivant"])
-            human_delay(2000, 4000)
-            
+                try: cb.check()
+                except: pass
+            click_button(page, ["Continuer", "Suivant"]); human_delay(2000, 4000)
             fill_field(page, ["input[name*='postal']", "input[placeholder*='code postal']"], user["postal_code"])
             
             for day_offset in range(SEARCH_DAYS):
-                if KillSwitch.is_active():
-                    break
-                
+                if KillSwitch.is_active(): break
                 target_date = datetime.now() + timedelta(days=day_offset)
                 date_str = target_date.strftime("%Y-%m-%d")
-                
                 date_input = page.locator("input[type='date']").first
                 if date_input.count() > 0:
-                    try:
-                        date_input.fill(date_str)
-                        human_delay(500, 1000)
-                    except:
-                        pass
-                
-                if click_button(page, ["Rechercher", "Search"]):
-                    human_delay(2000, 4000)
-                
+                    try: date_input.fill(date_str); human_delay(500, 1000)
+                    except: pass
+                if click_button(page, ["Rechercher", "Search"]): human_delay(2000, 4000)
                 if check_page_for_slots(page):
                     found.append({"clinic_name": clinic_name, "platform": "telus_sante", "date": target_date.strftime("%d/%m/%Y"), "url": page.url, "city": clinic.get("city", "")})
                     KillSwitch.add_slot(found[-1])
                     return found
-                
                 for cycle in range(3):
-                    if KillSwitch.is_active():
-                        break
-                    page.reload(wait_until="domcontentloaded")
-                    human_delay(5000, 8000)
+                    if KillSwitch.is_active(): break
+                    page.reload(wait_until="domcontentloaded"); human_delay(5000, 8000)
                     if check_page_for_slots(page):
                         found.append({"clinic_name": clinic_name, "platform": "telus_sante", "date": target_date.strftime("%d/%m/%Y"), "url": page.url, "city": clinic.get("city", "")})
                         KillSwitch.add_slot(found[-1])
                         return found
-        
         except:
             pass
         finally:
             browser.close()
-    
     return found
 
 # ================================================================
-# 11. MAIN SEARCH
+# 11. MAIN SEARCH ENGINE
 # ================================================================
 
 def search_all_platforms(user: dict) -> list:
@@ -615,22 +557,18 @@ def search_all_platforms(user: dict) -> list:
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = []
         profiles = BROWSER_PROFILES[:MAX_WORKERS]
-        
         futures.append(executor.submit(scrape_clicsante, profiles[0], user, 0))
-        
         idx = 0
         for i, profile in enumerate(profiles[1:], 1):
             if idx < len(nearby):
-                clinic = nearby[idx]
-                idx += 1
+                clinic = nearby[idx]; idx += 1
                 if clinic["platform"] == "bonjour_sante":
                     futures.append(executor.submit(scrape_bonjoursante, profile, clinic, user, i))
                 elif clinic["platform"] == "telus_sante":
                     futures.append(executor.submit(scrape_telussante, profile, clinic, user, i))
         
         for future in as_completed(futures):
-            if KillSwitch.is_active():
-                break
+            if KillSwitch.is_active(): break
             try:
                 result = future.result(timeout=600)
                 all_slots.extend(result)
@@ -653,6 +591,10 @@ def main():
     print(f"📋 {user['first_name']} {user['last_name']} | {user['postal_code']}")
     
     request_id = get_or_create_request(user)
+    
+    if request_id and is_request_cancelled(request_id):
+        print("🛑 Request cancelled — stopping")
+        return
     
     KillSwitch.reset()
     start = time.time()
