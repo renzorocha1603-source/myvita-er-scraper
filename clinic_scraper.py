@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
-MYVITA UNIFIED SCRAPER — ALL 3 PLATFORMS + FIRESTORE
-- ClicSanté: availability check
-- Bonjour Santé: full flow with 7-day search
-- TELUS Santé: full flow with 7-day search
-- 5 parallel headless browsers with unique fingerprints
-- Updates Firestore request document with results
-- Kill switch collects up to 3 slots
+MYVITA UNIFIED SCRAPER — FIRESTORE UPSERT
+- Creates request document if it doesn't exist
+- Searches by postal code if REQUEST_ID not found
+- ClicSanté + Bonjour Santé + TELUS Santé
+- 5 parallel headless browsers
 """
 
 from playwright.sync_api import sync_playwright
@@ -37,20 +35,9 @@ if FIREBASE_CREDENTIALS_JSON:
         if not firebase_admin._apps:
             firebase_admin.initialize_app(cred, {'projectId': 'myvita-app-c5ecd'})
         db = firestore.client()
-        print("✅ Firebase initialized (GitHub Secret)")
+        print("✅ Firebase initialized")
     except Exception as e:
-        print(f"⚠️ Firebase init error from secret: {e}")
-elif os.path.exists(FIREBASE_CRED_PATH):
-    try:
-        cred = credentials.Certificate(FIREBASE_CRED_PATH)
-        if not firebase_admin._apps:
-            firebase_admin.initialize_app(cred, {'projectId': 'myvita-app-c5ecd'})
-        db = firestore.client()
-        print("✅ Firebase initialized (local file)")
-    except Exception as e:
-        print(f"⚠️ Firebase init error from file: {e}")
-else:
-    print("⚠️ Firebase credentials not found — Firestore disabled")
+        print(f"⚠️ Firebase error: {e}")
 
 # ================================================================
 # 2. CONFIGURATION
@@ -60,55 +47,18 @@ HEADLESS = os.getenv("HEADLESS", "true").lower() == "true"
 MAX_WORKERS = int(os.getenv("MAX_WORKERS", "5"))
 SEARCH_DAYS = 7
 RADIUS_KM = 50
-REQUEST_ID = os.getenv("REQUEST_ID", "")
-REQUEST_COLLECTION = os.getenv("REQUEST_COLLECTION", "concierge_requests")
+REQUEST_COLLECTION = "concierge_requests"
 
 # ================================================================
-# 3. 5 UNIQUE BROWSER FINGERPRINTS
+# 3. BROWSER PROFILES
 # ================================================================
 
 BROWSER_PROFILES = [
-    {
-        "name": "User-1-Chrome-Win",
-        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "viewport": {"width": 1366, "height": 768},
-        "locale": "fr-CA",
-        "timezone": "America/Montreal",
-        "delay": 0,
-    },
-    {
-        "name": "User-2-Safari-Mac",
-        "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15",
-        "viewport": {"width": 1440, "height": 900},
-        "locale": "fr-CA",
-        "timezone": "America/Montreal",
-        "delay": 15,
-    },
-    {
-        "name": "User-3-Firefox-Win",
-        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
-        "viewport": {"width": 1536, "height": 864},
-        "locale": "en-CA",
-        "timezone": "America/Toronto",
-        "delay": 30,
-    },
-    {
-        "name": "User-4-Chrome-Linux",
-        "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-        "viewport": {"width": 1280, "height": 720},
-        "locale": "fr-CA",
-        "timezone": "America/Montreal",
-        "delay": 45,
-    },
-    {
-        "name": "User-5-iPhone",
-        "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1",
-        "viewport": {"width": 390, "height": 844},
-        "locale": "fr-CA",
-        "timezone": "America/Montreal",
-        "is_mobile": True,
-        "delay": 60,
-    },
+    {"name": "User-1-Chrome-Win", "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36", "viewport": {"width": 1366, "height": 768}, "locale": "fr-CA", "timezone": "America/Montreal", "delay": 0},
+    {"name": "User-2-Safari-Mac", "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.2 Safari/605.1.15", "viewport": {"width": 1440, "height": 900}, "locale": "fr-CA", "timezone": "America/Montreal", "delay": 15},
+    {"name": "User-3-Firefox-Win", "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0", "viewport": {"width": 1536, "height": 864}, "locale": "en-CA", "timezone": "America/Toronto", "delay": 30},
+    {"name": "User-4-Chrome-Linux", "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/119.0.0.0 Safari/537.36", "viewport": {"width": 1280, "height": 720}, "locale": "fr-CA", "timezone": "America/Montreal", "delay": 45},
+    {"name": "User-5-iPhone", "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 Version/17.1 Mobile/15E148 Safari/604.1", "viewport": {"width": 390, "height": 844}, "locale": "fr-CA", "timezone": "America/Montreal", "is_mobile": True, "delay": 60},
 ]
 
 GOOGLE_MAPS_PROXY = "https://us-central1-myvita-app-c5ecd.cloudfunctions.net/googleMapsProxy"
@@ -118,7 +68,6 @@ GOOGLE_MAPS_PROXY = "https://us-central1-myvita-app-c5ecd.cloudfunctions.net/goo
 # ================================================================
 
 CLINICS_DATABASE = [
-    # ========== BONJOUR SANTÉ — MONTRÉAL ==========
     {"name": "GMF Clinique medicale Angus", "lat": 45.5401, "lng": -73.5658, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/angus", "city": "Montreal"},
     {"name": "Clinique Medico-Centre Mont-Royal", "lat": 45.5163, "lng": -73.5786, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/montroyal", "city": "Montreal"},
     {"name": "Centre Medical Mieux-Etre Levasseur", "lat": 45.5841, "lng": -73.6412, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/levasseur", "city": "Montreal"},
@@ -126,33 +75,24 @@ CLINICS_DATABASE = [
     {"name": "GMF Clinique Medicale St-Denis", "lat": 45.5264, "lng": -73.5932, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/stdenis", "city": "Montreal"},
     {"name": "Centre Medical Mieux-Etre Lasalle", "lat": 45.4312, "lng": -73.6248, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/cmmelasalle", "city": "Montreal"},
     {"name": "GMF A-R Centre medical Mieux-Etre St-Leonard", "lat": 45.5892, "lng": -73.6014, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/mieuxetre", "city": "Montreal"},
-    # ========== BONJOUR SANTÉ — LAVAL ==========
     {"name": "GMF Medi-Centre Chomedey", "lat": 45.5451, "lng": -73.7483, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/medicentrechomedey", "city": "Laval"},
     {"name": "GMF Le Carrefour Medical Laval", "lat": 45.5684, "lng": -73.7431, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/lecarrefour", "city": "Laval"},
     {"name": "Super-Clinique Polyclinique Medicale Fabreville", "lat": 45.5925, "lng": -73.7912, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/fabreville", "city": "Laval"},
     {"name": "Clinique Medicale Saint-Francois", "lat": 45.5781, "lng": -73.6542, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/stfrancois", "city": "Laval"},
     {"name": "GMF-R Centre Medical Laval", "lat": 45.5985, "lng": -73.6712, "platform": "bonjour_sante", "website": "https://www.lavalensante.com/", "city": "Laval"},
     {"name": "GMF-R Concorde", "lat": 45.5721, "lng": -73.6914, "platform": "bonjour_sante", "website": "https://www.lavalensante.com/", "city": "Laval"},
-    # ========== BONJOUR SANTÉ — LONGUEUIL / RIVE-SUD ==========
     {"name": "Clinique medicale privee Longueuil UnionMD", "lat": 45.5252, "lng": -73.5135, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/unionmdlongueuil", "city": "Longueuil"},
     {"name": "GMF-R Clinique Medicale Longueuil-Ouest", "lat": 45.5314, "lng": -73.5248, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/longueuilouest", "city": "Longueuil"},
-    {"name": "GMF Clinique Medicale GMF Pierre Boucher", "lat": 45.5511, "lng": -73.4425, "platform": "bonjour_sante", "website": "https://www.santemonteregie.qc.ca/", "city": "Longueuil"},
-    # ========== BONJOUR SANTÉ — BROSSARD ==========
     {"name": "GMF Dix30 Brossard", "lat": 45.4428, "lng": -73.4412, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/gmfdix30", "city": "Brossard"},
     {"name": "Clinique Sans Rendez-Vous Dix30", "lat": 45.4428, "lng": -73.4412, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/csansrendezvousdix30brossard", "city": "Brossard"},
-    # ========== BONJOUR SANTÉ — TERREBONNE ==========
     {"name": "GMF Clinique Medicale Terrebonne", "lat": 45.6982, "lng": -73.6391, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/cmterrebonne", "city": "Terrebonne"},
-    # ========== BONJOUR SANTÉ — LAURENTIDES ==========
     {"name": "GMF du Grand Saint-Jerome", "lat": 45.8321, "lng": -73.9915, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/santhippolyte", "city": "Saint-Jerome"},
     {"name": "GMF Clinique Medicale Rosemere", "lat": 45.6382, "lng": -73.7915, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/rosemere", "city": "Rosemere"},
     {"name": "GMF Clinique Medicale Lorraine", "lat": 45.6512, "lng": -73.7814, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/cmlorraine", "city": "Lorraine"},
-    # ========== BONJOUR SANTÉ — VAUDREUIL ==========
     {"name": "GMF-R Vaudreuil-Dorion", "lat": 45.3982, "lng": -74.0321, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/uno/clinique/vaudreuildorion", "city": "Vaudreuil-Dorion"},
-    # ========== BONJOUR SANTÉ — QUEBEC CITY ==========
     {"name": "GMF-U de Maizerets", "lat": 46.8361, "lng": -71.2294, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/", "city": "Quebec"},
     {"name": "GMF-U Laurier", "lat": 46.7728, "lng": -71.2852, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/", "city": "Quebec"},
     {"name": "GMF-U Quatre-Bourgeois", "lat": 46.7794, "lng": -71.3021, "platform": "bonjour_sante", "website": "https://bonjour-sante.ca/", "city": "Quebec"},
-    # ========== TELUS SANTÉ (POMELO) ==========
     {"name": "GMF Clinique Medicale Sainte-Dorothee", "lat": 45.5312, "lng": -73.8115, "platform": "telus_sante", "website": "https://pomelo.health/cliniquemedicalesaintedorothee", "city": "Laval"},
     {"name": "GMF-U Charles-Le Moyne", "lat": 45.5184, "lng": -73.4831, "platform": "telus_sante", "website": "https://qc.pomelo.health/gmfucharleslemoyne", "city": "Longueuil"},
     {"name": "GMF Centre Medical Laval", "lat": 45.5521, "lng": -73.7314, "platform": "telus_sante", "website": "https://qc.pomelo.health/centremedicallaval", "city": "Laval"},
@@ -177,7 +117,6 @@ class KillSwitch:
             cls._found_slots.append(details)
             if len(cls._found_slots) >= 3:
                 cls._active = True
-            print(f"\n🎯 SLOT: {details.get('clinic_name', details.get('name', 'Unknown'))} ({len(cls._found_slots)}/3)")
     
     @classmethod
     def is_active(cls) -> bool:
@@ -211,14 +150,14 @@ def human_delay(min_ms=300, max_ms=1000):
 
 def get_user_data():
     return {
-        "first_name": os.getenv("USER_FIRST_NAME", "Eric"),
-        "last_name": os.getenv("USER_LAST_NAME", "Reategui"),
-        "ramq": os.getenv("USER_RAMQ", "REAE82031610"),
-        "ramq_seq": os.getenv("USER_RAMQ_SEQ", "09"),
-        "birth_year": os.getenv("USER_BIRTH_YEAR", "1982"),
+        "first_name": os.getenv("USER_FIRST_NAME", ""),
+        "last_name": os.getenv("USER_LAST_NAME", ""),
+        "ramq": os.getenv("USER_RAMQ", ""),
+        "ramq_seq": os.getenv("USER_RAMQ_SEQ", "01"),
+        "birth_date": os.getenv("USER_BIRTH_DATE", ""),
         "sex": os.getenv("USER_SEX", "M"),
-        "email": os.getenv("USER_EMAIL", "user@example.com"),
-        "phone": os.getenv("USER_PHONE", "4383665862"),
+        "email": os.getenv("USER_EMAIL", ""),
+        "phone": os.getenv("USER_PHONE", ""),
         "postal_code": os.getenv("POSTAL_CODE", "H1Y3H1"),
     }
 
@@ -251,23 +190,78 @@ def click_button(page, texts: list):
     return False
 
 # ================================================================
-# 7. FIRESTORE HELPERS
+# 7. FIRESTORE — UPSERT (create if not exists)
 # ================================================================
 
-def mark_scraper_running(request_id: str):
-    if db is None or not request_id:
-        return
+def get_or_create_request(user: dict) -> str:
+    """Find pending request or create a new one"""
+    if db is None:
+        return os.getenv("REQUEST_ID", "")
+    
+    request_id = os.getenv("REQUEST_ID", "")
+    postal = user["postal_code"][:3].upper()
+    
     try:
-        db.collection(REQUEST_COLLECTION).document(request_id).update({
+        # First check if the passed ID exists
+        if request_id:
+            doc = db.collection(REQUEST_COLLECTION).document(request_id).get()
+            if doc.exists:
+                print(f"📝 Found request: {request_id[:8]}")
+                return request_id
+        
+        # Search by postal code for pending requests
+        docs = db.collection(REQUEST_COLLECTION)\
+            .where("postal_code", ">=", postal)\
+            .where("postal_code", "<=", postal + "z")\
+            .where("status", "in", ["pending", "scraper_running"])\
+            .order_by("postal_code")\
+            .order_by("created_at", direction="DESCENDING")\
+            .limit(1)\
+            .stream()
+        
+        for doc in docs:
+            print(f"📝 Found pending: {doc.id[:8]}")
+            return doc.id
+        
+        # Create new request document
+        if request_id:
+            db.collection(REQUEST_COLLECTION).document(request_id).set({
+                "status": "scraper_running",
+                "scraper_status": "running",
+                "postal_code": postal,
+                "first_name": user["first_name"],
+                "last_name": user["last_name"],
+                "email": user["email"],
+                "phone": user["phone"],
+                "ramq": user["ramq"],
+                "ramq_seq": user["ramq_seq"],
+                "birth_date": user["birth_date"],
+                "sex": user["sex"],
+                "created_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            })
+            print(f"📝 Created request: {request_id[:8]}")
+            return request_id
+        
+        # No ID provided, create anonymous
+        new_ref = db.collection(REQUEST_COLLECTION).document()
+        new_ref.set({
             "status": "scraper_running",
             "scraper_status": "running",
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            "postal_code": postal,
+            "first_name": user["first_name"],
+            "last_name": user["last_name"],
+            "created_at": firestore.SERVER_TIMESTAMP,
         })
-        print(f"📝 Request {request_id[:8]}: marked as running")
+        print(f"📝 Created anonymous request: {new_ref.id[:8]}")
+        return new_ref.id
+        
     except Exception as e:
-        print(f"⚠️ Could not mark running: {e}")
+        print(f"⚠️ Firestore error: {e}")
+        return request_id
 
-def update_firestore_request(request_id: str, slots: list):
+def save_results(request_id: str, slots: list, user: dict):
+    """Save scraper results to Firestore"""
     if db is None or not request_id:
         return
     try:
@@ -278,26 +272,26 @@ def update_firestore_request(request_id: str, slots: list):
                 "scraper_result": {
                     "found": True,
                     "slots": slots,
-                    "completed_at": datetime.now(),
+                    "completed_at": datetime.now().isoformat(),
                 },
                 "scraper_status": "completed",
                 "updated_at": firestore.SERVER_TIMESTAMP,
             })
-            print(f"✅ Request {request_id[:8]}: {len(slots)} slots saved")
+            print(f"✅ Saved {len(slots)} slots to {request_id[:8]}")
         else:
             doc_ref.update({
                 "status": "pending",
                 "scraper_result": {
                     "found": False,
                     "slots": [],
-                    "completed_at": datetime.now(),
+                    "completed_at": datetime.now().isoformat(),
                 },
                 "scraper_status": "completed",
                 "updated_at": firestore.SERVER_TIMESTAMP,
             })
-            print(f"😴 Request {request_id[:8]}: no slots")
+            print(f"😴 No slots — request {request_id[:8]} stays pending")
     except Exception as e:
-        print(f"❌ Firestore update failed: {e}")
+        print(f"❌ Save failed: {e}")
 
 # ================================================================
 # 8. CLICSANTÉ
@@ -310,8 +304,6 @@ def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
     stagger = profile.get("delay", 0)
     if stagger > 0:
         time.sleep(stagger)
-    
-    print(f"\n🔍 [{profile_name}] ClicSanté...")
     
     if KillSwitch.is_active():
         return []
@@ -354,7 +346,6 @@ def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
             human_delay(3000, 5000)
             
             book_links = page.locator("a[href*='take-appt']").all()
-            print(f"   [{profile_name}] 📎 {len(book_links)} links")
             
             for link in book_links[:5]:
                 if KillSwitch.is_active():
@@ -378,17 +369,13 @@ def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
                         return '';
                     }""") or f"Clinique #{clinic_id}"
                     
-                    found.append({
-                        "name": name[:150],
-                        "platform": "clicsante",
-                        "url": url,
-                    })
+                    found.append({"name": name[:150], "platform": "clicsante", "url": url})
                     KillSwitch.add_slot(found[-1])
                 except:
                     pass
         
         except Exception as e:
-            print(f"   [{profile_name}] ❌ {e}")
+            pass
         finally:
             browser.close()
     
@@ -405,8 +392,6 @@ def scrape_bonjoursante(profile: dict, clinic: dict, user: dict, worker_id: int)
     stagger = profile.get("delay", 0)
     if stagger > 0:
         time.sleep(stagger)
-    
-    print(f"\n🏥 [{profile_name}] Bonjour Santé: {clinic_name[:40]}...")
     
     if KillSwitch.is_active():
         return []
@@ -477,13 +462,7 @@ def scrape_bonjoursante(profile: dict, clinic: dict, user: dict, worker_id: int)
                     human_delay(2000, 4000)
                 
                 if check_page_for_slots(page):
-                    found.append({
-                        "clinic_name": clinic_name,
-                        "platform": "bonjour_sante",
-                        "date": target_date.strftime("%d/%m/%Y"),
-                        "url": page.url,
-                        "city": clinic.get("city", ""),
-                    })
+                    found.append({"clinic_name": clinic_name, "platform": "bonjour_sante", "date": target_date.strftime("%d/%m/%Y"), "url": page.url, "city": clinic.get("city", "")})
                     KillSwitch.add_slot(found[-1])
                     return found
                 
@@ -492,20 +471,13 @@ def scrape_bonjoursante(profile: dict, clinic: dict, user: dict, worker_id: int)
                         break
                     page.reload(wait_until="domcontentloaded")
                     human_delay(5000, 8000)
-                    
                     if check_page_for_slots(page):
-                        found.append({
-                            "clinic_name": clinic_name,
-                            "platform": "bonjour_sante",
-                            "date": target_date.strftime("%d/%m/%Y"),
-                            "url": page.url,
-                            "city": clinic.get("city", ""),
-                        })
+                        found.append({"clinic_name": clinic_name, "platform": "bonjour_sante", "date": target_date.strftime("%d/%m/%Y"), "url": page.url, "city": clinic.get("city", "")})
                         KillSwitch.add_slot(found[-1])
                         return found
         
-        except Exception as e:
-            print(f"   [{profile_name}] ❌ {e}")
+        except:
+            pass
         finally:
             browser.close()
     
@@ -522,8 +494,6 @@ def scrape_telussante(profile: dict, clinic: dict, user: dict, worker_id: int) -
     stagger = profile.get("delay", 0)
     if stagger > 0:
         time.sleep(stagger)
-    
-    print(f"\n🏥 [{profile_name}] TELUS Santé: {clinic_name[:40]}...")
     
     if KillSwitch.is_active():
         return []
@@ -592,13 +562,7 @@ def scrape_telussante(profile: dict, clinic: dict, user: dict, worker_id: int) -
                     human_delay(2000, 4000)
                 
                 if check_page_for_slots(page):
-                    found.append({
-                        "clinic_name": clinic_name,
-                        "platform": "telus_sante",
-                        "date": target_date.strftime("%d/%m/%Y"),
-                        "url": page.url,
-                        "city": clinic.get("city", ""),
-                    })
+                    found.append({"clinic_name": clinic_name, "platform": "telus_sante", "date": target_date.strftime("%d/%m/%Y"), "url": page.url, "city": clinic.get("city", "")})
                     KillSwitch.add_slot(found[-1])
                     return found
                 
@@ -607,27 +571,20 @@ def scrape_telussante(profile: dict, clinic: dict, user: dict, worker_id: int) -
                         break
                     page.reload(wait_until="domcontentloaded")
                     human_delay(5000, 8000)
-                    
                     if check_page_for_slots(page):
-                        found.append({
-                            "clinic_name": clinic_name,
-                            "platform": "telus_sante",
-                            "date": target_date.strftime("%d/%m/%Y"),
-                            "url": page.url,
-                            "city": clinic.get("city", ""),
-                        })
+                        found.append({"clinic_name": clinic_name, "platform": "telus_sante", "date": target_date.strftime("%d/%m/%Y"), "url": page.url, "city": clinic.get("city", "")})
                         KillSwitch.add_slot(found[-1])
                         return found
         
-        except Exception as e:
-            print(f"   [{profile_name}] ❌ {e}")
+        except:
+            pass
         finally:
             browser.close()
     
     return found
 
 # ================================================================
-# 11. MAIN SEARCH ENGINE
+# 11. MAIN SEARCH
 # ================================================================
 
 def search_all_platforms(user: dict) -> list:
@@ -637,39 +594,35 @@ def search_all_platforms(user: dict) -> list:
     user_coords = None
     
     try:
-        r = requests.post(GOOGLE_MAPS_PROXY, json={
-            "endpoint": "geocode/json",
-            "params": {"address": f"{user['postal_code']}, Quebec, Canada", "region": "ca"}
-        }, timeout=15)
+        r = requests.post(GOOGLE_MAPS_PROXY, json={"endpoint": "geocode/json", "params": {"address": f"{user['postal_code']}, Quebec, Canada", "region": "ca"}}, timeout=15)
         loc = r.json()["results"][0]["geometry"]["location"]
         user_coords = (loc["lat"], loc["lng"])
     except:
         pass
     
-    nearby_clinics = []
+    nearby = []
     for clinic in CLINICS_DATABASE:
         if user_coords:
             dist = haversine(user_coords[0], user_coords[1], clinic["lat"], clinic["lng"])
             if dist <= RADIUS_KM:
                 clinic["distance"] = round(dist, 1)
-                nearby_clinics.append(clinic)
+                nearby.append(clinic)
         else:
-            nearby_clinics.append(clinic)
+            nearby.append(clinic)
     
-    print(f"\n📍 {len(nearby_clinics)} clinics within {RADIUS_KM}km")
-    print(f"🧑 {MAX_WORKERS} parallel browsers | {SEARCH_DAYS}-day search | Headless: {HEADLESS}")
+    print(f"📍 {len(nearby)} clinics within {RADIUS_KM}km | {MAX_WORKERS} browsers | {SEARCH_DAYS}-day")
     
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = []
-        profiles_cycle = BROWSER_PROFILES[:MAX_WORKERS]
+        profiles = BROWSER_PROFILES[:MAX_WORKERS]
         
-        futures.append(executor.submit(scrape_clicsante, profiles_cycle[0], user, 0))
+        futures.append(executor.submit(scrape_clicsante, profiles[0], user, 0))
         
-        clinic_idx = 0
-        for i, profile in enumerate(profiles_cycle[1:], 1):
-            if clinic_idx < len(nearby_clinics):
-                clinic = nearby_clinics[clinic_idx]
-                clinic_idx += 1
+        idx = 0
+        for i, profile in enumerate(profiles[1:], 1):
+            if idx < len(nearby):
+                clinic = nearby[idx]
+                idx += 1
                 if clinic["platform"] == "bonjour_sante":
                     futures.append(executor.submit(scrape_bonjoursante, profile, clinic, user, i))
                 elif clinic["platform"] == "telus_sante":
@@ -693,17 +646,13 @@ def search_all_platforms(user: dict) -> list:
 def main():
     print("╔══════════════════════════════════════════════╗")
     print("║   MYVITA UNIFIED SCRAPER                     ║")
-    print("║   ClicSanté + Bonjour Santé + TELUS Santé    ║")
     print(f"║   {MAX_WORKERS} browsers | {SEARCH_DAYS}-day | Headless: {HEADLESS}   ║")
     print("╚══════════════════════════════════════════════╝")
     
     user = get_user_data()
-    request_id = REQUEST_ID
+    print(f"📋 {user['first_name']} {user['last_name']} | {user['postal_code']}")
     
-    print(f"\n📋 {user['first_name']} {user['last_name']} | {user['postal_code']}")
-    if request_id:
-        print(f"📝 Request: {request_id[:8]}...")
-        mark_scraper_running(request_id)
+    request_id = get_or_create_request(user)
     
     KillSwitch.reset()
     start = time.time()
@@ -711,14 +660,14 @@ def main():
     elapsed = time.time() - start
     
     if request_id:
-        update_firestore_request(request_id, slots)
+        save_results(request_id, slots, user)
     
     if slots:
         print(f"\n🎉 FOUND {len(slots)} SLOTS in {elapsed:.0f}s:")
         for s in slots:
-            print(f"   ✅ {s.get('clinic_name', s.get('name', '?'))} — {s.get('platform', '?')} — {s.get('date', '?')}")
+            print(f"   ✅ {s.get('clinic_name', s.get('name', '?'))} — {s.get('platform', '?')}")
     else:
-        print(f"\n😴 No slots found in {elapsed:.0f}s — escalate to human (MiniClaw)")
+        print(f"\n😴 No slots in {elapsed:.0f}s — escalate to MiniClaw")
     
     print("\n✅ Done")
 
