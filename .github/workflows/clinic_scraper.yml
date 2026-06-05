@@ -3,10 +3,6 @@ name: MyVita Clinic Scraper
 on:
   workflow_dispatch:
     inputs:
-      request_id:
-        description: 'Firestore request ID to update with results'
-        required: false
-        default: ''
       postal_code:
         description: 'Postal code'
         required: true
@@ -76,7 +72,7 @@ jobs:
       - name: Run clinic scraper
         env:
           FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
-          REQUEST_ID: ${{ github.event.inputs.request_id }}
+          REQUEST_ID: ''
           POSTAL_CODE: ${{ github.event.inputs.postal_code }}
           USER_FIRST_NAME: ${{ github.event.inputs.first_name }}
           USER_LAST_NAME: ${{ github.event.inputs.last_name }}
