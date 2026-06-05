@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-MYVITA UNIFIED SCRAPER — ALL 3 PLATFORMS
-- ClicSanté: availability check (blood test + consultation)
+MYVITA UNIFIED SCRAPER — ALL 3 PLATFORMS + FIRESTORE
+- ClicSanté: availability check
 - Bonjour Santé: full flow with 7-day search
 - TELUS Santé: full flow with 7-day search
 - 5 parallel headless browsers with unique fingerprints
+- Updates Firestore request document with results
 - Kill switch collects up to 3 slots
 """
 
@@ -14,21 +15,56 @@ import random
 import os
 import re
 import math
+import json
 import threading
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 # ================================================================
-# 1. CONFIGURATION
+# 1. FIREBASE SETUP
+# ================================================================
+
+FIREBASE_CREDENTIALS_JSON = os.getenv("FIREBASE_CREDENTIALS", "")
+FIREBASE_CRED_PATH = os.getenv("FIREBASE_CRED_PATH", "firebase-credentials.json")
+
+db = None
+if FIREBASE_CREDENTIALS_JSON:
+    try:
+        cred_dict = json.loads(FIREBASE_CREDENTIALS_JSON)
+        cred = credentials.Certificate(cred_dict)
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred, {'projectId': 'myvita-app-c5ecd'})
+        db = firestore.client()
+        print("✅ Firebase initialized (GitHub Secret)")
+    except Exception as e:
+        print(f"⚠️ Firebase init error from secret: {e}")
+elif os.path.exists(FIREBASE_CRED_PATH):
+    try:
+        cred = credentials.Certificate(FIREBASE_CRED_PATH)
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred, {'projectId': 'myvita-app-c5ecd'})
+        db = firestore.client()
+        print("✅ Firebase initialized (local file)")
+    except Exception as e:
+        print(f"⚠️ Firebase init error from file: {e}")
+else:
+    print("⚠️ Firebase credentials not found — Firestore disabled")
+
+# ================================================================
+# 2. CONFIGURATION
 # ================================================================
 
 HEADLESS = os.getenv("HEADLESS", "true").lower() == "true"
 MAX_WORKERS = int(os.getenv("MAX_WORKERS", "5"))
 SEARCH_DAYS = 7
 RADIUS_KM = 50
+REQUEST_ID = os.getenv("REQUEST_ID", "")
+REQUEST_COLLECTION = os.getenv("REQUEST_COLLECTION", "concierge_requests")
 
 # ================================================================
-# 2. 5 UNIQUE BROWSER FINGERPRINTS
+# 3. 5 UNIQUE BROWSER FINGERPRINTS
 # ================================================================
 
 BROWSER_PROFILES = [
@@ -78,7 +114,7 @@ BROWSER_PROFILES = [
 GOOGLE_MAPS_PROXY = "https://us-central1-myvita-app-c5ecd.cloudfunctions.net/googleMapsProxy"
 
 # ================================================================
-# 3. CLINICS DATABASE
+# 4. CLINICS DATABASE
 # ================================================================
 
 CLINICS_DATABASE = [
@@ -127,7 +163,7 @@ CLINICS_DATABASE = [
 ]
 
 # ================================================================
-# 4. KILL SWITCH
+# 5. KILL SWITCH
 # ================================================================
 
 class KillSwitch:
@@ -160,7 +196,7 @@ class KillSwitch:
             cls._found_slots = []
 
 # ================================================================
-# 5. UTILITIES
+# 6. UTILITIES
 # ================================================================
 
 def haversine(lat1, lng1, lat2, lng2):
@@ -215,7 +251,56 @@ def click_button(page, texts: list):
     return False
 
 # ================================================================
-# 6. CLICSANTÉ — AVAILABILITY CHECK
+# 7. FIRESTORE HELPERS
+# ================================================================
+
+def mark_scraper_running(request_id: str):
+    if db is None or not request_id:
+        return
+    try:
+        db.collection(REQUEST_COLLECTION).document(request_id).update({
+            "status": "scraper_running",
+            "scraper_status": "running",
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        })
+        print(f"📝 Request {request_id[:8]}: marked as running")
+    except Exception as e:
+        print(f"⚠️ Could not mark running: {e}")
+
+def update_firestore_request(request_id: str, slots: list):
+    if db is None or not request_id:
+        return
+    try:
+        doc_ref = db.collection(REQUEST_COLLECTION).document(request_id)
+        if slots:
+            doc_ref.update({
+                "status": "scraper_completed",
+                "scraper_result": {
+                    "found": True,
+                    "slots": slots,
+                    "completed_at": datetime.now(),
+                },
+                "scraper_status": "completed",
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            })
+            print(f"✅ Request {request_id[:8]}: {len(slots)} slots saved")
+        else:
+            doc_ref.update({
+                "status": "pending",
+                "scraper_result": {
+                    "found": False,
+                    "slots": [],
+                    "completed_at": datetime.now(),
+                },
+                "scraper_status": "completed",
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            })
+            print(f"😴 Request {request_id[:8]}: no slots")
+    except Exception as e:
+        print(f"❌ Firestore update failed: {e}")
+
+# ================================================================
+# 8. CLICSANTÉ
 # ================================================================
 
 def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
@@ -310,7 +395,7 @@ def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
     return found
 
 # ================================================================
-# 7. BONJOUR SANTÉ — 7-DAY SEARCH
+# 9. BONJOUR SANTÉ
 # ================================================================
 
 def scrape_bonjoursante(profile: dict, clinic: dict, user: dict, worker_id: int) -> list:
@@ -321,7 +406,7 @@ def scrape_bonjoursante(profile: dict, clinic: dict, user: dict, worker_id: int)
     if stagger > 0:
         time.sleep(stagger)
     
-    print(f"\n🏥 [{profile_name}] Bonjour Santé: {clinic_name}...")
+    print(f"\n🏥 [{profile_name}] Bonjour Santé: {clinic_name[:40]}...")
     
     if KillSwitch.is_active():
         return []
@@ -427,7 +512,7 @@ def scrape_bonjoursante(profile: dict, clinic: dict, user: dict, worker_id: int)
     return found
 
 # ================================================================
-# 8. TELUS SANTÉ — 7-DAY SEARCH
+# 10. TELUS SANTÉ
 # ================================================================
 
 def scrape_telussante(profile: dict, clinic: dict, user: dict, worker_id: int) -> list:
@@ -438,7 +523,7 @@ def scrape_telussante(profile: dict, clinic: dict, user: dict, worker_id: int) -
     if stagger > 0:
         time.sleep(stagger)
     
-    print(f"\n🏥 [{profile_name}] TELUS Santé: {clinic_name}...")
+    print(f"\n🏥 [{profile_name}] TELUS Santé: {clinic_name[:40]}...")
     
     if KillSwitch.is_active():
         return []
@@ -542,7 +627,7 @@ def scrape_telussante(profile: dict, clinic: dict, user: dict, worker_id: int) -
     return found
 
 # ================================================================
-# 9. MAIN SEARCH ENGINE
+# 11. MAIN SEARCH ENGINE
 # ================================================================
 
 def search_all_platforms(user: dict) -> list:
@@ -561,7 +646,6 @@ def search_all_platforms(user: dict) -> list:
     except:
         pass
     
-    # Filter clinics by distance
     nearby_clinics = []
     for clinic in CLINICS_DATABASE:
         if user_coords:
@@ -577,14 +661,10 @@ def search_all_platforms(user: dict) -> list:
     
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = []
-        
-        # Assign each worker a profile
         profiles_cycle = BROWSER_PROFILES[:MAX_WORKERS]
         
-        # 1 worker for ClicSanté
         futures.append(executor.submit(scrape_clicsante, profiles_cycle[0], user, 0))
         
-        # Remaining workers for Bonjour Santé + TELUS Santé
         clinic_idx = 0
         for i, profile in enumerate(profiles_cycle[1:], 1):
             if clinic_idx < len(nearby_clinics):
@@ -607,7 +687,7 @@ def search_all_platforms(user: dict) -> list:
     return all_slots
 
 # ================================================================
-# 10. MAIN
+# 12. MAIN
 # ================================================================
 
 def main():
@@ -618,12 +698,20 @@ def main():
     print("╚══════════════════════════════════════════════╝")
     
     user = get_user_data()
+    request_id = REQUEST_ID
+    
     print(f"\n📋 {user['first_name']} {user['last_name']} | {user['postal_code']}")
+    if request_id:
+        print(f"📝 Request: {request_id[:8]}...")
+        mark_scraper_running(request_id)
     
     KillSwitch.reset()
     start = time.time()
     slots = search_all_platforms(user)
     elapsed = time.time() - start
+    
+    if request_id:
+        update_firestore_request(request_id, slots)
     
     if slots:
         print(f"\n🎉 FOUND {len(slots)} SLOTS in {elapsed:.0f}s:")
