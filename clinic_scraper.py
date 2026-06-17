@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-MYVITA HYBRID SCRAPER v7 — Full Booking Flow
-- Bonjour Santé: Complete form filling + booking page + search
-- ClicSanté: Medical consultation search with booking links
-- TELUS Santé: Deeplink extraction + form filling
+MYVITA HYBRID SCRAPER v10 — Free Government Platforms
+- ClicSanté: Medical consultation search (free, government-backed)
+- TELUS Health Appointment Access: Government-backed FREE system
+- NO Bonjour Santé (paywall)
 - Kill switch after 5 slots
-- Screenshots at every step for debugging
+- Screenshots for debugging
 """
 
 from playwright.sync_api import sync_playwright
@@ -66,7 +66,7 @@ os.makedirs(DEBUG_DIR, exist_ok=True)
 print(f"📸 Screenshots will be saved to: {DEBUG_DIR}")
 
 # ================================================================
-# 3. BROWSER PROFILES — 5 different human fingerprints
+# 3. BROWSER PROFILES
 # ================================================================
 
 BROWSER_PROFILES = [
@@ -114,28 +114,25 @@ BROWSER_PROFILES = [
 ]
 
 # ================================================================
-# 4. ALL CLINICS DATABASE
+# 4. CLINICS DATABASE
 # ================================================================
 
 CLINICS = [
-    # === BONJOUR SANTÉ ===
-    {"name": "Médico-Centre Mont-Royal", "lat": 45.5163, "lng": -73.5786, "platform": "bonjour_sante", "url": "https://bonjour-sante.ca/uno/clinique/montroyal", "city": "Montreal"},
-    {"name": "GMF Angus", "lat": 45.5401, "lng": -73.5658, "platform": "bonjour_sante", "url": "https://bonjour-sante.ca/uno/clinique/angus", "city": "Montreal"},
-    {"name": "GMF St-Denis", "lat": 45.5264, "lng": -73.5932, "platform": "bonjour_sante", "url": "https://bonjour-sante.ca/uno/clinique/stdenis", "city": "Montreal"},
-    {"name": "Urgence Saint-Laurent", "lat": 45.5118, "lng": -73.6802, "platform": "bonjour_sante", "url": "https://bonjour-sante.ca/uno/clinique/cusl", "city": "Montreal"},
-    {"name": "CM Mieux-Être Levasseur", "lat": 45.5841, "lng": -73.6412, "platform": "bonjour_sante", "url": "https://bonjour-sante.ca/uno/clinique/levasseur", "city": "Montreal"},
-    {"name": "CM Mieux-Être St-Léonard", "lat": 45.5892, "lng": -73.6014, "platform": "bonjour_sante", "url": "https://bonjour-sante.ca/uno/clinique/mieuxetre", "city": "Montreal"},
-    {"name": "Medi-Centre Chomedey", "lat": 45.5451, "lng": -73.7483, "platform": "bonjour_sante", "url": "https://bonjour-sante.ca/uno/clinique/medicentrechomedey", "city": "Laval"},
-    {"name": "Carrefour Médical Laval", "lat": 45.5684, "lng": -73.7431, "platform": "bonjour_sante", "url": "https://bonjour-sante.ca/uno/clinique/lecarrefour", "city": "Laval"},
-    {"name": "UnionMD Longueuil", "lat": 45.5252, "lng": -73.5135, "platform": "bonjour_sante", "url": "https://bonjour-sante.ca/uno/clinique/unionmdlongueuil", "city": "Longueuil"},
-    {"name": "GMF Terrebonne", "lat": 45.6982, "lng": -73.6391, "platform": "bonjour_sante", "url": "https://bonjour-sante.ca/uno/clinique/cmterrebonne", "city": "Terrebonne"},
-
-    # === TELUS SANTÉ (POMELO) ===
-    {"name": "GMF-U Charles-Le Moyne", "lat": 45.5184, "lng": -73.4831, "platform": "telus_sante", "url": "https://qc.pomelo.health/gmfucharleslemoyne", "city": "Longueuil"},
-    {"name": "Centre Médical Laval", "lat": 45.5521, "lng": -73.7314, "platform": "telus_sante", "url": "https://qc.pomelo.health/centremedicallaval", "city": "Laval"},
-    {"name": "Clinique Sainte-Dorothée", "lat": 45.5312, "lng": -73.8115, "platform": "telus_sante", "url": "https://pomelo.health/cliniquemedicalesaintedorothee", "city": "Laval"},
-    {"name": "Clinique de la Gare", "lat": 45.5582, "lng": -73.9015, "platform": "telus_sante", "url": "https://qc.pomelo.health/cliniquemedicaledelagare", "city": "Saint-Eustache"},
-    {"name": "GMF des Seigneurs", "lat": 45.7025, "lng": -73.6514, "platform": "telus_sante", "url": "https://qc.pomelo.health/gmfdesseigneurs", "city": "Terrebonne"},
+    {"name": "Médico-Centre Mont-Royal", "lat": 45.5163, "lng": -73.5786, "platform": "clic_sante", "url": "", "city": "Montreal"},
+    {"name": "GMF Angus", "lat": 45.5401, "lng": -73.5658, "platform": "clic_sante", "url": "", "city": "Montreal"},
+    {"name": "GMF St-Denis", "lat": 45.5264, "lng": -73.5932, "platform": "clic_sante", "url": "", "city": "Montreal"},
+    {"name": "Urgence Saint-Laurent", "lat": 45.5118, "lng": -73.6802, "platform": "clic_sante", "url": "", "city": "Montreal"},
+    {"name": "CM Mieux-Être Levasseur", "lat": 45.5841, "lng": -73.6412, "platform": "clic_sante", "url": "", "city": "Montreal"},
+    {"name": "CM Mieux-Être St-Léonard", "lat": 45.5892, "lng": -73.6014, "platform": "clic_sante", "url": "", "city": "Montreal"},
+    {"name": "Medi-Centre Chomedey", "lat": 45.5451, "lng": -73.7483, "platform": "clic_sante", "url": "", "city": "Laval"},
+    {"name": "Carrefour Médical Laval", "lat": 45.5684, "lng": -73.7431, "platform": "clic_sante", "url": "", "city": "Laval"},
+    {"name": "UnionMD Longueuil", "lat": 45.5252, "lng": -73.5135, "platform": "telus_health", "url": "https://appointmentaccess.telushealth.com/", "city": "Longueuil"},
+    {"name": "GMF Terrebonne", "lat": 45.6982, "lng": -73.6391, "platform": "telus_health", "url": "https://appointmentaccess.telushealth.com/", "city": "Terrebonne"},
+    {"name": "GMF-U Charles-Le Moyne", "lat": 45.5184, "lng": -73.4831, "platform": "telus_health", "url": "https://appointmentaccess.telushealth.com/", "city": "Longueuil"},
+    {"name": "Centre Médical Laval", "lat": 45.5521, "lng": -73.7314, "platform": "telus_health", "url": "https://appointmentaccess.telushealth.com/", "city": "Laval"},
+    {"name": "Clinique Sainte-Dorothée", "lat": 45.5312, "lng": -73.8115, "platform": "telus_health", "url": "https://appointmentaccess.telushealth.com/", "city": "Laval"},
+    {"name": "Clinique de la Gare", "lat": 45.5582, "lng": -73.9015, "platform": "telus_health", "url": "https://appointmentaccess.telushealth.com/", "city": "Saint-Eustache"},
+    {"name": "GMF des Seigneurs", "lat": 45.7025, "lng": -73.6514, "platform": "telus_health", "url": "https://appointmentaccess.telushealth.com/", "city": "Terrebonne"},
 ]
 
 GOOGLE_MAPS_PROXY = "https://us-central1-myvita-app-c5ecd.cloudfunctions.net/googleMapsProxy"
@@ -145,7 +142,6 @@ GOOGLE_MAPS_PROXY = "https://us-central1-myvita-app-c5ecd.cloudfunctions.net/goo
 # ================================================================
 
 def take_screenshot(page, step_name: str, worker_id: int = 0):
-    """Save a screenshot with timestamp for debugging"""
     try:
         timestamp = datetime.now().strftime("%H%M%S")
         filename = f"worker{worker_id}_{timestamp}_{step_name}.png"
@@ -157,12 +153,10 @@ def take_screenshot(page, step_name: str, worker_id: int = 0):
 
 
 def human_delay(min_ms: int = 300, max_ms: int = 1000):
-    """Random delay to simulate human behavior"""
     time.sleep(random.uniform(min_ms, max_ms) / 1000)
 
 
 def haversine(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
-    """Calculate distance between two GPS coordinates in km"""
     R = 6371
     dlat = math.radians(lat2 - lat1)
     dlng = math.radians(lng2 - lng1)
@@ -171,7 +165,6 @@ def haversine(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
 
 
 def get_user_data() -> dict:
-    """Get user data from environment variables"""
     return {
         "first_name": os.getenv("USER_FIRST_NAME", "Jean"),
         "last_name": os.getenv("USER_LAST_NAME", "Tremblay"),
@@ -184,48 +177,40 @@ def get_user_data() -> dict:
 
 
 # ================================================================
-# 6. KILL SWITCH — Stops all workers after 5 slots found
+# 6. KILL SWITCH
 # ================================================================
 
 class KillSwitch:
-    """Thread-safe kill switch that stops all workers after finding 5 slots"""
     _active = False
     _found_slots = []
     _lock = threading.Lock()
 
     @classmethod
     def add_slot(cls, details: dict):
-        """Add a found slot and check if kill switch should activate"""
         with cls._lock:
-            # Avoid duplicate URLs
             existing_urls = [s.get('url', '') for s in cls._found_slots]
             if details.get('url', '') in existing_urls:
                 return
-
             cls._found_slots.append(details)
             print(f"\n   🎯 SLOT #{len(cls._found_slots)} FOUND!")
             print(f"   📋 Name: {details.get('name', 'Unknown')}")
             print(f"   🔗 URL: {details.get('url', '')[:120]}")
-
             if len(cls._found_slots) >= 5:
                 cls._active = True
                 print("\n   🛑 KILL SWITCH ACTIVATED — 5 slots found! Stopping all workers...")
 
     @classmethod
     def is_active(cls) -> bool:
-        """Check if kill switch is active"""
         with cls._lock:
             return cls._active
 
     @classmethod
     def get_results(cls) -> list:
-        """Get all found slots"""
         with cls._lock:
             return list(cls._found_slots)
 
     @classmethod
     def reset(cls):
-        """Reset the kill switch for a new search"""
         with cls._lock:
             cls._active = False
             cls._found_slots = []
@@ -236,11 +221,9 @@ class KillSwitch:
 # ================================================================
 
 def save_to_firestore(postal_code: str, slots: list):
-    """Save results to Firestore"""
     if db is None:
         print("⚠️ Firestore not available — skipping save")
         return
-
     try:
         data = {
             "postal_code": postal_code,
@@ -257,20 +240,16 @@ def save_to_firestore(postal_code: str, slots: list):
 
 
 def get_or_create_request(user: dict) -> str:
-    """Get existing request or create a new one in Firestore"""
     if db is None:
         return ""
-
     request_id = os.getenv("REQUEST_ID", "")
     postal = user["postal_code"][:3].upper()
-
     try:
         if request_id:
             doc = db.collection(REQUEST_COLLECTION).document(request_id).get()
             if doc.exists:
                 print(f"📝 Using existing request: {request_id[:8]}...")
                 return request_id
-
         new_data = {
             "status": "scraper_running",
             "scraper_status": "running",
@@ -283,12 +262,10 @@ def get_or_create_request(user: dict) -> str:
             "ramq_seq": user["ramq_seq"],
             "created_at": firestore.SERVER_TIMESTAMP,
         }
-
         result = db.collection(REQUEST_COLLECTION).add(new_data)
         doc_id = result[1].id
         print(f"📄 Created request: {doc_id}")
         return doc_id
-
     except Exception as e:
         print(f"❌ Error creating request: {e}")
         return ""
@@ -300,23 +277,19 @@ def get_or_create_request(user: dict) -> str:
 
 def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
     """
-    ClicSanté scraper for medical consultations.
-    Searches by postal code, selects medical service, extracts booking links.
+    ClicSanté scraper for FREE medical consultations.
+    Government-backed platform.
     """
     found = []
     postal_code = user["postal_code"]
-    profile_name = profile.get("name", f"Worker-{worker_id}")
     stagger_delay = profile.get("delay", 0)
-
     if stagger_delay > 0:
         time.sleep(stagger_delay)
-
     if KillSwitch.is_active():
-        print(f"   🛑 Kill switch active — skipping ClicSanté")
         return []
 
     print(f"\n{'='*60}")
-    print(f"🔵 WORKER {worker_id}: ClicSanté Medical — {profile_name}")
+    print(f"🔵 WORKER {worker_id}: ClicSanté — {profile['name']}")
     print(f"{'='*60}")
 
     with sync_playwright() as p:
@@ -332,18 +305,17 @@ def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
 
         try:
             # Step 1: Load ClicSanté
-            print("\n📂 Step 1: Loading ClicSanté portal...")
+            print("\n📂 Step 1: Loading ClicSanté...")
             human_delay(1000, 3000)
             page.goto("https://portal3.clicsante.ca/", wait_until="networkidle", timeout=60000)
             human_delay(1500, 3000)
 
-            # Close popup
+            # Close "Sans frais" popup
             try:
                 page.locator("text=Sans frais").first.click(timeout=8000)
                 print("   ✅ Popup closed")
             except:
                 pass
-
             human_delay(1000, 2000)
 
             # Step 2: Enter postal code
@@ -355,14 +327,14 @@ def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
                 inputs[0].type(postal_code, delay=random.randint(100, 200))
                 print(f"   ✅ Postal code entered")
             human_delay(1000, 2000)
-            take_screenshot(page, "clicsante_postal", worker_id)
+            take_screenshot(page, "cs_01_postal", worker_id)
 
-            # Step 3: Try selecting medical service
+            # Step 3: Select medical service
             print("\n📂 Step 3: Selecting medical service...")
             service_selected = False
             medical_keywords = [
-                "Médecine familiale",
                 "Consultation médicale",
+                "Médecine familiale",
                 "Médecin",
                 "Soins de santé",
                 "Urgence mineure",
@@ -375,14 +347,14 @@ def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
                     if button.count() > 0 and button.is_visible():
                         button.click()
                         service_selected = True
-                        print(f"   ✅ Selected service: '{keyword}'")
+                        print(f"   ✅ Selected: '{keyword}'")
                         human_delay(2000, 4000)
                         break
                 except:
                     pass
 
             if not service_selected:
-                print("   ⚠️ Could not select medical service — searching with default")
+                print("   ⚠️ Could not select medical service — using default")
 
             # Step 4: Click Search
             print("\n📂 Step 4: Searching...")
@@ -397,28 +369,69 @@ def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
                     page.keyboard.press("Enter")
                     print("   ✅ Pressed Enter")
 
-            human_delay(4000, 8000)
-            take_screenshot(page, "clicsante_results", worker_id)
+            human_delay(5000, 8000)
+            take_screenshot(page, "cs_02_results", worker_id)
 
             # Step 5: Extract booking links
             print("\n📂 Step 5: Extracting booking links...")
+
+            # Try multiple methods to find booking links
             booking_links = page.locator("a[href*='take-appt']").all()
+
+            if len(booking_links) == 0:
+                # Try alternative: look for any link with "appt" or "rendez-vous"
+                booking_links = page.locator("a[href*='appt'], a[href*='rendez-vous']").all()
+
+            if len(booking_links) == 0:
+                # Try clicking on clinic names to get to booking page
+                print("   🔄 No direct links found — trying to click clinic names...")
+                clinic_cards = page.locator("a, button, [class*='clinic'], [class*='result'], [class*='card']").all()
+                for card in clinic_cards[:5]:
+                    try:
+                        text = (card.inner_text() or "").lower()
+                        if any(kw in text for kw in ["clinique", "clinic", "médical", "medical", "gmf", "clsc"]):
+                            card.click()
+                            human_delay(3000, 5000)
+                            new_url = page.url
+                            if "take-appt" in new_url or "rendez-vous" in new_url:
+                                found.append({
+                                    "name": text.split('\n')[0][:150] if text else "Clinique",
+                                    "platform": "clicsante",
+                                    "url": new_url,
+                                    "city": "Various",
+                                })
+                                KillSwitch.add_slot(found[-1])
+                                print(f"   📍 Found: {text[:80]}")
+                                page.go_back()
+                                human_delay(1000, 2000)
+                    except:
+                        pass
+
             print(f"   📎 Found {len(booking_links)} booking links")
 
             for link in booking_links[:5]:
                 if KillSwitch.is_active():
                     break
-
                 try:
                     href = link.get_attribute("href") or ""
                     clinic_id_match = re.search(r'/(\d+)/take-appt', href)
                     if not clinic_id_match:
+                        if "rendez-vous" in href or "appt" in href:
+                            place = {
+                                "name": "Clinique ClicSanté",
+                                "platform": "clicsante",
+                                "url": href,
+                                "city": "Various",
+                            }
+                            if place not in found:
+                                found.append(place)
+                                KillSwitch.add_slot(place)
+                                print(f"   📍 Found booking link")
                         continue
 
                     clinic_id = clinic_id_match.group(1)
                     booking_url = f"https://clients3.clicsante.ca/{clinic_id}/take-appt"
 
-                    # Extract clinic name using JavaScript
                     clinic_name = link.evaluate("""
                         () => {
                             let parent = this.closest('li, article, div[class*="result"], div[class*="card"]');
@@ -427,14 +440,13 @@ def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
                             let headings = parent.querySelectorAll('h1, h2, h3, h4, strong, b, [class*="name"], [class*="title"]');
                             for (let h of headings) {
                                 let text = h.innerText?.trim();
-                                if (text && text.length > 5 && text.length < 200 && text !== 'Book appt.') return text;
+                                if (text && text.length > 5 && text.length < 200) return text;
                             }
+                            let text = parent.innerText?.trim();
+                            if (text) return text.split('\\n')[0].substring(0, 150);
                             return '';
                         }
-                    """)
-
-                    if not clinic_name:
-                        clinic_name = f"Clinique ClicSanté #{clinic_id}"
+                    """) or f"Clinique ClicSanté #{clinic_id}"
 
                     place = {
                         "name": clinic_name[:150],
@@ -442,20 +454,18 @@ def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
                         "url": booking_url,
                         "city": "Various",
                     }
-
                     if place not in found:
                         found.append(place)
                         KillSwitch.add_slot(place)
                         print(f"   📍 {clinic_name[:80]}")
-                        print(f"   🔗 {booking_url}")
 
                 except Exception as e:
-                    print(f"   ⚠️ Error extracting link: {e}")
+                    print(f"   ⚠️ Error: {e}")
 
         except Exception as e:
             print(f"   ❌ ClicSanté error: {e}")
             traceback.print_exc()
-            take_screenshot(page, "clicsante_error", worker_id)
+            take_screenshot(page, "cs_99_error", worker_id)
         finally:
             browser.close()
 
@@ -464,28 +474,25 @@ def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
 
 
 # ================================================================
-# 9. BONJOUR SANTÉ SCRAPER — Full flow with form completion
+# 9. TELUS HEALTH APPOINTMENT ACCESS — Government-backed FREE system
 # ================================================================
 
-def scrape_bonjoursante(profile: dict, clinic: dict, user: dict, worker_id: int) -> list:
+def scrape_telushealth(profile: dict, user: dict, worker_id: int) -> list:
     """
-    Bonjour Santé scraper with complete form filling.
-    Flow: Clinic page → Click service → Fill RAMQ form → Booking page → Fill all fields → Search
+    TELUS Health Appointment Access — Government-backed FREE system.
+    Fills patient form, searches for appointments.
     """
     found = []
-    clinic_name = clinic.get("name", "Unknown")
-    clinic_url = clinic.get("url", "")
     stagger_delay = profile.get("delay", 0)
 
     if stagger_delay > 0:
         time.sleep(stagger_delay)
 
     if KillSwitch.is_active():
-        print(f"   🛑 Kill switch active — skipping {clinic_name}")
         return []
 
     print(f"\n{'='*60}")
-    print(f"🟢 WORKER {worker_id}: Bonjour Santé — {clinic_name}")
+    print(f"🟣 WORKER {worker_id}: TELUS Health — {profile['name']}")
     print(f"{'='*60}")
 
     with sync_playwright() as p:
@@ -501,583 +508,382 @@ def scrape_bonjoursante(profile: dict, clinic: dict, user: dict, worker_id: int)
 
         try:
             # ═══════════════════════════════════════════════
-            # STEP 1: Load clinic page and click service button
+            # STEP 1: Load TELUS Health Appointment Access
             # ═══════════════════════════════════════════════
-            print(f"\n📂 STEP 1: Loading clinic page...")
-            print(f"   🌐 URL: {clinic_url}")
+            print(f"\n📂 STEP 1: Loading TELUS Health Appointment Access...")
+            page.goto("https://appointmentaccess.telushealth.com/", wait_until="networkidle", timeout=60000)
+            human_delay(2000, 3000)
 
+            # Close measles popup if present
             try:
-                page.goto(clinic_url, wait_until="domcontentloaded", timeout=30000)
-            except Exception as e:
-                print(f"   ⚠️ Timeout loading clinic page: {e}")
-                print(f"   🔄 Retrying with longer timeout...")
-                try:
-                    page.goto(clinic_url, wait_until="load", timeout=60000)
-                except:
-                    print(f"   ❌ Could not load clinic page — skipping")
-                    return found
+                page.keyboard.press("Escape")
+                human_delay(500, 1000)
+            except:
+                pass
 
-            human_delay(1500, 2500)
-            take_screenshot(page, "01_clinic_page", worker_id)
+            take_screenshot(page, "telus_01_home", worker_id)
 
-            print(f"\n📂 STEP 2: Clicking service button...")
-            service_clicked = False
-            service_button_texts = [
-                "Médecin de famille ou urgence mineure",
-                "Urgence mineure",
-                "Consultation rapide",
-                "Suivi avec mon médecin",
-                "Dans ma clinique",
-                "Consultation sans rendez-vous",
-                "Sans rendez-vous",
-            ]
-
-            for button_text in service_button_texts:
-                if service_clicked:
-                    break
-                try:
-                    button = page.locator(f"text={button_text}").first
-                    if button.count() > 0 and button.is_visible():
-                        print(f"   👆 Clicking: '{button_text}'")
-                        button.click()
-                        service_clicked = True
-                        human_delay(3000, 5000)
-                        break
-                except:
-                    pass
-
-            # Fallback: try generic search
-            if not service_clicked:
-                print(f"   ⚠️ No service button found — trying generic search page")
-                try:
-                    page.goto("https://bonjour-sante.ca/uno/hubidentificationpatient", wait_until="domcontentloaded", timeout=30000)
-                except:
-                    pass
-                human_delay(2000, 3000)
-
-            take_screenshot(page, "02_after_service_click", worker_id)
-            current_url = page.url
-            print(f"   📍 Current URL: {current_url[:120]}")
+            # Print page text for debugging
+            try:
+                body_text = page.locator("body").inner_text()
+                print(f"   📄 Page content: {body_text[:400]}")
+            except:
+                pass
 
             # ═══════════════════════════════════════════════
-            # STEP 3: Fill RAMQ identification form
+            # STEP 2: Fill patient identification form
             # ═══════════════════════════════════════════════
-            if "hubidentificationpatient" in current_url or "identification" in current_url.lower():
-                print(f"\n📂 STEP 3: Filling RAMQ identification form...")
+            print(f"\n📂 STEP 2: Filling patient form...")
 
-                # Fill ALL visible text inputs with appropriate values
-                all_text_inputs = page.locator("input[type='text']:visible, input:not([type]):visible").all()
-                print(f"   📥 Found {len(all_text_inputs)} visible text inputs")
+            all_inputs = page.locator("input:visible").all()
+            print(f"   📥 Found {len(all_inputs)} visible inputs")
 
-                for i, inp in enumerate(all_text_inputs):
-                    try:
-                        placeholder = (inp.get_attribute("placeholder") or "").lower()
-                        name = (inp.get_attribute("name") or "").lower()
-                        formcontrol = (inp.get_attribute("formcontrolname") or "").lower()
-                        label = ""
+            fields_filled = {
+                "first_name": False,
+                "last_name": False,
+                "ramq": False,
+                "seq": False,
+                "birth_year": False,
+                "email": False,
+                "phone": False,
+            }
 
-                        # Try to find associated label
-                        try:
-                            label_element = inp.evaluate("""
-                                el => {
-                                    let id = el.getAttribute('id');
-                                    if (id) {
-                                        let label = document.querySelector(`label[for="${id}"]`);
-                                        if (label) return label.innerText.toLowerCase();
-                                    }
-                                    return '';
-                                }
-                            """)
-                            if label_element:
-                                label = label_element
-                        except:
-                            pass
+            for inp in all_inputs:
+                try:
+                    input_type = (inp.get_attribute("type") or "").lower()
+                    placeholder = (inp.get_attribute("placeholder") or "").lower()
+                    name = (inp.get_attribute("name") or "").lower()
+                    aria_label = (inp.get_attribute("aria-label") or "").lower()
+                    autocomplete = (inp.get_attribute("autocomplete") or "").lower()
+                    combined = f"{placeholder} {name} {aria_label} {autocomplete}"
 
-                        combined = f"{placeholder} {name} {formcontrol} {label}"
+                    # Skip non-text inputs
+                    if input_type in ["checkbox", "radio", "submit", "button", "hidden"]:
+                        continue
 
-                        # Determine what to fill based on field hints
-                        if any(kw in combined for kw in ["ramq", "assurance", "maladie", "abcd"]):
-                            inp.click()
-                            inp.fill("")
-                            inp.type(user["ramq"], delay=80)
-                            print(f"   ✏️ Input {i}: RAMQ = {user['ramq']}")
-                        elif any(kw in combined for kw in ["seq", "séquentiel", "sequentiel", "00"]):
-                            inp.click()
-                            inp.fill("")
-                            inp.type(user["ramq_seq"], delay=80)
-                            print(f"   ✏️ Input {i}: Sequence = {user['ramq_seq']}")
-                        elif any(kw in combined for kw in ["prénom", "prenom", "first", "firstname"]):
+                    if not fields_filled["first_name"] and any(kw in combined for kw in ["first", "prénom", "prenom", "firstname", "given"]):
+                        inp.click()
+                        inp.fill("")
+                        inp.type(user["first_name"], delay=80)
+                        fields_filled["first_name"] = True
+                        print(f"   ✏️ First Name: {user['first_name']}")
+
+                    elif not fields_filled["last_name"] and any(kw in combined for kw in ["last", "nom", "lastname", "family", "surname"]):
+                        inp.click()
+                        inp.fill("")
+                        inp.type(user["last_name"], delay=80)
+                        fields_filled["last_name"] = True
+                        print(f"   ✏️ Last Name: {user['last_name']}")
+
+                    elif not fields_filled["ramq"] and any(kw in combined for kw in ["ramq", "assurance", "health insurance", "abcd", "maladie", "health card"]):
+                        inp.click()
+                        inp.fill("")
+                        inp.type(user["ramq"], delay=80)
+                        fields_filled["ramq"] = True
+                        print(f"   ✏️ RAMQ: {user['ramq']}")
+
+                    elif not fields_filled["seq"] and any(kw in combined for kw in ["seq", "sequential", "séquentiel", "00", "sequence"]):
+                        inp.click()
+                        inp.fill("")
+                        inp.type(user["ramq_seq"], delay=80)
+                        fields_filled["seq"] = True
+                        print(f"   ✏️ Sequence: {user['ramq_seq']}")
+
+                    elif not fields_filled["birth_year"] and any(kw in combined for kw in ["year", "année", "birth", "naissance", "yyyy"]):
+                        inp.click()
+                        inp.fill("")
+                        inp.type("1970", delay=80)
+                        fields_filled["birth_year"] = True
+                        print(f"   ✏️ Year of Birth: 1970")
+
+                    elif not fields_filled["email"] and any(kw in combined for kw in ["email", "courriel", "e-mail"]):
+                        inp.click()
+                        inp.fill("")
+                        inp.type(user["email"], delay=80)
+                        fields_filled["email"] = True
+                        print(f"   ✏️ Email: {user['email']}")
+
+                    elif not fields_filled["phone"] and any(kw in combined for kw in ["phone", "téléphone", "tel", "mobile"]):
+                        inp.click()
+                        inp.fill("")
+                        inp.type(user["phone"], delay=80)
+                        fields_filled["phone"] = True
+                        print(f"   ✏️ Phone: {user['phone']}")
+
+                except Exception as e:
+                    print(f"   ⚠️ Error filling field: {e}")
+
+            # Fill any remaining unfilled fields
+            for inp in all_inputs:
+                try:
+                    input_type = (inp.get_attribute("type") or "").lower()
+                    if input_type in ["checkbox", "radio", "submit", "button", "hidden"]:
+                        continue
+                    current_val = inp.input_value() or ""
+                    if len(current_val) == 0:
+                        if not fields_filled["first_name"]:
                             inp.click()
                             inp.fill("")
                             inp.type(user["first_name"], delay=80)
-                            print(f"   ✏️ Input {i}: First Name = {user['first_name']}")
-                        elif any(kw in combined for kw in ["nom", "lastname", "last"]):
+                            fields_filled["first_name"] = True
+                            print(f"   ✏️ First Name (fallback): {user['first_name']}")
+                        elif not fields_filled["last_name"]:
                             inp.click()
                             inp.fill("")
                             inp.type(user["last_name"], delay=80)
-                            print(f"   ✏️ Input {i}: Last Name = {user['last_name']}")
-                        elif any(kw in combined for kw in ["email", "courriel"]):
+                            fields_filled["last_name"] = True
+                            print(f"   ✏️ Last Name (fallback): {user['last_name']}")
+                        elif not fields_filled["ramq"]:
                             inp.click()
                             inp.fill("")
-                            inp.type(user["email"], delay=80)
-                            print(f"   ✏️ Input {i}: Email = {user['email']}")
-                        elif any(kw in combined for kw in ["téléphone", "telephone", "phone", "tel"]):
-                            inp.click()
-                            inp.fill("")
-                            inp.type(user["phone"], delay=80)
-                            print(f"   ✏️ Input {i}: Phone = {user['phone']}")
-                        elif any(kw in combined for kw in ["postal", "code"]):
-                            inp.click()
-                            inp.fill("")
-                            inp.type(user["postal_code"], delay=80)
-                            print(f"   ✏️ Input {i}: Postal = {user['postal_code']}")
-                        else:
-                            # Unknown field — skip
-                            print(f"   ℹ️ Input {i}: Unknown field (placeholder='{placeholder}', name='{name}') — skipping")
-                    except Exception as e:
-                        print(f"   ⚠️ Error filling input {i}: {e}")
-
-                human_delay(500, 1000)
-
-                # Check consent checkbox
-                try:
-                    checkboxes = page.locator("input[type='checkbox']").all()
-                    for checkbox in checkboxes:
-                        if checkbox.is_visible() and not checkbox.is_checked():
-                            checkbox.check()
-                            print(f"   ✅ Consent checkbox checked")
-                            break
+                            inp.type(user["ramq"], delay=80)
+                            fields_filled["ramq"] = True
+                            print(f"   ✏️ RAMQ (fallback): {user['ramq']}")
                 except:
                     pass
 
-                take_screenshot(page, "03_form_filled", worker_id)
+            # Select sex (Male)
+            try:
+                male_btn = page.locator("text=Male").first
+                if male_btn.count() > 0 and male_btn.is_visible():
+                    male_btn.click()
+                    print(f"   ✅ Sex: Male")
+                    human_delay(300, 500)
+            except:
+                pass
 
-                # ═══════════════════════════════════════════════
-                # STEP 4: Click Continue button
-                # ═══════════════════════════════════════════════
-                print(f"\n📂 STEP 4: Clicking Continue...")
-                continue_clicked = False
+            # Select language (Français)
+            try:
+                fr_btn = page.locator("text=Français").first
+                if fr_btn.count() > 0 and fr_btn.is_visible():
+                    fr_btn.click()
+                    print(f"   ✅ Language: Français")
+                    human_delay(300, 500)
+            except:
+                pass
 
-                # Method 1: Click by data-test attribute
+            # Select communication preference (Email only)
+            try:
+                email_only_btn = page.locator("text=Email only").first
+                if email_only_btn.count() > 0 and email_only_btn.is_visible():
+                    email_only_btn.click()
+                    print(f"   ✅ Communication: Email only")
+                    human_delay(300, 500)
+            except:
+                pass
+
+            # Check consent checkbox
+            try:
+                checkboxes = page.locator("input[type='checkbox']").all()
+                for checkbox in checkboxes:
+                    if checkbox.is_visible() and not checkbox.is_checked():
+                        checkbox.check()
+                        print(f"   ✅ Consent checked")
+                        break
+            except:
+                pass
+
+            human_delay(500, 1000)
+            take_screenshot(page, "telus_02_form_filled", worker_id)
+
+            # ═══════════════════════════════════════════════
+            # STEP 3: Click Continue
+            # ═══════════════════════════════════════════════
+            print(f"\n📂 STEP 3: Clicking Continue...")
+            continue_clicked = False
+
+            try:
+                btn = page.locator("button:has-text('Continue')").first
+                if btn.count() > 0 and btn.is_visible():
+                    is_disabled = btn.get_attribute("disabled")
+                    if is_disabled is None:
+                        btn.click()
+                        continue_clicked = True
+                        print(f"   ✅ Clicked Continue")
+                    else:
+                        print(f"   ⚠️ Continue is DISABLED — form may be incomplete")
+                        print(f"   📋 Fields filled: {fields_filled}")
+                        try:
+                            body_text = page.locator("body").inner_text()
+                            print(f"   📄 Page text: {body_text[:400]}")
+                        except:
+                            pass
+            except:
+                pass
+
+            if not continue_clicked:
                 try:
-                    btn = page.locator("[data-test='continueButton']").first
-                    if btn.count() > 0:
-                        is_disabled = btn.get_attribute("disabled")
-                        if is_disabled is None:
-                            btn.click()
-                            continue_clicked = True
-                            print(f"   ✅ Clicked Continue (data-test)")
-                        else:
-                            print(f"   ⚠️ Continue button is DISABLED — form may be incomplete")
-                            # Print page state for debugging
-                            try:
-                                body_text = page.locator("body").inner_text()
-                                print(f"   📄 Page text (first 500 chars): {body_text[:500]}")
-                            except:
-                                pass
-                except Exception as e:
-                    print(f"   ⚠️ Method 1 failed: {e}")
+                    page.keyboard.press("Enter")
+                    human_delay(2000, 3000)
+                    continue_clicked = True
+                    print(f"   ✅ Pressed Enter")
+                except:
+                    pass
 
-                # Method 2: Click by button text
-                if not continue_clicked:
-                    try:
-                        btn = page.locator("button:has-text('Continuer')").first
-                        if btn.count() > 0 and btn.is_visible():
-                            is_disabled = btn.get_attribute("disabled")
-                            if is_disabled is None:
-                                btn.click()
-                                continue_clicked = True
-                                print(f"   ✅ Clicked Continue (text)")
-                            else:
-                                print(f"   ⚠️ Continue button (text) is DISABLED")
-                    except Exception as e:
-                        print(f"   ⚠️ Method 2 failed: {e}")
+            if continue_clicked:
+                human_delay(3000, 5000)
+                take_screenshot(page, "telus_03_after_continue", worker_id)
+                current_url = page.url
+                print(f"   📍 URL: {current_url[:120]}")
 
-                # Method 3: Try pressing Enter
-                if not continue_clicked:
-                    try:
-                        page.keyboard.press("Enter")
-                        human_delay(2000, 3000)
-                        new_url = page.url
-                        if new_url != current_url:
-                            continue_clicked = True
-                            print(f"   ✅ Pressed Enter — page navigated")
-                        else:
-                            print(f"   ⚠️ Enter did not navigate")
-                    except Exception as e:
-                        print(f"   ⚠️ Method 3 failed: {e}")
-
-                if continue_clicked:
-                    human_delay(3000, 5000)
-                    take_screenshot(page, "04_after_continue", worker_id)
-                    current_url = page.url
-                    print(f"   📍 New URL: {current_url[:120]}")
-                else:
-                    print(f"   ❌ Could not click Continue — saving current URL anyway")
-            else:
-                print(f"   ℹ️ Not on identification page — skipping form")
-
-            # ═══════════════════════════════════════════════
-            # STEP 5: On hubclinique booking page — fill ALL fields
-            # ═══════════════════════════════════════════════
-            if "hubclinique" in current_url or "clinique" in current_url.lower():
-                print(f"\n📂 STEP 5: Filling booking form on hubclinique page...")
-
-                # Wait for page to fully load
-                human_delay(2000, 3000)
-                take_screenshot(page, "05_booking_start", worker_id)
-
-                # Print page text for debugging
+                # Print next page content
                 try:
                     body_text = page.locator("body").inner_text()
-                    print(f"   📄 Page content preview: {body_text[:300]}")
+                    print(f"   📄 Next page: {body_text[:400]}")
                 except:
                     pass
 
-                # 1. Select service type: "Consultation rapide"
-                print(f"   📋 Selecting service type: Consultation rapide...")
+                # ═══════════════════════════════════════════════
+                # STEP 4: Fill appointment search form
+                # ═══════════════════════════════════════════════
+                print(f"\n📂 STEP 4: Filling appointment search form...")
+
+                human_delay(2000, 3000)
+                take_screenshot(page, "telus_04_search_page", worker_id)
+
+                # Print page content
                 try:
-                    consultation_btn = page.locator("text=Consultation rapide").first
-                    if consultation_btn.count() > 0 and consultation_btn.is_visible():
-                        consultation_btn.click()
-                        print(f"   ✅ Selected: Consultation rapide")
-                        human_delay(500, 1000)
-                    else:
-                        print(f"   ⚠️ Consultation rapide button not found")
-                except Exception as e:
-                    print(f"   ⚠️ Service selection error: {e}")
+                    body_text = page.locator("body").inner_text()
+                    print(f"   📄 Search page: {body_text[:500]}")
+                except:
+                    pass
 
-                # 2. Select preference: "Présentiel" (in-person only)
-                print(f"   📋 Selecting preference: Présentiel...")
-                try:
-                    presentiel_btns = page.locator("text=Présentiel").all()
-                    clicked_pref = False
-                    for b in presentiel_btns:
-                        if b.is_visible():
-                            b.click()
-                            clicked_pref = True
-                            print(f"   ✅ Selected: Présentiel")
-                            human_delay(500, 1000)
-                            break
-                    if not clicked_pref:
-                        print(f"   ⚠️ Présentiel button not found")
-                except Exception as e:
-                    print(f"   ⚠️ Preference error: {e}")
-
-                # 3. Set date to tomorrow
-                print(f"   📋 Setting date to tomorrow...")
-                try:
-                    tomorrow = datetime.now() + timedelta(days=1)
-                    date_str = tomorrow.strftime("%Y-%m-%d")
-
-                    date_input = page.locator("input[type='date']").first
-                    if date_input.count() > 0 and date_input.is_visible():
-                        date_input.click()
-                        human_delay(200, 400)
-                        date_input.fill(date_str)
-                        print(f"   ✅ Date set: {date_str}")
-                        human_delay(300, 600)
-                    else:
-                        print(f"   ⚠️ Date input not found — trying to click date text")
-                        # Try clicking the date text to open date picker
-                        date_text = page.locator(f"text={tomorrow.strftime('%d')}").first
-                        if date_text.count() > 0 and date_text.is_visible():
-                            date_text.click()
-                            print(f"   ✅ Clicked date text")
-                            human_delay(300, 600)
-                except Exception as e:
-                    print(f"   ⚠️ Date error: {e}")
-
-                # 4. Select time period: "Avant-midi" (morning)
-                print(f"   📋 Selecting time period: Avant-midi...")
-                try:
-                    am_btn = page.locator("text=Avant-midi").first
-                    if am_btn.count() > 0 and am_btn.is_visible():
-                        am_btn.click()
-                        print(f"   ✅ Selected: Avant-midi")
-                        human_delay(500, 1000)
-                    else:
-                        print(f"   ⚠️ Avant-midi button not found")
-                except Exception as e:
-                    print(f"   ⚠️ Time period error: {e}")
-
-                # 5. Fill postal code
+                # 1. Fill postal code
                 print(f"   📋 Filling postal code: {user['postal_code']}...")
-                try:
+                postal_filled = False
+                for selector in [
+                    "input[placeholder*='G1G']",
+                    "input[placeholder*='postal']",
+                    "input[placeholder*='code']",
+                    "input[name*='postal']",
+                ]:
+                    element = page.locator(selector).first
+                    if element.count() > 0 and element.is_visible():
+                        element.click()
+                        element.fill("")
+                        element.type(user["postal_code"], delay=80)
+                        postal_filled = True
+                        print(f"   ✏️ Postal code: {user['postal_code']}")
+                        break
+
+                if not postal_filled:
                     all_inputs = page.locator("input[type='text']:visible, input:not([type]):visible").all()
-                    postal_filled = False
                     for inp in all_inputs:
                         try:
                             current_val = inp.input_value() or ""
-                            placeholder = (inp.get_attribute("placeholder") or "").lower()
-                            name = (inp.get_attribute("name") or "").lower()
-                            combined = f"{current_val} {placeholder} {name}"
-
-                            # Check if this looks like a postal code field
-                            if any(kw in combined for kw in ["postal", "code", "h1y", "a0a"]) or len(current_val) >= 3:
+                            if len(current_val) < 3:
                                 inp.click()
                                 inp.fill("")
                                 inp.type(user["postal_code"], delay=80)
                                 postal_filled = True
-                                print(f"   ✏️ Postal code filled: {user['postal_code']}")
+                                print(f"   ✏️ Postal code (fallback): {user['postal_code']}")
                                 break
                         except:
                             pass
 
-                    if not postal_filled:
-                        # Fallback: fill the first empty text input
-                        for inp in all_inputs:
-                            try:
-                                current_val = inp.input_value() or ""
-                                if len(current_val) < 3:
-                                    inp.click()
-                                    inp.fill("")
-                                    inp.type(user["postal_code"], delay=80)
-                                    postal_filled = True
-                                    print(f"   ✏️ Postal code filled (fallback): {user['postal_code']}")
-                                    break
-                            except:
-                                pass
-
-                    if not postal_filled:
-                        print(f"   ⚠️ Could not find postal code field")
-                except Exception as e:
-                    print(f"   ⚠️ Postal code error: {e}")
-
-                # 6. Select distance: 50 km
-                print(f"   📋 Selecting distance: 50 km...")
+                # 2. Select "Urgent Consultation" from dropdown
+                print(f"   📋 Selecting reason: Urgent Consultation...")
                 try:
-                    distance_btns = page.locator("text=50").all()
-                    distance_clicked = False
-                    for db in distance_btns:
-                        if db.is_visible():
-                            db.click()
-                            distance_clicked = True
-                            print(f"   ✅ Distance set to 50 km")
-                            human_delay(300, 600)
-                            break
-                    if not distance_clicked:
-                        print(f"   ⚠️ 50 km button not found")
+                    dropdown = page.locator("select, [role='combobox'], [role='listbox']").first
+                    if dropdown.count() > 0 and dropdown.is_visible():
+                        dropdown.click()
+                        human_delay(500, 1000)
+                        urgent_option = page.locator("option:has-text('Urgent'), text=Urgent Consultation").first
+                        if urgent_option.count() > 0 and urgent_option.is_visible():
+                            urgent_option.click()
+                            print(f"   ✅ Selected: Urgent Consultation")
+                    else:
+                        reason_btn = page.locator("text=Urgent Consultation").first
+                        if reason_btn.count() > 0 and reason_btn.is_visible():
+                            reason_btn.click()
+                            print(f"   ✅ Clicked: Urgent Consultation")
                 except Exception as e:
-                    print(f"   ⚠️ Distance error: {e}")
+                    print(f"   ⚠️ Reason selection error: {e}")
+
+                # 3. Set radius to 50km
+                print(f"   📋 Setting radius to 50km...")
+                try:
+                    radius_selectors = page.locator("select, [role='combobox']").all()
+                    for sel in radius_selectors:
+                        try:
+                            sel.click()
+                            human_delay(300, 500)
+                            option_50 = page.locator("option[value='50'], text=50 km, text=50").first
+                            if option_50.count() > 0 and option_50.is_visible():
+                                option_50.click()
+                                print(f"   ✅ Radius: 50km")
+                                break
+                        except:
+                            pass
+                except Exception as e:
+                    print(f"   ⚠️ Radius error: {e}")
 
                 human_delay(500, 1000)
-                take_screenshot(page, "05_booking_filled", worker_id)
+                take_screenshot(page, "telus_04_search_filled", worker_id)
 
-                # ═══════════════════════════════════════════════
-                # STEP 6: Click Chercher (Search) button
-                # ═══════════════════════════════════════════════
-                print(f"\n📂 STEP 6: Clicking Chercher...")
+                # 4. Click Search button
+                print(f"\n📂 STEP 5: Clicking Search...")
                 search_clicked = False
 
-                # Method 1: Look for "Chercher" button
-                try:
-                    search_btn = page.locator("button:has-text('Chercher')").first
-                    if search_btn.count() > 0 and search_btn.is_visible():
-                        is_disabled = search_btn.get_attribute("disabled")
-                        if is_disabled is None:
-                            search_btn.click()
-                            search_clicked = True
-                            print(f"   ✅ Clicked Chercher (text)")
-                        else:
-                            print(f"   ⚠️ Chercher button is DISABLED — some fields may be missing")
-                    else:
-                        print(f"   ⚠️ Chercher button not found by text")
-                except Exception as e:
-                    print(f"   ⚠️ Chercher text method failed: {e}")
-
-                # Method 2: Look for "Rechercher" button
-                if not search_clicked:
+                for btn_text in ["Search", "Rechercher", "Chercher", "Trouver"]:
+                    if search_clicked:
+                        break
                     try:
-                        search_btn = page.locator("button:has-text('Rechercher')").first
-                        if search_btn.count() > 0 and search_btn.is_visible():
-                            is_disabled = search_btn.get_attribute("disabled")
+                        btn = page.locator(f"button:has-text('{btn_text}')").first
+                        if btn.count() > 0 and btn.is_visible():
+                            is_disabled = btn.get_attribute("disabled")
                             if is_disabled is None:
-                                search_btn.click()
+                                btn.click()
                                 search_clicked = True
-                                print(f"   ✅ Clicked Rechercher (text)")
+                                print(f"   ✅ Clicked '{btn_text}'")
                             else:
-                                print(f"   ⚠️ Rechercher button is DISABLED")
-                    except Exception as e:
-                        print(f"   ⚠️ Rechercher text method failed: {e}")
+                                print(f"   ⚠️ '{btn_text}' is DISABLED")
+                    except:
+                        pass
 
-                # Method 3: Try any button with search-related text
-                if not search_clicked:
-                    try:
-                        all_buttons = page.locator("button:visible").all()
-                        for btn in all_buttons:
-                            try:
-                                btn_text = (btn.inner_text() or "").lower()
-                                if any(kw in btn_text for kw in ["chercher", "rechercher", "search", "trouver"]):
-                                    is_disabled = btn.get_attribute("disabled")
-                                    if is_disabled is None:
-                                        btn.click()
-                                        search_clicked = True
-                                        print(f"   ✅ Clicked search button: '{btn_text[:40]}'")
-                                        break
-                            except:
-                                pass
-                        if not search_clicked:
-                            print(f"   ⚠️ No enabled search button found")
-                            # Print all visible button texts for debugging
-                            button_texts = []
-                            for btn in all_buttons:
-                                try:
-                                    txt = btn.inner_text() or ""
-                                    if txt.strip():
-                                        disabled = btn.get_attribute("disabled")
-                                        button_texts.append(f"'{txt.strip()[:30]}' {'DISABLED' if disabled is not None else 'enabled'}")
-                                except:
-                                    pass
-                            print(f"   📄 Available buttons: {button_texts[:10]}")
-                    except Exception as e:
-                        print(f"   ⚠️ Button scan failed: {e}")
-
-                # Method 4: Press Enter as last resort
                 if not search_clicked:
                     try:
                         page.keyboard.press("Enter")
-                        human_delay(2000, 3000)
-                        print(f"   ✅ Pressed Enter (last resort)")
                         search_clicked = True
+                        print(f"   ✅ Pressed Enter")
                     except:
                         pass
 
                 if search_clicked:
-                    human_delay(4000, 6000)
-                    take_screenshot(page, "06_search_results", worker_id)
+                    human_delay(5000, 8000)
+                    take_screenshot(page, "telus_05_results", worker_id)
                     current_url = page.url
                     print(f"   📍 Results URL: {current_url[:120]}")
-                else:
-                    print(f"   ❌ Could not click any search button")
+
+                    # Check for available appointments
+                    try:
+                        body_text = page.locator("body").inner_text().lower()
+                        slot_keywords = ["disponible", "available", "créneau", "plage", "horaire", "réserver", "book", "select"]
+                        found_slots = [kw for kw in slot_keywords if kw in body_text]
+                        if found_slots:
+                            print(f"   🎯 SLOT INDICATORS: {found_slots}")
+                        else:
+                            print(f"   😴 No slot indicators found")
+                            print(f"   📄 Results: {body_text[:400]}")
+                    except:
+                        pass
 
             # ═══════════════════════════════════════════════
-            # STEP 7: Save the result
+            # STEP 6: Save result
             # ═══════════════════════════════════════════════
             place = {
-                "name": clinic_name,
-                "platform": "bonjour_sante",
+                "name": "TELUS Health Appointment Access",
+                "platform": "telus_health",
                 "url": page.url,
-                "city": clinic.get("city", ""),
+                "city": "Quebec",
             }
             found.append(place)
             KillSwitch.add_slot(place)
 
         except Exception as e:
-            print(f"   ❌ Bonjour Santé error: {e}")
+            print(f"   ❌ TELUS Health error: {e}")
             traceback.print_exc()
-            take_screenshot(page, "99_error", worker_id)
-        finally:
-            browser.close()
-
-    print(f"\n🟢 Worker {worker_id} finished — Found {len(found)} slots")
-    return found
-
-
-# ================================================================
-# 10. TELUS SANTÉ (POMELO) SCRAPER — Deeplink extraction
-# ================================================================
-
-def scrape_telussante(profile: dict, clinic: dict, user: dict, worker_id: int) -> list:
-    """
-    TELUS Santé (Pomelo) scraper.
-    Loads clinic page, clicks service button, captures redirect URL.
-    """
-    found = []
-    clinic_name = clinic.get("name", "Unknown")
-    clinic_url = clinic.get("url", "")
-    stagger_delay = profile.get("delay", 0)
-
-    if stagger_delay > 0:
-        time.sleep(stagger_delay)
-
-    if KillSwitch.is_active():
-        print(f"   🛑 Kill switch active — skipping {clinic_name}")
-        return []
-
-    print(f"\n{'='*60}")
-    print(f"🟣 WORKER {worker_id}: TELUS Santé — {clinic_name}")
-    print(f"{'='*60}")
-
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=HEADLESS)
-        context = browser.new_context(
-            viewport=profile.get("viewport", {"width": 1280, "height": 720}),
-            user_agent=profile.get("user_agent"),
-            locale=profile.get("locale", "fr-CA"),
-            timezone_id=profile.get("timezone", "America/Montreal"),
-        )
-        context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-        page = context.new_page()
-
-        try:
-            # Load clinic page
-            print(f"\n📂 Loading: {clinic_url}")
-            page.goto(clinic_url, wait_until="domcontentloaded", timeout=30000)
-            human_delay(1500, 2500)
-            take_screenshot(page, "01_clinic_page", worker_id)
-
-            old_url = page.url
-
-            # Click service button
-            print(f"\n📂 Clicking service button...")
-            service_texts = [
-                "Prendre un rendez-vous",
-                "Prendre rendez-vous",
-                "Réserver",
-                "Consultation",
-                "Voir les disponibilités",
-                "Prendre rendez-vous en ligne",
-            ]
-
-            for button_text in service_texts:
-                try:
-                    button = page.locator(f"text={button_text}").first
-                    if button.count() > 0 and button.is_visible():
-                        print(f"   👆 Clicking: '{button_text}'")
-                        button.click()
-                        human_delay(3000, 5000)
-                        break
-                except:
-                    pass
-
-            new_url = page.url
-            if new_url != old_url:
-                print(f"   🔗 Redirect detected!")
-                print(f"   📍 Old: {old_url[:100]}")
-                print(f"   📍 New: {new_url[:120]}")
-
-            take_screenshot(page, "02_after_click", worker_id)
-
-            # Try filling RAMQ if form is visible
-            print(f"\n📂 Checking for RAMQ form...")
-            ramq_selectors = [
-                "input[placeholder*='ABCD']",
-                "input[name*='ramq']",
-            ]
-            for selector in ramq_selectors:
-                element = page.locator(selector).first
-                if element.count() > 0 and element.is_visible():
-                    element.click()
-                    element.fill("")
-                    element.type(user["ramq"], delay=100)
-                    print(f"   ✏️ RAMQ filled: {user['ramq']}")
-                    break
-
-            # Save result
-            place = {
-                "name": clinic_name,
-                "platform": "telus_sante",
-                "url": page.url,
-                "city": clinic.get("city", ""),
-            }
-            found.append(place)
-            KillSwitch.add_slot(place)
-
-        except Exception as e:
-            print(f"   ❌ TELUS Santé error: {e}")
-            traceback.print_exc()
-            take_screenshot(page, "99_error", worker_id)
+            take_screenshot(page, "telus_99_error", worker_id)
         finally:
             browser.close()
 
@@ -1086,14 +892,10 @@ def scrape_telussante(profile: dict, clinic: dict, user: dict, worker_id: int) -
 
 
 # ================================================================
-# 11. MAIN SEARCH COORDINATOR
+# 10. MAIN SEARCH COORDINATOR
 # ================================================================
 
 def search_all_platforms(user: dict) -> list:
-    """
-    Main search coordinator.
-    Launches 5 parallel browsers: 1 for ClicSanté, 4 for nearby clinics.
-    """
     import requests
 
     all_slots = []
@@ -1148,17 +950,15 @@ def search_all_platforms(user: dict) -> list:
         # Worker 0: ClicSanté
         futures.append(executor.submit(scrape_clicsante, profiles[0], user, 0))
 
-        # Workers 1-4: Nearby clinics
-        for i, profile in enumerate(profiles[1:], 1):
-            clinic_index = i - 1
-            if clinic_index < len(nearby_clinics):
-                clinic = nearby_clinics[clinic_index]
-                if clinic["platform"] == "bonjour_sante":
-                    futures.append(executor.submit(scrape_bonjoursante, profile, clinic, user, i))
-                elif clinic["platform"] == "telus_sante":
-                    futures.append(executor.submit(scrape_telussante, profile, clinic, user, i))
+        # Worker 1: TELUS Health
+        futures.append(executor.submit(scrape_telushealth, profiles[1], user, 1))
 
-        # Wait for all futures
+        # Workers 2-4: More TELUS Health instances with different profiles
+        for i in range(2, MAX_WORKERS):
+            profile_index = i
+            if profile_index < len(profiles):
+                futures.append(executor.submit(scrape_telushealth, profiles[profile_index], user, i))
+
         for future in as_completed(futures):
             if KillSwitch.is_active():
                 print("\n🛑 Kill switch active — cancelling remaining workers...")
@@ -1173,40 +973,33 @@ def search_all_platforms(user: dict) -> list:
 
 
 # ================================================================
-# 12. MAIN ENTRY POINT
+# 11. MAIN ENTRY POINT
 # ================================================================
 
 def main():
-    """Main entry point for the scraper"""
     print("╔══════════════════════════════════════════════╗")
-    print("║        MYVITA HYBRID SCRAPER v7              ║")
-    print("║    ClicSanté + Bonjour Santé + TELUS         ║")
+    print("║        MYVITA HYBRID SCRAPER v10             ║")
+    print("║    FREE Government Platforms Only            ║")
+    print("║    ClicSanté + TELUS Health                  ║")
     print(f"║    {MAX_WORKERS} browsers | {RADIUS_KM}km radius | Headless: {HEADLESS}     ║")
     print("╚══════════════════════════════════════════════╝")
 
-    # Get user data
     user = get_user_data()
     print(f"\n📋 Patient: {user['first_name']} {user['last_name']}")
     print(f"📋 Postal Code: {user['postal_code']}")
     print(f"📋 RAMQ: {user['ramq'][:4]}****{user['ramq'][-2:]}")
 
-    # Create request in Firestore
     request_id = get_or_create_request(user)
     if request_id:
         print(f"📄 Request ID: {request_id}")
 
-    # Reset kill switch
     KillSwitch.reset()
-
-    # Run search
     start_time = time.time()
     slots = search_all_platforms(user)
     elapsed_time = time.time() - start_time
 
-    # Save results
     save_to_firestore(user["postal_code"], slots)
 
-    # Print summary
     print(f"\n{'='*60}")
     print(f"📊 FINAL RESULTS — {elapsed_time:.0f} seconds")
     print(f"{'='*60}")
@@ -1219,9 +1012,8 @@ def main():
             print(f"      🌆 City: {slot.get('city', 'Unknown')}")
             print(f"      🔗 URL: {slot.get('url', '')[:120]}")
     else:
-        print(f"\n😴 No slots found — try again later or use MiniClaw")
+        print(f"\n😴 No slots found")
 
-    # Screenshot summary
     screenshot_count = len(os.listdir(DEBUG_DIR)) if os.path.exists(DEBUG_DIR) else 0
     print(f"\n📸 Screenshots saved: {screenshot_count} files in {DEBUG_DIR}")
     print("\n✅ Scraper finished successfully!")
