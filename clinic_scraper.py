@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-MYVITA HYBRID SCRAPER v12 — Free Government Platforms
+MYVITA HYBRID SCRAPER v13 — Free Government Platforms
 - ClicSanté: Medical consultation search (free, government-backed)
 - TELUS Health Appointment Access: Government-backed FREE system
-- Uses real birth year from environment
-- Longer waits for form validation
+- JavaScript click for Continue button (bypasses SPA issues)
+- Waits for actual page navigation
 - Kill switch after 5 slots
 - Screenshots for debugging
 """
@@ -276,7 +276,7 @@ def get_or_create_request(user: dict) -> str:
 
 
 # ================================================================
-# 8. CLICSANTÉ SCRAPER — Medical consultation search
+# 8. CLICSANTÉ SCRAPER
 # ================================================================
 
 def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
@@ -412,7 +412,7 @@ def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
 
 
 # ================================================================
-# 9. TELUS HEALTH — Human-like form filling with validation waits
+# 9. TELUS HEALTH — JavaScript click approach
 # ================================================================
 
 def scrape_telushealth(profile: dict, user: dict, worker_id: int) -> list:
@@ -457,9 +457,9 @@ def scrape_telushealth(profile: dict, user: dict, worker_id: int) -> list:
             take_screenshot(page, "telus_01_home", worker_id)
 
             # ═══════════════════════════════════════════════
-            # STEP 2: Fill form field by field with validation waits
+            # STEP 2: Fill form
             # ═══════════════════════════════════════════════
-            print(f"\n📂 STEP 2: Filling form with validation waits...")
+            print(f"\n📂 STEP 2: Filling form...")
 
             all_inputs = page.locator("input:visible").all()
             print(f"   📥 {len(all_inputs)} visible inputs")
@@ -506,7 +506,6 @@ def scrape_telushealth(profile: dict, user: dict, worker_id: int) -> list:
                         inp.type(user["ramq"], delay=120)
                         filled_count += 1
                         print(f"   ✏️ [{filled_count}] RAMQ: {user['ramq']}")
-                        # Longer wait for RAMQ validation
                         human_delay(2000, 3000)
 
                     elif any(kw in combined for kw in ["seq", "sequential", "séquentiel", "sequence"]):
@@ -548,7 +547,7 @@ def scrape_telushealth(profile: dict, user: dict, worker_id: int) -> list:
                 except Exception as e:
                     print(f"   ⚠️ Field error: {e}")
 
-            # Handle radio buttons and checkboxes
+            # Handle selections
             print(f"\n   📋 Handling selections...")
             human_delay(1000, 1500)
 
@@ -594,49 +593,54 @@ def scrape_telushealth(profile: dict, user: dict, worker_id: int) -> list:
             take_screenshot(page, "telus_02_form_filled", worker_id)
 
             # ═══════════════════════════════════════════════
-            # STEP 3: Click Continue with multiple methods
+            # STEP 3: Click Continue with JavaScript
             # ═══════════════════════════════════════════════
-            print(f"\n📂 STEP 3: Clicking Continue...")
-            
-            # Check if Continue is enabled
-            try:
-                continue_btn = page.locator("button:has-text('Continue')").first
-                if continue_btn.count() > 0:
-                    is_disabled = continue_btn.get_attribute("disabled")
-                    if is_disabled is not None:
-                        print(f"   ⚠️ Continue button is DISABLED — checking for errors...")
-                        body_text = page.locator("body").inner_text()
-                        print(f"   📄 Page state: {body_text[:500]}")
-                        
-                        # Try pressing Tab then Enter
-                        print(f"   🔄 Trying Tab navigation...")
-                        page.keyboard.press("Tab")
-                        human_delay(300, 500)
-                        page.keyboard.press("Tab")
-                        human_delay(300, 500)
-                        page.keyboard.press("Enter")
-                        human_delay(3000, 4000)
-                    else:
-                        continue_btn.click()
-                        print(f"   ✅ Clicked Continue")
-                        human_delay(3000, 4000)
-            except Exception as e:
-                print(f"   ⚠️ Continue click error: {e}")
-                page.keyboard.press("Enter")
-                human_delay(3000, 4000)
+            print(f"\n📂 STEP 3: Clicking Continue (JavaScript)...")
+
+            old_url = page.url
+
+            # Use JavaScript to click the button
+            js_click_result = page.evaluate("""
+                () => {
+                    const buttons = document.querySelectorAll('button');
+                    for (const btn of buttons) {
+                        if (btn.innerText.includes('Continue') && !btn.disabled) {
+                            btn.click();
+                            return 'clicked';
+                        }
+                    }
+                    return 'not found';
+                }
+            """)
+            print(f"   JS click result: {js_click_result}")
+
+            # Wait for page to change
+            human_delay(4000, 6000)
+
+            new_url = page.url
+            print(f"   📍 Old URL: {old_url[:80]}")
+            print(f"   📍 New URL: {new_url[:120]}")
 
             take_screenshot(page, "telus_03_after_continue", worker_id)
-            current_url = page.url
-            print(f"   📍 URL: {current_url[:120]}")
 
-            # Check page state
+            # Check if page advanced
             try:
                 body_text = page.locator("body").inner_text()
-                if "Patient identification" in body_text:
-                    print(f"   ⚠️ Still on form page")
-                    print(f"   📄 Content: {body_text[:400]}")
-                elif "postal code" in body_text.lower() or "appointment" in body_text.lower():
+
+                if "postal code" in body_text.lower() or "your postal code" in body_text.lower():
                     print(f"   ✅ Advanced to search page!")
+                    advanced = True
+                elif "Patient identification" in body_text and new_url == old_url:
+                    print(f"   ⚠️ Still on form page — trying Enter key")
+                    page.keyboard.press("Enter")
+                    human_delay(3000, 5000)
+                    new_url = page.url
+                    body_text = page.locator("body").inner_text()
+                    if "postal code" in body_text.lower():
+                        print(f"   ✅ Advanced after Enter!")
+                    else:
+                        print(f"   ❌ Could not advance past form")
+                        print(f"   📄 Content: {body_text[:300]}")
                 else:
                     print(f"   📄 Content: {body_text[:300]}")
             except:
@@ -693,21 +697,24 @@ def scrape_telushealth(profile: dict, user: dict, worker_id: int) -> list:
             print(f"\n📂 STEP 5: Clicking Search...")
             search_clicked = False
 
-            for btn_text in ["Search", "Rechercher", "Chercher", "Trouver"]:
-                if search_clicked:
-                    break
-                try:
-                    btn = page.locator(f"button:has-text('{btn_text}')").first
-                    if btn.count() > 0 and btn.is_visible():
-                        is_disabled = btn.get_attribute("disabled")
-                        if is_disabled is None:
-                            btn.click()
-                            search_clicked = True
-                            print(f"   ✅ Clicked '{btn_text}'")
-                        else:
-                            print(f"   ⚠️ '{btn_text}' DISABLED")
-                except:
-                    pass
+            # Try JavaScript click for Search
+            js_search_result = page.evaluate("""
+                () => {
+                    const buttons = document.querySelectorAll('button');
+                    for (const btn of buttons) {
+                        const text = btn.innerText.toLowerCase();
+                        if ((text.includes('search') || text.includes('rechercher') || text.includes('chercher') || text.includes('trouver')) && !btn.disabled) {
+                            btn.click();
+                            return 'clicked: ' + btn.innerText;
+                        }
+                    }
+                    return 'not found';
+                }
+            """)
+            print(f"   JS search result: {js_search_result}")
+
+            if "clicked" in str(js_search_result):
+                search_clicked = True
 
             if not search_clicked:
                 try:
@@ -725,13 +732,12 @@ def scrape_telushealth(profile: dict, user: dict, worker_id: int) -> list:
 
                 try:
                     body_text = page.locator("body").inner_text().lower()
-                    slot_keywords = ["disponible", "available", "créneau", "plage", "horaire", "réserver", "book", "select", "confirm"]
-                    found_slots = [kw for kw in slot_keywords if kw in body_text]
-                    if found_slots:
-                        print(f"   🎯 SLOT INDICATORS: {found_slots}")
-                        print(f"   📄 Full text: {body_text[:600]}")
+                    # Better slot detection
+                    real_slot_keywords = ["appointment available", "time slot", "book now", "select time", "choose time"]
+                    found_real_slots = [kw for kw in real_slot_keywords if kw in body_text]
+                    if found_real_slots:
+                        print(f"   🎯 REAL SLOTS FOUND: {found_real_slots}")
                     else:
-                        print(f"   😴 No slot indicators")
                         print(f"   📄 Results text: {body_text[:400]}")
                 except:
                     pass
@@ -829,7 +835,7 @@ def search_all_platforms(user: dict) -> list:
 
 def main():
     print("╔══════════════════════════════════════════════╗")
-    print("║        MYVITA HYBRID SCRAPER v12             ║")
+    print("║        MYVITA HYBRID SCRAPER v13             ║")
     print("║    FREE Government Platforms Only            ║")
     print("║    ClicSanté + TELUS Health                  ║")
     print(f"║    {MAX_WORKERS} browsers | {RADIUS_KM}km radius | Headless: {HEADLESS}     ║")
