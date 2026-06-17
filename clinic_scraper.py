@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-MYVITA HYBRID SCRAPER v11 — Free Government Platforms
+MYVITA HYBRID SCRAPER v12 — Free Government Platforms
 - ClicSanté: Medical consultation search (free, government-backed)
 - TELUS Health Appointment Access: Government-backed FREE system
-- Form filling in human-like order (top to bottom)
+- Uses real birth year from environment
+- Longer waits for form validation
 - Kill switch after 5 slots
 - Screenshots for debugging
 """
@@ -165,6 +166,8 @@ def haversine(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
 
 
 def get_user_data() -> dict:
+    birth_date = os.getenv("USER_BIRTH_DATE", "1970-01-01")
+    birth_year = birth_date.split("-")[0] if "-" in birth_date else "1970"
     return {
         "first_name": os.getenv("USER_FIRST_NAME", "Jean"),
         "last_name": os.getenv("USER_LAST_NAME", "Tremblay"),
@@ -173,6 +176,7 @@ def get_user_data() -> dict:
         "postal_code": os.getenv("POSTAL_CODE", "H1Y3H1"),
         "email": os.getenv("USER_EMAIL", "jean.tremblay@email.com"),
         "phone": os.getenv("USER_PHONE", "5145550101"),
+        "birth_year": birth_year,
     }
 
 
@@ -355,11 +359,10 @@ def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
                     break
                 try:
                     href = link.get_attribute("href") or ""
-                    
-                    # Skip cancellation links
+
                     if "annuler" in href.lower() or "cancel" in href.lower():
                         continue
-                    
+
                     clinic_id_match = re.search(r'/(\d+)/take-appt', href)
                     if not clinic_id_match:
                         continue
@@ -409,7 +412,7 @@ def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
 
 
 # ================================================================
-# 9. TELUS HEALTH — Human-like form filling
+# 9. TELUS HEALTH — Human-like form filling with validation waits
 # ================================================================
 
 def scrape_telushealth(profile: dict, user: dict, worker_id: int) -> list:
@@ -443,7 +446,7 @@ def scrape_telushealth(profile: dict, user: dict, worker_id: int) -> list:
             # ═══════════════════════════════════════════════
             print(f"\n📂 STEP 1: Loading TELUS Health...")
             page.goto("https://appointmentaccess.telushealth.com/", wait_until="networkidle", timeout=60000)
-            human_delay(2000, 3000)
+            human_delay(3000, 4000)
 
             try:
                 page.keyboard.press("Escape")
@@ -454,13 +457,13 @@ def scrape_telushealth(profile: dict, user: dict, worker_id: int) -> list:
             take_screenshot(page, "telus_01_home", worker_id)
 
             # ═══════════════════════════════════════════════
-            # STEP 2: Fill form IN ORDER (like a human)
+            # STEP 2: Fill form field by field with validation waits
             # ═══════════════════════════════════════════════
-            print(f"\n📂 STEP 2: Filling form in human order...")
+            print(f"\n📂 STEP 2: Filling form with validation waits...")
 
             all_inputs = page.locator("input:visible").all()
             print(f"   📥 {len(all_inputs)} visible inputs")
-            
+
             filled_count = 0
 
             for inp in all_inputs:
@@ -468,7 +471,7 @@ def scrape_telushealth(profile: dict, user: dict, worker_id: int) -> list:
                     input_type = (inp.get_attribute("type") or "").lower()
                     if input_type in ["hidden", "submit", "button"]:
                         continue
-                    
+
                     is_disabled = inp.get_attribute("disabled")
                     if is_disabled is not None:
                         continue
@@ -480,74 +483,81 @@ def scrape_telushealth(profile: dict, user: dict, worker_id: int) -> list:
 
                     if any(kw in combined for kw in ["first", "prénom", "prenom", "firstname"]):
                         inp.click()
-                        human_delay(200, 400)
+                        human_delay(300, 500)
                         inp.fill("")
-                        inp.type(user["first_name"], delay=100)
+                        inp.type(user["first_name"], delay=120)
                         filled_count += 1
                         print(f"   ✏️ [{filled_count}] First Name: {user['first_name']}")
+                        human_delay(800, 1200)
 
                     elif any(kw in combined for kw in ["last", "nom", "lastname"]):
                         inp.click()
-                        human_delay(200, 400)
+                        human_delay(300, 500)
                         inp.fill("")
-                        inp.type(user["last_name"], delay=100)
+                        inp.type(user["last_name"], delay=120)
                         filled_count += 1
                         print(f"   ✏️ [{filled_count}] Last Name: {user['last_name']}")
+                        human_delay(800, 1200)
 
                     elif any(kw in combined for kw in ["ramq", "assurance", "health insurance", "abcd", "maladie", "health card"]):
                         inp.click()
-                        human_delay(200, 400)
+                        human_delay(300, 500)
                         inp.fill("")
-                        inp.type(user["ramq"], delay=100)
+                        inp.type(user["ramq"], delay=120)
                         filled_count += 1
                         print(f"   ✏️ [{filled_count}] RAMQ: {user['ramq']}")
+                        # Longer wait for RAMQ validation
+                        human_delay(2000, 3000)
 
                     elif any(kw in combined for kw in ["seq", "sequential", "séquentiel", "sequence"]):
                         inp.click()
-                        human_delay(200, 400)
+                        human_delay(300, 500)
                         inp.fill("")
-                        inp.type(user["ramq_seq"], delay=100)
+                        inp.type(user["ramq_seq"], delay=120)
                         filled_count += 1
                         print(f"   ✏️ [{filled_count}] Sequence: {user['ramq_seq']}")
+                        human_delay(800, 1200)
 
                     elif any(kw in combined for kw in ["year", "année", "birth", "naissance"]):
                         inp.click()
-                        human_delay(200, 400)
+                        human_delay(300, 500)
                         inp.fill("")
-                        inp.type("1970", delay=100)
+                        inp.type(user["birth_year"], delay=120)
                         filled_count += 1
-                        print(f"   ✏️ [{filled_count}] Birth Year: 1970")
+                        print(f"   ✏️ [{filled_count}] Birth Year: {user['birth_year']}")
+                        human_delay(800, 1200)
 
                     elif any(kw in combined for kw in ["email", "courriel"]):
                         inp.click()
-                        human_delay(200, 400)
+                        human_delay(300, 500)
                         inp.fill("")
-                        inp.type(user["email"], delay=100)
+                        inp.type(user["email"], delay=120)
                         filled_count += 1
                         print(f"   ✏️ [{filled_count}] Email: {user['email']}")
+                        human_delay(800, 1200)
 
                     elif any(kw in combined for kw in ["phone", "téléphone", "tel", "mobile"]):
                         inp.click()
-                        human_delay(200, 400)
+                        human_delay(300, 500)
                         inp.fill("")
-                        inp.type(user["phone"], delay=100)
+                        inp.type(user["phone"], delay=120)
                         filled_count += 1
                         print(f"   ✏️ [{filled_count}] Phone: {user['phone']}")
-
-                    human_delay(500, 800)
+                        human_delay(800, 1200)
 
                 except Exception as e:
                     print(f"   ⚠️ Field error: {e}")
 
             # Handle radio buttons and checkboxes
             print(f"\n   📋 Handling selections...")
+            human_delay(1000, 1500)
 
             try:
                 male_label = page.locator("text=Male").first
                 if male_label.count() > 0 and male_label.is_visible():
                     male_label.click()
                     print(f"   ✅ Sex: Male")
-                    human_delay(500, 800)
+                    human_delay(800, 1200)
             except:
                 pass
 
@@ -556,7 +566,7 @@ def scrape_telushealth(profile: dict, user: dict, worker_id: int) -> list:
                 if fr_label.count() > 0 and fr_label.is_visible():
                     fr_label.click()
                     print(f"   ✅ Language: Français")
-                    human_delay(500, 800)
+                    human_delay(800, 1200)
             except:
                 pass
 
@@ -565,7 +575,7 @@ def scrape_telushealth(profile: dict, user: dict, worker_id: int) -> list:
                 if email_label.count() > 0 and email_label.is_visible():
                     email_label.click()
                     print(f"   ✅ Communication: Email only")
-                    human_delay(500, 800)
+                    human_delay(800, 1200)
             except:
                 pass
 
@@ -575,154 +585,156 @@ def scrape_telushealth(profile: dict, user: dict, worker_id: int) -> list:
                     if cb.is_visible() and not cb.is_checked():
                         cb.check()
                         print(f"   ✅ Consent checked")
+                        human_delay(500, 800)
                         break
             except:
                 pass
 
-            human_delay(1000, 1500)
+            human_delay(1500, 2500)
             take_screenshot(page, "telus_02_form_filled", worker_id)
 
             # ═══════════════════════════════════════════════
-            # STEP 3: Click Continue
+            # STEP 3: Click Continue with multiple methods
             # ═══════════════════════════════════════════════
             print(f"\n📂 STEP 3: Clicking Continue...")
-            continue_clicked = False
-
+            
+            # Check if Continue is enabled
             try:
-                btn = page.locator("button:has-text('Continue')").first
-                if btn.count() > 0 and btn.is_visible():
-                    is_disabled = btn.get_attribute("disabled")
-                    if is_disabled is None:
-                        btn.click()
-                        continue_clicked = True
-                        print(f"   ✅ Clicked Continue")
+                continue_btn = page.locator("button:has-text('Continue')").first
+                if continue_btn.count() > 0:
+                    is_disabled = continue_btn.get_attribute("disabled")
+                    if is_disabled is not None:
+                        print(f"   ⚠️ Continue button is DISABLED — checking for errors...")
+                        body_text = page.locator("body").inner_text()
+                        print(f"   📄 Page state: {body_text[:500]}")
+                        
+                        # Try pressing Tab then Enter
+                        print(f"   🔄 Trying Tab navigation...")
+                        page.keyboard.press("Tab")
+                        human_delay(300, 500)
+                        page.keyboard.press("Tab")
+                        human_delay(300, 500)
+                        page.keyboard.press("Enter")
+                        human_delay(3000, 4000)
                     else:
-                        print(f"   ⚠️ Continue DISABLED")
-                        try:
-                            body_text = page.locator("body").inner_text()
-                            print(f"   📄 Page: {body_text[:400]}")
-                        except:
-                            pass
+                        continue_btn.click()
+                        print(f"   ✅ Clicked Continue")
+                        human_delay(3000, 4000)
+            except Exception as e:
+                print(f"   ⚠️ Continue click error: {e}")
+                page.keyboard.press("Enter")
+                human_delay(3000, 4000)
+
+            take_screenshot(page, "telus_03_after_continue", worker_id)
+            current_url = page.url
+            print(f"   📍 URL: {current_url[:120]}")
+
+            # Check page state
+            try:
+                body_text = page.locator("body").inner_text()
+                if "Patient identification" in body_text:
+                    print(f"   ⚠️ Still on form page")
+                    print(f"   📄 Content: {body_text[:400]}")
+                elif "postal code" in body_text.lower() or "appointment" in body_text.lower():
+                    print(f"   ✅ Advanced to search page!")
+                else:
+                    print(f"   📄 Content: {body_text[:300]}")
             except:
                 pass
 
-            if not continue_clicked:
+            # ═══════════════════════════════════════════════
+            # STEP 4: Fill search form
+            # ═══════════════════════════════════════════════
+            print(f"\n📂 STEP 4: Filling search form...")
+            human_delay(2000, 3000)
+            take_screenshot(page, "telus_04_search_page", worker_id)
+
+            # Fill postal code
+            postal_filled = False
+            for selector in [
+                "input[placeholder*='G1G']",
+                "input[placeholder*='postal']",
+                "input[placeholder*='code']",
+            ]:
+                element = page.locator(selector).first
+                if element.count() > 0 and element.is_visible():
+                    current_val = element.input_value() or ""
+                    if len(current_val) < 3:
+                        element.click()
+                        human_delay(300, 500)
+                        element.fill("")
+                        element.type(user["postal_code"], delay=80)
+                        postal_filled = True
+                        print(f"   ✏️ Postal: {user['postal_code']}")
+                    break
+
+            if not postal_filled:
+                all_search_inputs = page.locator("input[type='text']:visible, input:not([type]):visible").all()
+                for inp in all_search_inputs:
+                    try:
+                        is_disabled = inp.get_attribute("disabled")
+                        if is_disabled is not None:
+                            continue
+                        current_val = inp.input_value() or ""
+                        if len(current_val) < 3:
+                            inp.click()
+                            human_delay(300, 500)
+                            inp.fill("")
+                            inp.type(user["postal_code"], delay=80)
+                            print(f"   ✏️ Postal (fallback): {user['postal_code']}")
+                            break
+                    except:
+                        pass
+
+            human_delay(1000, 2000)
+            take_screenshot(page, "telus_04_search_filled", worker_id)
+
+            # Click Search
+            print(f"\n📂 STEP 5: Clicking Search...")
+            search_clicked = False
+
+            for btn_text in ["Search", "Rechercher", "Chercher", "Trouver"]:
+                if search_clicked:
+                    break
+                try:
+                    btn = page.locator(f"button:has-text('{btn_text}')").first
+                    if btn.count() > 0 and btn.is_visible():
+                        is_disabled = btn.get_attribute("disabled")
+                        if is_disabled is None:
+                            btn.click()
+                            search_clicked = True
+                            print(f"   ✅ Clicked '{btn_text}'")
+                        else:
+                            print(f"   ⚠️ '{btn_text}' DISABLED")
+                except:
+                    pass
+
+            if not search_clicked:
                 try:
                     page.keyboard.press("Enter")
-                    human_delay(2000, 3000)
-                    continue_clicked = True
+                    search_clicked = True
                     print(f"   ✅ Pressed Enter")
                 except:
                     pass
 
-            if continue_clicked:
-                human_delay(3000, 5000)
-                take_screenshot(page, "telus_03_after_continue", worker_id)
+            if search_clicked:
+                human_delay(6000, 9000)
+                take_screenshot(page, "telus_05_results", worker_id)
                 current_url = page.url
-                print(f"   📍 URL: {current_url[:120]}")
+                print(f"   📍 Results: {current_url[:120]}")
 
-                # Check if we advanced past the form
                 try:
-                    body_text = page.locator("body").inner_text()
-                    print(f"   📄 Next: {body_text[:300]}")
-                    
-                    # If we're still on the form page, something went wrong
-                    if "Patient identification" in body_text:
-                        print(f"   ⚠️ Still on form page — may have validation errors")
+                    body_text = page.locator("body").inner_text().lower()
+                    slot_keywords = ["disponible", "available", "créneau", "plage", "horaire", "réserver", "book", "select", "confirm"]
+                    found_slots = [kw for kw in slot_keywords if kw in body_text]
+                    if found_slots:
+                        print(f"   🎯 SLOT INDICATORS: {found_slots}")
+                        print(f"   📄 Full text: {body_text[:600]}")
+                    else:
+                        print(f"   😴 No slot indicators")
+                        print(f"   📄 Results text: {body_text[:400]}")
                 except:
                     pass
-
-                # ═══════════════════════════════════════════════
-                # STEP 4: Fill search form (if we advanced)
-                # ═══════════════════════════════════════════════
-                print(f"\n📂 STEP 4: Filling search form...")
-                human_delay(2000, 3000)
-                take_screenshot(page, "telus_04_search_page", worker_id)
-
-                # Fill postal code
-                postal_filled = False
-                for selector in [
-                    "input[placeholder*='G1G']",
-                    "input[placeholder*='postal']",
-                    "input[placeholder*='code']",
-                ]:
-                    element = page.locator(selector).first
-                    if element.count() > 0 and element.is_visible():
-                        current_val = element.input_value() or ""
-                        if len(current_val) < 3:
-                            element.click()
-                            human_delay(200, 400)
-                            element.fill("")
-                            element.type(user["postal_code"], delay=80)
-                            postal_filled = True
-                            print(f"   ✏️ Postal: {user['postal_code']}")
-                        break
-
-                if not postal_filled:
-                    all_inputs = page.locator("input[type='text']:visible, input:not([type]):visible").all()
-                    for inp in all_inputs:
-                        try:
-                            is_disabled = inp.get_attribute("disabled")
-                            if is_disabled is not None:
-                                continue
-                            current_val = inp.input_value() or ""
-                            if len(current_val) < 3:
-                                inp.click()
-                                inp.fill("")
-                                inp.type(user["postal_code"], delay=80)
-                                print(f"   ✏️ Postal (fallback): {user['postal_code']}")
-                                break
-                        except:
-                            pass
-
-                human_delay(1000, 1500)
-                take_screenshot(page, "telus_04_search_filled", worker_id)
-
-                # Click Search
-                print(f"\n📂 STEP 5: Clicking Search...")
-                search_clicked = False
-
-                for btn_text in ["Search", "Rechercher", "Chercher", "Trouver"]:
-                    if search_clicked:
-                        break
-                    try:
-                        btn = page.locator(f"button:has-text('{btn_text}')").first
-                        if btn.count() > 0 and btn.is_visible():
-                            is_disabled = btn.get_attribute("disabled")
-                            if is_disabled is None:
-                                btn.click()
-                                search_clicked = True
-                                print(f"   ✅ Clicked '{btn_text}'")
-                            else:
-                                print(f"   ⚠️ '{btn_text}' DISABLED")
-                    except:
-                        pass
-
-                if not search_clicked:
-                    try:
-                        page.keyboard.press("Enter")
-                        search_clicked = True
-                        print(f"   ✅ Pressed Enter")
-                    except:
-                        pass
-
-                if search_clicked:
-                    human_delay(5000, 8000)
-                    take_screenshot(page, "telus_05_results", worker_id)
-                    current_url = page.url
-                    print(f"   📍 Results: {current_url[:120]}")
-
-                    try:
-                        body_text = page.locator("body").inner_text().lower()
-                        slot_keywords = ["disponible", "available", "créneau", "plage", "horaire", "réserver", "book", "select"]
-                        found_slots = [kw for kw in slot_keywords if kw in body_text]
-                        if found_slots:
-                            print(f"   🎯 SLOT INDICATORS: {found_slots}")
-                        else:
-                            print(f"   😴 No slot indicators")
-                            print(f"   📄 Results: {body_text[:300]}")
-                    except:
-                        pass
 
             # Save result
             place = {
@@ -817,7 +829,7 @@ def search_all_platforms(user: dict) -> list:
 
 def main():
     print("╔══════════════════════════════════════════════╗")
-    print("║        MYVITA HYBRID SCRAPER v11             ║")
+    print("║        MYVITA HYBRID SCRAPER v12             ║")
     print("║    FREE Government Platforms Only            ║")
     print("║    ClicSanté + TELUS Health                  ║")
     print(f"║    {MAX_WORKERS} browsers | {RADIUS_KM}km radius | Headless: {HEADLESS}     ║")
@@ -827,6 +839,7 @@ def main():
     print(f"\n📋 Patient: {user['first_name']} {user['last_name']}")
     print(f"📋 Postal Code: {user['postal_code']}")
     print(f"📋 RAMQ: {user['ramq'][:4]}****{user['ramq'][-2:]}")
+    print(f"📋 Birth Year: {user['birth_year']}")
 
     request_id = get_or_create_request(user)
     if request_id:
