@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-MYVITA UNIFIED SCRAPER — FINAL WITH DEBUG SCREENSHOTS
-- Takes screenshots at EVERY step
-- Saves to /tmp/myvita_debug/ with timestamps
-- Detailed logging of what it sees on each page
+MYVITA UNIFIED SCRAPER — DEEPLINK FLOW WITH DEBUG
+- Goes to clinic page → clicks service → fills form → searches slots
+- Screenshots at EVERY step
+- Kill switch after 3 slots found
 """
 
 from playwright.sync_api import sync_playwright
@@ -14,6 +14,7 @@ import re
 import math
 import json
 import threading
+import traceback
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import firebase_admin
@@ -49,9 +50,8 @@ RADIUS_KM = 50
 REQUEST_COLLECTION = "concierge_requests"
 DEBUG_DIR = "/tmp/myvita_debug"
 
-# Create debug directory
 os.makedirs(DEBUG_DIR, exist_ok=True)
-print(f"📸 Screenshots will be saved to: {DEBUG_DIR}")
+print(f"📸 Screenshots: {DEBUG_DIR}")
 
 # ================================================================
 # 3. BROWSER PROFILES
@@ -84,18 +84,16 @@ CLINICS_DATABASE = [
 # ================================================================
 
 def take_screenshot(page, step_name: str, worker_id: int = 0):
-    """Take a screenshot and save it with timestamp"""
     try:
         timestamp = datetime.now().strftime("%H%M%S")
         filename = f"worker{worker_id}_{timestamp}_{step_name}.png"
         filepath = os.path.join(DEBUG_DIR, filename)
         page.screenshot(path=filepath, full_page=True)
         
-        # Also dump page text content
         text_filename = f"worker{worker_id}_{timestamp}_{step_name}.txt"
         text_filepath = os.path.join(DEBUG_DIR, text_filename)
         try:
-            page_text = page.locator("body").inner_text()[:2000]  # First 2000 chars
+            page_text = page.locator("body").inner_text()[:2000]
             with open(text_filepath, 'w', encoding='utf-8') as f:
                 f.write(f"URL: {page.url}\n")
                 f.write(f"Title: {page.title()}\n")
@@ -103,44 +101,32 @@ def take_screenshot(page, step_name: str, worker_id: int = 0):
         except:
             pass
             
-        print(f"   📸 Screenshot: {filename}")
-        return True
+        print(f"   📸 {filename}")
     except Exception as e:
         print(f"   ⚠️ Screenshot failed: {e}")
-        return False
 
 def log_page_state(page, step_name: str, worker_id: int = 0):
-    """Log what's visible on the page"""
     try:
         url = page.url
         title = page.title()
         body_text = page.locator("body").inner_text()[:500]
         
-        # Check for key elements
         buttons = page.locator("button").all()
         button_texts = [b.inner_text()[:50] for b in buttons[:10] if b.is_visible()]
         
         inputs = page.locator("input").all()
         input_count = len([i for i in inputs if i.is_visible()])
         
-        links = page.locator("a").all()
-        link_count = len([l for l in links if l.is_visible()])
+        print(f"\n   🔍 [{step_name}] W{worker_id}")
+        print(f"   📍 {url[:100]}")
+        print(f"   📝 {title[:80]}")
+        print(f"   🔘 Buttons: {button_texts[:5]}")
+        print(f"   📥 Inputs: {input_count}")
         
-        print(f"\n   🔍 [{step_name}] Worker {worker_id}")
-        print(f"   📍 URL: {url[:100]}")
-        print(f"   📝 Title: {title[:80]}")
-        print(f"   🔘 Visible buttons ({len(button_texts)}): {button_texts[:5]}")
-        print(f"   📥 Visible inputs: {input_count}")
-        print(f"   🔗 Visible links: {link_count}")
-        print(f"   📄 Body preview: {body_text[:200]}")
-        
-        # Check for key French/English phrases
-        keywords = ["rendez-vous", "appointment", "disponible", "available", 
-                   "complet", "full", "aucun", "sorry", "désolé",
-                   "créneau", "slot", "réserver", "book", "continuer", "continue"]
-        found_keywords = [kw for kw in keywords if kw in body_text.lower()]
-        if found_keywords:
-            print(f"   🔑 Keywords found: {found_keywords}")
+        keywords = ["rendez-vous", "disponible", "complet", "créneau", "slot", "réserver", "book", "continuer"]
+        found_kw = [kw for kw in keywords if kw in body_text.lower()]
+        if found_kw:
+            print(f"   🔑 Keywords: {found_kw}")
             
     except Exception as e:
         print(f"   ⚠️ Log failed: {e}")
@@ -158,11 +144,10 @@ class KillSwitch:
     def add_slot(cls, details: dict):
         with cls._lock:
             cls._found_slots.append(details)
-            print(f"\n   🎯 SLOT FOUND! Total: {len(cls._found_slots)}")
-            print(f"   📋 Details: {json.dumps(details, indent=2, ensure_ascii=False)}")
+            print(f"\n   🎯 SLOT #{len(cls._found_slots)}: {details.get('clinic_name', details.get('name', '?'))}")
             if len(cls._found_slots) >= 3:
                 cls._active = True
-                print("   🛑 KILL SWITCH ACTIVATED — 3 slots found!")
+                print("   🛑 KILL SWITCH — 3 slots found!")
     
     @classmethod
     def is_active(cls) -> bool:
@@ -209,22 +194,19 @@ def get_user_data():
 
 def check_page_for_slots(page) -> bool:
     content = page.content().lower()
-    has_slot = any(kw in content for kw in ["disponible", "available", "creneau", "plage horaire", "reserver", "confirmer", "choisir", "select"])
-    no_slot = any(kw in content for kw in ["aucun rendez-vous", "no appointment", "desole", "sorry", "complet", "full", "impossible", "aucune disponibilité"])
-    result = has_slot and not no_slot
-    if has_slot:
-        print(f"   ✅ Slot indicators found in page content")
-    if no_slot:
-        print(f"   ❌ No-slot indicators found in page content")
-    return result
+    has_slot = any(kw in content for kw in ["disponible", "available", "creneau", "créneau", "plage horaire", "reserver", "réserver", "confirmer", "choisir", "select", "horaire"])
+    no_slot = any(kw in content for kw in ["aucun rendez-vous", "no appointment", "desole", "désolé", "sorry", "complet", "full", "impossible", "aucune disponibilité"])
+    return has_slot and not no_slot
 
 def fill_field(page, selectors: list, value: str):
     for sel in selectors:
         el = page.locator(sel).first
-        if el.count() > 0:
+        if el.count() > 0 and el.is_visible():
             try:
+                el.click()
+                el.fill("")
                 el.fill(value)
-                print(f"   ✏️ Filled field '{sel}' with '{value}'")
+                print(f"   ✏️ Filled '{sel}' = '{value}'")
                 return True
             except:
                 pass
@@ -232,14 +214,14 @@ def fill_field(page, selectors: list, value: str):
 
 def click_button(page, texts: list):
     for text in texts:
-        btn = page.get_by_role("button", name=re.compile(text, re.I)).first
-        if btn.count() > 0:
-            try:
+        try:
+            btn = page.get_by_role("button", name=re.compile(text, re.I)).first
+            if btn.count() > 0 and btn.is_visible():
                 btn.click()
-                print(f"   👆 Clicked button: '{text}'")
+                print(f"   👆 Clicked: '{text}'")
                 return True
-            except:
-                pass
+        except:
+            pass
     return False
 
 # ================================================================
@@ -261,17 +243,14 @@ def is_request_cancelled(request_id: str) -> bool:
 def get_or_create_request(user: dict) -> str:
     if db is None:
         return ""
-    
     request_id = os.getenv("REQUEST_ID", "")
     postal = user["postal_code"][:3].upper()
-    
     try:
         if request_id:
             doc = db.collection(REQUEST_COLLECTION).document(request_id).get()
             if doc.exists:
                 print(f"📝 Using existing: {request_id[:8]}")
                 return request_id
-        
         new_data = {
             "status": "scraper_running",
             "scraper_status": "running",
@@ -286,15 +265,12 @@ def get_or_create_request(user: dict) -> str:
             "gender": user["sex"],
             "created_at": firestore.SERVER_TIMESTAMP,
         }
-        
-        print(f"   🔍 Creating document...")
         result = db.collection(REQUEST_COLLECTION).add(new_data)
         doc_id = result[1].id
-        print(f"   📄 Doc ID: {doc_id}")
+        print(f"📄 Doc: {doc_id}")
         return doc_id
-        
     except Exception as e:
-        print(f"   ❌ Error: {e}")
+        print(f"❌ Error: {e}")
         return ""
 
 def save_results(request_id: str, slots: list, user: dict):
@@ -305,108 +281,84 @@ def save_results(request_id: str, slots: list, user: dict):
         if slots:
             doc_ref.update({
                 "status": "scraper_completed",
-                "scraper_result": {
-                    "found": True,
-                    "slots": slots,
-                    "completed_at": datetime.now().isoformat(),
-                },
+                "scraper_result": {"found": True, "slots": slots, "completed_at": datetime.now().isoformat()},
                 "scraper_status": "completed",
                 "updated_at": firestore.SERVER_TIMESTAMP,
             })
-            print(f"✅ Saved {len(slots)} slots to {request_id[:8]}")
+            print(f"✅ Saved {len(slots)} slots")
         else:
             doc_ref.update({
                 "status": "pending",
-                "scraper_result": {
-                    "found": False,
-                    "slots": [],
-                    "message": "No slots found — use MiniClaw",
-                    "completed_at": datetime.now().isoformat(),
-                },
+                "scraper_result": {"found": False, "slots": [], "message": "No slots found", "completed_at": datetime.now().isoformat()},
                 "scraper_status": "completed",
                 "updated_at": firestore.SERVER_TIMESTAMP,
             })
-            print(f"😴 No slots — {request_id[:8]} stays pending")
+            print(f"😴 No slots saved")
     except Exception as e:
         print(f"❌ Save failed: {e}")
 
 # ================================================================
-# 9. CLICSANTÉ
+# 9. CLICSANTÉ SCRAPER
 # ================================================================
 
 def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
     found = []
     postal_code = user["postal_code"]
-    profile_name = profile.get("name", f"Worker-{worker_id}")
     stagger = profile.get("delay", 0)
     if stagger > 0: time.sleep(stagger)
     if KillSwitch.is_active(): return []
     
     print(f"\n{'='*60}")
-    print(f"🔵 WORKER {worker_id}: ClicSanté — {profile_name}")
+    print(f"🔵 W{worker_id}: ClicSanté")
     print(f"{'='*60}")
     
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=HEADLESS)
-        context = browser.new_context(
-            viewport=profile.get("viewport", {"width": 1280, "height": 720}),
-            user_agent=profile.get("user_agent"),
-            locale=profile.get("locale", "fr-CA"),
-            timezone_id=profile.get("timezone", "America/Montreal")
-        )
+        context = browser.new_context(viewport=profile.get("viewport", {"width": 1280, "height": 720}), user_agent=profile.get("user_agent"), locale=profile.get("locale", "fr-CA"), timezone_id=profile.get("timezone", "America/Montreal"))
         context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         page = context.new_page()
         
         try:
-            # Step 1: Load ClicSanté
-            print("\n📂 Step 1: Loading ClicSanté portal...")
+            print("\n📂 Loading ClicSanté...")
             page.goto("https://portal3.clicsante.ca/", wait_until="networkidle", timeout=60000)
             human_delay(1000, 2000)
-            log_page_state(page, "clicsante_home", worker_id)
-            take_screenshot(page, "01_homepage", worker_id)
+            log_page_state(page, "home", worker_id)
+            take_screenshot(page, "01_home", worker_id)
             
-            # Step 2: Close popup
-            print("\n📂 Step 2: Closing popup...")
-            try: 
-                page.locator("text=Sans frais").first.click(timeout=8000)
-                print("   ✅ Popup closed")
-            except: 
-                print("   ℹ️ No popup found")
+            try: page.locator("text=Sans frais").first.click(timeout=8000); print("   ✅ Popup closed")
+            except: pass
             human_delay(500, 1000)
             
-            # Step 3: Enter postal code
-            print(f"\n📂 Step 3: Entering postal code '{postal_code}'...")
+            print(f"\n📂 Entering postal code: {postal_code}")
             inputs = page.locator("input[type='text']").all()
-            print(f"   📥 Found {len(inputs)} text inputs")
             if inputs:
-                inputs[0].click()
-                inputs[0].fill("")
+                inputs[0].click(); inputs[0].fill("")
                 inputs[0].type(postal_code, delay=random.randint(100, 200))
-                print(f"   ✅ Postal code entered")
-            take_screenshot(page, "02_postal_entered", worker_id)
+            take_screenshot(page, "02_postal", worker_id)
             
             human_delay(1000, 2000)
             
-            # Step 4: Search
-            print("\n📂 Step 4: Clicking search...")
-            try: 
-                page.get_by_role("button", name="Search").first.click(timeout=8000)
-                print("   ✅ Clicked 'Search'")
+            print("\n📂 Searching...")
+            try:
+                with page.expect_navigation(wait_until="networkidle", timeout=15000):
+                    page.get_by_role("button", name="Search").first.click()
+                print("   ✅ Navigated to results")
             except:
-                try: 
-                    page.get_by_role("button", name="Rechercher").first.click(timeout=5000)
-                    print("   ✅ Clicked 'Rechercher'")
-                except: 
+                try:
+                    with page.expect_navigation(wait_until="networkidle", timeout=15000):
+                        page.get_by_role("button", name="Rechercher").first.click()
+                    print("   ✅ Navigated to results (FR)")
+                except:
                     page.keyboard.press("Enter")
-                    print("   ✅ Pressed Enter")
-            human_delay(3000, 5000)
-            log_page_state(page, "clicsante_results", worker_id)
-            take_screenshot(page, "03_search_results", worker_id)
+                    human_delay(5000, 8000)
             
-            # Step 5: Find appointment links
-            print("\n📂 Step 5: Looking for appointment links...")
+            human_delay(3000, 5000)
+            log_page_state(page, "results", worker_id)
+            take_screenshot(page, "03_results", worker_id)
+            
+            print("\n📂 Looking for appointment links...")
             links = page.locator("a[href*='take-appt']").all()
-            print(f"   🔗 Found {len(links)} appointment links")
+            print(f"   🔗 Found {len(links)} links")
             
             for i, link in enumerate(links[:5]):
                 if KillSwitch.is_active(): break
@@ -414,36 +366,25 @@ def scrape_clicsante(profile: dict, user: dict, worker_id: int) -> list:
                     href = link.get_attribute("href") or ""
                     m = re.search(r'/(\d+)/take-appt', href)
                     if not m: continue
-                    
                     url = f"https://clients3.clicsante.ca/{m.group(1)}/take-appt"
-                    name = link.evaluate("""el => { 
-                        let p = el.closest('li, article, div'); 
-                        if (!p) return ''; 
-                        for (let h of p.querySelectorAll('h1,h2,h3,h4,strong,b')) { 
-                            let t = h.innerText?.trim(); 
-                            if (t && t.length > 5 && t.length < 200) return t; 
-                        } 
-                        return ''; 
-                    }""") or f"Clinique #{m.group(1)}"
-                    
-                    print(f"\n   🏥 Clinic {i+1}: {name[:80]}")
-                    print(f"   🔗 URL: {url}")
-                    
+                    name = link.evaluate("""el => { let p = el.closest('li, article, div'); if (!p) return ''; for (let h of p.querySelectorAll('h1,h2,h3,h4,strong,b')) { let t = h.innerText?.trim(); if (t && t.length > 5 && t.length < 200) return t; } return ''; }""") or f"Clinique #{m.group(1)}"
                     found.append({"name": name[:150], "platform": "clicsante", "url": url})
                     KillSwitch.add_slot(found[-1])
+                    print(f"   🏥 {i+1}: {name[:80]}")
                 except Exception as e:
-                    print(f"   ⚠️ Error extracting link: {e}")
+                    print(f"   ⚠️ Link error: {e}")
                     
         except Exception as e:
-            print(f"   ❌ ClicSanté error: {e}")
+            print(f"   ❌ Error: {e}")
+            traceback.print_exc()
             take_screenshot(page, "99_error", worker_id)
         finally:
-            print(f"\n🔵 Worker {worker_id} done — found {len(found)} slots")
+            print(f"\n🔵 W{worker_id} done — {len(found)} slots")
             browser.close()
     return found
 
 # ================================================================
-# 10. BONJOUR SANTÉ (with debug)
+# 10. BONJOUR SANTÉ SCRAPER — DEEPLINK FLOW
 # ================================================================
 
 def scrape_bonjoursante(profile: dict, clinic: dict, user: dict, worker_id: int) -> list:
@@ -454,107 +395,167 @@ def scrape_bonjoursante(profile: dict, clinic: dict, user: dict, worker_id: int)
     if KillSwitch.is_active(): return []
     
     print(f"\n{'='*60}")
-    print(f"🟢 WORKER {worker_id}: Bonjour Santé — {clinic_name}")
+    print(f"🟢 W{worker_id}: {clinic_name}")
     print(f"{'='*60}")
     
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=HEADLESS)
-        context = browser.new_context(
-            viewport=profile.get("viewport", {"width": 1280, "height": 720}),
-            user_agent=profile.get("user_agent"),
-            locale=profile.get("locale", "fr-CA"),
-            timezone_id=profile.get("timezone", "America/Montreal")
-        )
+        context = browser.new_context(viewport=profile.get("viewport", {"width": 1280, "height": 720}), user_agent=profile.get("user_agent"), locale=profile.get("locale", "fr-CA"), timezone_id=profile.get("timezone", "America/Montreal"))
         context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         page = context.new_page()
         
         try:
-            # Step 1: Load clinic page
-            print(f"\n📂 Step 1: Loading {clinic['website']}...")
+            # ═══════════════════════════════════════════════
+            # PAGE 1: Clinic landing page
+            # ═══════════════════════════════════════════════
+            print(f"\n📂 PAGE 1: {clinic['website']}")
             page.goto(clinic["website"], wait_until="domcontentloaded", timeout=30000)
-            human_delay(1000, 2000)
-            log_page_state(page, "bonjoursante_clinic", worker_id)
-            take_screenshot(page, "01_clinic_page", worker_id)
+            human_delay(1500, 2500)
+            log_page_state(page, "page1", worker_id)
+            take_screenshot(page, "page1_clinic", worker_id)
             
-            # Step 2: Click "Prendre rendez-vous"
-            print("\n📂 Step 2: Looking for 'Prendre rendez-vous' button...")
-            rdv_btn = page.get_by_text("Prendre rendez-vous", exact=False).first
-            if rdv_btn.count() > 0:
-                rdv_btn.click()
-                print("   ✅ Clicked 'Prendre rendez-vous'")
-                human_delay(2000, 4000)
-                log_page_state(page, "bonjoursante_after_rdv", worker_id)
-                take_screenshot(page, "02_after_rdv_click", worker_id)
-            else:
-                print("   ❌ No 'Prendre rendez-vous' button found")
+            # ═══════════════════════════════════════════════
+            # CLICK SERVICE BUTTON
+            # ═══════════════════════════════════════════════
+            print("\n📂 Clicking service button...")
+            service_clicked = False
+            
+            service_texts = [
+                "Médecin de famille ou urgence mineure",
+                "Urgence mineure",
+                "Consultation rapide",
+                "Suivi avec mon médecin",
+                "Dans ma clinique",
+                "Consultation sans rendez-vous",
+                "Sans rendez-vous"
+            ]
+            
+            for text in service_texts:
+                if service_clicked: break
+                try:
+                    btn = page.locator(f"text={text}").first
+                    if btn.count() > 0 and btn.is_visible():
+                        print(f"   👆 Clicking: '{text}'")
+                        btn.click()
+                        service_clicked = True
+                        human_delay(3000, 5000)
+                        break
+                except:
+                    pass
+            
+            # Fallback: click any button containing rendez-vous/médecin
+            if not service_clicked:
+                print("   🔄 Fallback scan...")
+                all_btns = page.locator("button, a").all()
+                for b in all_btns:
+                    try:
+                        txt = (b.inner_text() or "").lower()
+                        if any(kw in txt for kw in ["rendez-vous", "médecin", "urgence", "consultation", "suivi"]):
+                            b.click()
+                            print(f"   👆 Fallback: '{txt[:60]}'")
+                            service_clicked = True
+                            human_delay(3000, 5000)
+                            break
+                    except:
+                        pass
+            
+            if not service_clicked:
+                print("   ❌ No service button found")
                 return []
             
-            # Step 3: Select service type
-            print("\n📂 Step 3: Selecting service type...")
-            for s in ["Urgence mineure", "Medecin de famille ou urgence mineure", "Consultation rapide", "Suivi"]:
-                btn = page.get_by_text(s, exact=False).first
-                if btn.count() > 0:
-                    btn.click()
-                    print(f"   ✅ Selected: {s}")
-                    human_delay(2000, 4000)
-                    break
-            take_screenshot(page, "03_service_selected", worker_id)
+            log_page_state(page, "page2_form", worker_id)
+            take_screenshot(page, "page2_form", worker_id)
             
-            # Step 4: Fill form
-            print("\n📂 Step 4: Filling patient form...")
-            fill_field(page, ["input[name*='ramq']", "input[placeholder*='ABCD']"], user["ramq"])
-            fill_field(page, ["input[name*='seq']", "input[placeholder*='00']"], user["ramq_seq"])
-            fill_field(page, ["input[name*='firstName']", "input[name*='prenom']", "input[placeholder*='Prenom']"], user["first_name"])
+            # ═══════════════════════════════════════════════
+            # FILL PATIENT FORM
+            # ═══════════════════════════════════════════════
+            print("\n📂 Filling patient form...")
+            human_delay(2000, 3000)
+            
+            fill_field(page, ["input[name*='ramq']", "input[placeholder*='ABCD']", "input[placeholder*='RAMQ']"], user["ramq"])
+            fill_field(page, ["input[name*='seq']", "input[placeholder*='00']", "input[placeholder*='séquence']"], user["ramq_seq"])
+            fill_field(page, ["input[name*='firstName']", "input[name*='prenom']", "input[placeholder*='Prénom']", "input[placeholder*='Prenom']"], user["first_name"])
             fill_field(page, ["input[name*='lastName']", "input[name*='nom']", "input[placeholder*='Nom']"], user["last_name"])
+            
             human_delay(500, 1000)
             
-            cb = page.locator("input[type='checkbox']").first
-            if cb.count() > 0:
-                try: cb.check(); print("   ✅ Checked consent box")
-                except: pass
+            # Check consent
+            try:
+                for cb in page.locator("input[type='checkbox']").all():
+                    if cb.is_visible() and not cb.is_checked():
+                        cb.check()
+                        print("   ✅ Consent checked")
+                        break
+            except:
+                pass
             
-            click_button(page, ["Continuer", "Suivant", "Next"])
-            human_delay(2000, 4000)
-            log_page_state(page, "bonjoursante_form", worker_id)
-            take_screenshot(page, "04_form_filled", worker_id)
+            take_screenshot(page, "page2_filled", worker_id)
             
-            # Step 5: Search for slots
-            print(f"\n📂 Step 5: Searching {SEARCH_DAYS} days for slots...")
-            fill_field(page, ["input[name*='postal']", "input[placeholder*='code postal']"], user["postal_code"])
+            # ═══════════════════════════════════════════════
+            # CLICK CONTINUE
+            # ═══════════════════════════════════════════════
+            print("\n📂 Clicking Continue...")
+            cont_clicked = click_button(page, ["Continuer", "Suivant", "Next", "Valider", "Confirmer"])
+            
+            if not cont_clicked:
+                try:
+                    for btn in page.locator("button[type='submit']").all():
+                        if btn.is_visible():
+                            btn.click()
+                            cont_clicked = True
+                            print("   👆 Submit button")
+                            break
+                except:
+                    pass
+            
+            human_delay(3000, 5000)
+            log_page_state(page, "page3_search", worker_id)
+            take_screenshot(page, "page3_search", worker_id)
+            
+            # ═══════════════════════════════════════════════
+            # SEARCH FOR SLOTS
+            # ═══════════════════════════════════════════════
+            print(f"\n📂 Searching {SEARCH_DAYS} days...")
+            fill_field(page, ["input[name*='postal']", "input[placeholder*='code postal']", "input[placeholder*='postal']"], user["postal_code"])
             
             for d in range(SEARCH_DAYS):
-                if KillSwitch.is_active(): break
+                if KillSwitch.is_active():
+                    print("   🛑 Kill switch")
+                    break
+                
                 td = datetime.now() + timedelta(days=d)
                 ds = td.strftime("%Y-%m-%d")
                 print(f"\n   📅 Day {d+1}/{SEARCH_DAYS}: {ds}")
                 
-                di = page.locator("input[type='date']").first
-                if di.count() > 0:
-                    try: di.fill(ds); human_delay(500, 1000)
-                    except: pass
+                for di in page.locator("input[type='date']").all():
+                    if di.is_visible():
+                        try: di.fill(ds); break
+                        except: pass
                 
-                if click_button(page, ["Rechercher", "Search", "Chercher"]):
-                    human_delay(2000, 4000)
+                click_button(page, ["Rechercher", "Search", "Chercher", "Trouver", "Voir"])
+                human_delay(3000, 5000)
                 
-                take_screenshot(page, f"05_day{d+1}_{ds}", worker_id)
-                log_page_state(page, f"day_{d+1}", worker_id)
+                log_page_state(page, f"day{d+1}", worker_id)
+                take_screenshot(page, f"day{d+1}", worker_id)
                 
                 if check_page_for_slots(page):
-                    found.append({
-                        "clinic_name": clinic_name, 
-                        "platform": "bonjour_sante", 
-                        "date": td.strftime("%d/%m/%Y"), 
-                        "url": page.url, 
-                        "city": clinic.get("city", "")
-                    })
+                    found.append({"clinic_name": clinic_name, "platform": "bonjour_sante", "date": td.strftime("%d/%m/%Y"), "url": page.url, "city": clinic.get("city", "")})
                     KillSwitch.add_slot(found[-1])
+                    print(f"   🎯 SLOT FOUND!")
                     return found
+                else:
+                    print(f"   😴 No slots")
+                
+                if d < SEARCH_DAYS - 1:
+                    page.reload(wait_until="domcontentloaded")
+                    human_delay(3000, 5000)
                     
         except Exception as e:
-            print(f"   ❌ Bonjour Santé error: {e}")
+            print(f"   ❌ Error: {e}")
+            traceback.print_exc()
             take_screenshot(page, "99_error", worker_id)
         finally:
-            print(f"\n🟢 Worker {worker_id} done — found {len(found)} slots")
+            print(f"\n🟢 W{worker_id} done — {len(found)} slots")
             browser.close()
     return found
 
@@ -566,38 +567,37 @@ def search_all_platforms(user: dict) -> list:
     import requests
     all_slots = []
     user_coords = None
+    
     try:
         r = requests.post(GOOGLE_MAPS_PROXY, json={"endpoint": "geocode/json", "params": {"address": f"{user['postal_code']}, Quebec, Canada", "region": "ca"}}, timeout=15)
         loc = r.json()["results"][0]["geometry"]["location"]
         user_coords = (loc["lat"], loc["lng"])
-        print(f"📍 User location: {user_coords}")
+        print(f"📍 Location: {user_coords}")
     except Exception as e:
-        print(f"⚠️ Geocoding failed: {e}")
+        print(f"⚠️ Geocode failed: {e}")
     
     nearby = []
     for clinic in CLINICS_DATABASE:
         if user_coords:
             d = haversine(user_coords[0], user_coords[1], clinic["lat"], clinic["lng"])
-            if d <= RADIUS_KM: 
+            if d <= RADIUS_KM:
                 clinic["distance"] = round(d, 1)
                 nearby.append(clinic)
-        else: 
+        else:
             nearby.append(clinic)
     
     print(f"\n📍 {len(nearby)} clinics within {RADIUS_KM}km")
     for c in nearby:
-        print(f"   🏥 {c['name'][:50]} — {c.get('distance', '?')}km — {c['platform']}")
+        print(f"   🏥 {c['name'][:50]} — {c.get('distance', '?')}km")
     
-    print(f"\n🚀 Launching {MAX_WORKERS} browsers...")
+    print(f"\n🚀 {MAX_WORKERS} browsers...")
     
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = []
         profiles = BROWSER_PROFILES[:MAX_WORKERS]
         
-        # Worker 0: ClicSanté
         futures.append(executor.submit(scrape_clicsante, profiles[0], user, 0))
         
-        # Workers 1-4: Clinics
         idx = 0
         for i, profile in enumerate(profiles[1:], 1):
             if idx < len(nearby):
@@ -605,16 +605,12 @@ def search_all_platforms(user: dict) -> list:
                 idx += 1
                 if clinic["platform"] == "bonjour_sante":
                     futures.append(executor.submit(scrape_bonjoursante, profile, clinic, user, i))
-                elif clinic["platform"] == "telus_sante":
-                    futures.append(executor.submit(scrape_bonjoursante, profile, clinic, user, i))  # Using same scraper for now
         
         for future in as_completed(futures):
-            if KillSwitch.is_active(): 
-                print("\n🛑 Kill switch active — cancelling remaining futures")
+            if KillSwitch.is_active():
                 break
-            try: 
-                result = future.result(timeout=600)
-                all_slots.extend(result)
+            try:
+                all_slots.extend(future.result(timeout=600))
             except Exception as e:
                 print(f"   ⚠️ Future failed: {e}")
     
@@ -625,22 +621,18 @@ def search_all_platforms(user: dict) -> list:
 # ================================================================
 
 def main():
-    print("╔══════════════════════════════════════════════╗")
-    print("║   MYVITA UNIFIED SCRAPER — DEBUG MODE        ║")
-    print(f"║   {MAX_WORKERS} browsers | {SEARCH_DAYS}-day | Headless: {HEADLESS}   ║")
-    print(f"║   Screenshots: {DEBUG_DIR}")
-
-    print("╚══════════════════════════════════════════════╝")
+    print("╔══════════════════════════════════════╗")
+    print("║   MYVITA SCRAPER — DEEPLINK FLOW    ║")
+    print(f"║   {MAX_WORKERS} browsers | {SEARCH_DAYS}-day | Headless: {HEADLESS}  ║")
+    print("╚══════════════════════════════════════╝")
     
     user = get_user_data()
-    print(f"\n📋 User: {user['first_name']} {user['last_name']}")
-    print(f"📋 Postal Code: {user['postal_code']}")
-    print(f"📋 RAMQ: {user['ramq'][:4]}****")
+    print(f"\n📋 {user['first_name']} {user['last_name']} | {user['postal_code']}")
     
     request_id = get_or_create_request(user)
     
     if request_id and is_request_cancelled(request_id):
-        print("🛑 Request cancelled — stopping")
+        print("🛑 Cancelled")
         return
     
     KillSwitch.reset()
@@ -652,21 +644,18 @@ def main():
         save_results(request_id, slots, user)
     
     print(f"\n{'='*60}")
-    print(f"📊 FINAL RESULTS — {elapsed:.0f} seconds")
+    print(f"📊 RESULTS — {elapsed:.0f}s")
     print(f"{'='*60}")
     
     if slots:
-        print(f"\n🎉 FOUND {len(slots)} SLOTS:")
+        print(f"\n🎉 {len(slots)} SLOTS:")
         for i, s in enumerate(slots):
-            print(f"   {i+1}. {s.get('clinic_name', s.get('name', '?'))}")
-            print(f"      Platform: {s.get('platform', '?')}")
-            print(f"      URL: {s.get('url', '?')[:100]}")
+            print(f"   {i+1}. {s.get('clinic_name', s.get('name', '?'))} — {s.get('platform', '?')}")
     else:
-        print(f"\n😴 No slots found")
+        print(f"\n😴 No slots")
     
-    print(f"\n📸 Screenshots saved to: {DEBUG_DIR}")
-    print(f"📸 Files: {len(os.listdir(DEBUG_DIR))} files")
-    print("\n✅ Done")
+    print(f"\n📸 Screenshots: {DEBUG_DIR} ({len(os.listdir(DEBUG_DIR))} files)")
+    print("✅ Done")
 
 if __name__ == "__main__":
     main()
