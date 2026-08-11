@@ -156,70 +156,123 @@ def is_peak_hours() -> bool:
     hour = now.hour
     return 8 <= hour < 10
 
-def get_user_token():
+def get_user_token_for_user(user_id: str):
+    """Get FCM token for a specific user."""
     if db is None:
         return None
     try:
-        users_ref = db.collection('users').order_by('fcmTokenUpdated', direction='DESCENDING').limit(1)
-        for doc in users_ref.stream():
-            token = doc.to_dict().get('fcmToken')
-            if token:
-                return token
+        user_doc = db.collection('users').document(user_id).get()
+        if user_doc.exists:
+            return user_doc.to_dict().get('fcmToken')
     except:
         pass
     return None
 
 def save_to_firestore(postal_code: str, places_found: list):
+    """Save results to Firestore using USER-SPECIFIC document paths."""
     if db is None:
         print("⚠️ Firestore not available — skipping")
         return
+
     fsa = postal_code[:3].upper()
     zone = get_zone(postal_code)
     now = datetime.now()
+
+    # Find the FIRST pending request for this postal code and get its user_id
+    user_id = None
+    try:
+        requests_ref = db.collection("lab_requests") \
+            .where("postal_code", "==", postal_code) \
+            .where("status", "in", ["pending", "processing", "dispatched"]) \
+            .order_by("requested_at", direction="ASCENDING") \
+            .limit(1) \
+            .stream()
+        for req in requests_ref:
+            req_data = req.to_dict()
+            user_id = req_data.get('user_id', 'system')
+            # Update this specific request
+            req.reference.update({
+                "status": "completed",
+                "results": places_found,
+                "completed_at": now
+            })
+            print(f"   ✅ Request updated for user: {user_id}")
+            break
+    except Exception as e:
+        print(f"   ⚠️ Could not find matching request: {e}")
+
+    if not user_id:
+        user_id = 'system'
+        print(f"   ⚠️ No user_id found — using 'system'")
+
     data = {
-        "service": "blood-test", "postal_code": postal_code, "fsa": fsa,
-        "zone": zone, "status": "completed", "clinics": places_found,
-        "places_found": places_found, "slots_found": len(places_found) > 0,
+        "service": "blood-test",
+        "postal_code": postal_code,
+        "fsa": fsa,
+        "zone": zone,
+        "status": "completed",
+        "clinics": places_found,
+        "places_found": places_found,
+        "slots_found": len(places_found) > 0,
+        "user_id": user_id,
         "last_checked": now,
     }
+
+    # ★ Save with USER-SPECIFIC document IDs
     try:
-        db.collection("availability").document(postal_code).set(data)
-        db.collection("availability").document(fsa).set(data)
-        print(f"🔥 Saved to Firestore: availability/{postal_code} + availability/{fsa}")
-        requests_ref = db.collection("lab_requests").where("postal_code", "==", fsa).where("status", "in", ["pending", "processing", "dispatched"]).stream()
-        for req in requests_ref:
-            req.reference.update({"status": "completed", "results": places_found, "completed_at": now})
+        db.collection("availability").document(f"{postal_code}_{user_id}").set(data)
+        db.collection("availability").document(f"{fsa}_{user_id}").set(data)
+        print(f"🔥 Saved: availability/{postal_code}_{user_id} + availability/{fsa}_{user_id}")
     except Exception as e:
         print(f"❌ Firestore save failed: {e}")
 
-def send_notification(postal_code: str, places_found: list):
-    token = get_user_token()
+    return user_id
+
+def send_notification(postal_code: str, places_found: list, user_id: str):
+    """Send push notification to a SPECIFIC user."""
+    token = get_user_token_for_user(user_id)
     if not token:
-        print("⚠️ No FCM token found — skipping notification")
+        print(f"⚠️ No FCM token for user {user_id} — skipping notification")
         return
+
     place_names = ", ".join([p.get('name', 'Unknown')[:30] for p in places_found[:3]])
     first_url = places_found[0].get('url', '') if places_found else ''
     title = "🏥 Résultats ClicSanté disponibles!"
     body = f"{len(places_found)} lieux trouvés près de {postal_code}. Ouvre l'app pour voir!"
     data_payload = {
         "url": first_url if first_url else f"https://portal3.clicsante.ca/?postalCode={postal_code.replace(' ', '+')}&serviceId=227",
-        "postal_code": postal_code, "click_action": "OPEN_APPOINTMENTS", "place_count": str(len(places_found)),
+        "postal_code": postal_code,
+        "click_action": "OPEN_APPOINTMENTS",
+        "place_count": str(len(places_found)),
     }
     for i, p in enumerate(places_found[:5]):
         data_payload[f"place_{i}_name"] = p.get('name', 'Unknown')[:100]
         data_payload[f"place_{i}_url"] = p.get('url', '')[:500]
+
     try:
-        messaging.send(messaging.Message(notification=messaging.Notification(title=title, body=body), data=data_payload, token=token))
-        print(f"✅ 1 notification sent with {len(places_found)} places")
+        messaging.send(messaging.Message(
+            notification=messaging.Notification(title=title, body=body),
+            data=data_payload,
+            token=token
+        ))
+        print(f"✅ Notification sent to user {user_id} with {len(places_found)} places")
     except Exception as e:
         print(f"❌ Notification failed: {e}")
 
-def add_to_queue(postal_code: str):
-    if db is None: return
+def add_to_queue(postal_code: str, user_id: str):
+    """Add request to queue with user-specific ID."""
+    if db is None:
+        return
     try:
-        db.collection("lab_requests_queue").document(postal_code).set({"postal_code": postal_code, "status": "queued", "queued_at": datetime.now()})
-    except: pass
-
+        db.collection("lab_requests_queue").document(f"{postal_code}_{user_id}").set({
+            "postal_code": postal_code,
+            "user_id": user_id,
+            "status": "queued",
+            "queued_at": datetime.now()
+        })
+        print(f"   📝 Queued: lab_requests_queue/{postal_code}_{user_id}")
+    except Exception as e:
+        print(f"   ⚠️ Queue add failed: {e}")
 
 def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
     profile_name = profile.get("name", f"User-{worker_id}")
@@ -251,28 +304,37 @@ def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
                 page.locator("text=Sans frais").first.click(timeout=8000)
                 print(f"   [{profile_name}] ✅ Sans frais")
             except:
-                try: page.locator("text=No fees").first.click(timeout=5000)
-                except: pass
+                try:
+                    page.locator("text=No fees").first.click(timeout=5000)
+                except:
+                    pass
             time.sleep(random.uniform(1, 2))
             try:
                 inputs = page.locator("input[type='text']").all()
                 if inputs:
-                    inputs[0].click(); time.sleep(0.3)
-                    inputs[0].fill(""); time.sleep(0.2)
+                    inputs[0].click()
+                    time.sleep(0.3)
+                    inputs[0].fill("")
+                    time.sleep(0.2)
                     inputs[0].type(postal_code, delay=random.randint(100, 200))
                     print(f"   [{profile_name}] ✅ Postal: {postal_code}")
-            except: pass
-            time.sleep(random.uniform(1.5, 3))
-            try: page.get_by_role("button", name="Search").first.click(timeout=8000)
             except:
-                try: page.get_by_role("button", name="Rechercher").first.click(timeout=5000)
-                except: page.keyboard.press("Enter")
+                pass
+            time.sleep(random.uniform(1.5, 3))
+            try:
+                page.get_by_role("button", name="Search").first.click(timeout=8000)
+            except:
+                try:
+                    page.get_by_role("button", name="Rechercher").first.click(timeout=5000)
+                except:
+                    page.keyboard.press("Enter")
             time.sleep(random.uniform(2, 4))
-            try: page.wait_for_selector("text=km", timeout=30000)
-            except: pass
+            try:
+                page.wait_for_selector("text=km", timeout=30000)
+            except:
+                pass
             time.sleep(random.uniform(3, 6))
 
-            # ★ EXTRACT: Find booking links and get names ★
             book_links = page.locator("a[href*='take-appt']").all()
             print(f"   [{profile_name}] 📎 {len(book_links)} booking links")
 
@@ -280,11 +342,12 @@ def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
                 try:
                     href = link.get_attribute("href") or ""
                     clinic_id_match = re.search(r'/(\d+)/take-appt', href)
-                    if not clinic_id_match: continue
+                    if not clinic_id_match:
+                        continue
                     clinic_id = clinic_id_match.group(1)
                     url = f"https://clients3.clicsante.ca/{clinic_id}/take-appt"
 
-                    # Method 1: Nearby heading
+                    # Try multiple methods to get the clinic name
                     name = link.evaluate("""el => {
                         let parent = el.closest('li, article, div[class*="result"], div[class*="card"], div[class*="item"]');
                         if (!parent) parent = el.closest('div');
@@ -297,7 +360,6 @@ def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
                         return '';
                     }""")
 
-                    # Method 2: Previous sibling
                     if not name:
                         name = link.evaluate("""el => {
                             let prev = el.previousElementSibling;
@@ -310,7 +372,6 @@ def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
                             return '';
                         }""")
 
-                    # Method 3: Row text first line
                     if not name:
                         row_text = link.evaluate("""el => {
                             let row = el.closest('li, tr, [class*="row"], [class*="item"], [class*="result"]');
@@ -321,9 +382,9 @@ def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
                                 line = line.strip()
                                 if line and line != "Book appt." and len(line) > 10 and len(line) < 200:
                                     if "km" not in line.lower():
-                                        name = line; break
+                                        name = line
+                                        break
 
-                    # Method 4: Walk up parents
                     if not name:
                         name = link.evaluate("""el => {
                             let current = el;
@@ -354,7 +415,8 @@ def run_human_browser(profile: dict, postal_code: str, worker_id: int) -> list:
 
                     if len(places) >= 5:
                         break
-                except: pass
+                except:
+                    pass
 
             print(f"   [{profile_name}] ✅ Found {len(places)} places")
         except Exception as e:
@@ -368,14 +430,34 @@ def check_availability():
     postal_code = get_postal_code()
     zone = get_zone(postal_code)
 
+    # Find the pending request to get the user_id
+    user_id = None
+    if db:
+        try:
+            requests_ref = db.collection("lab_requests") \
+                .where("postal_code", "==", postal_code) \
+                .where("status", "in", ["pending", "processing", "dispatched"]) \
+                .order_by("requested_at", direction="ASCENDING") \
+                .limit(1) \
+                .stream()
+            for req in requests_ref:
+                user_id = req.to_dict().get('user_id', 'system')
+                break
+        except:
+            pass
+
+    if not user_id:
+        print(f"\n⚠️ No pending requests for {postal_code} — nothing to do")
+        return True
+
     if is_peak_hours():
         print(f"\n{'='*60}")
-        print(f"⏰ PEAK HOURS (8am-10am) — Request queued")
-        add_to_queue(postal_code)
+        print(f"⏰ PEAK HOURS (8am-10am) — Request queued for user {user_id}")
+        add_to_queue(postal_code, user_id)
         return True
 
     print(f"\n{'='*60}")
-    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M')}] 📍 {postal_code} | {zone}")
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M')}] 📍 {postal_code} | {zone} | User: {user_id}")
     print(f"🧑 5 human-like browsers...")
 
     all_places = []
@@ -390,7 +472,8 @@ def check_availability():
                     if p['name'] not in seen_names:
                         seen_names.add(p['name'])
                         all_places.append(p)
-            except: pass
+            except:
+                pass
 
     all_places = all_places[:5]
 
@@ -400,9 +483,10 @@ def check_availability():
         print(f"\n   {i+1}. 📍 {p.get('name')}")
         print(f"      🔗 {p.get('url')}")
 
-    save_to_firestore(postal_code, all_places)
-    send_notification(postal_code, all_places)
-    print(f"\n🎉 Done! {len(all_places)} choices saved + 1 notification sent.")
+    # Save with user-specific paths
+    saved_user_id = save_to_firestore(postal_code, all_places)
+    send_notification(postal_code, all_places, saved_user_id or user_id)
+    print(f"\n🎉 Done! {len(all_places)} choices saved + notification sent to user {saved_user_id or user_id}.")
     return True
 
 
