@@ -1,13 +1,9 @@
 name: Clic Santé Slot Checker
 
 on:
+  schedule:
+    - cron: '*/5 * * * *'
   workflow_dispatch:
-    inputs:
-      postal_code:
-        description: 'Postal code to search'
-        required: true
-        type: string
-        default: 'H1Y3H1'
 
 jobs:
   check:
@@ -28,6 +24,5 @@ jobs:
       
       - name: Run Bot
         env:
-          POSTAL_CODE: ${{ github.event.inputs.postal_code }}
           FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
         run: python bot.py
