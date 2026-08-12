@@ -1,15 +1,15 @@
 {
-  "last_update": "2026-08-12T08:20:11.267685",
+  "last_update": "2026-08-12T10:09:31.306647",
   "source": "MSSS / Gouvernement du Québec",
   "source_url": "https://www.msss.gouv.qc.ca/professionnels/statistiques/documents/urgences/Releve_horaire_urgences_7jours_nbpers.csv",
-  "gov_data_timestamp": "2026-08-12T03:45:00",
+  "gov_data_timestamp": "2026-08-12T05:45:00",
   "data_freshness": "live",
   "global_stats": {
-    "total_patients": 3230,
-    "total_waiting": 1117,
-    "avg_occupancy": 85.0,
-    "total_over_24h": 465,
-    "total_over_48h": 163
+    "total_patients": 3092,
+    "total_waiting": 938,
+    "avg_occupancy": 87.0,
+    "total_over_24h": 476,
+    "total_over_48h": 168
   },
   "hospitals": [
     {
@@ -19,8 +19,8 @@
       "patients_on_stretcher": 4,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 6,
-      "patients_waiting": 1,
+      "total_patients": 4,
+      "patients_waiting": 0,
       "occupancy_rate": 44.4
     },
     {
@@ -30,8 +30,8 @@
       "patients_on_stretcher": 5,
       "patients_over_24h": 2,
       "patients_over_48h": 0,
-      "total_patients": 5,
-      "patients_waiting": 0,
+      "total_patients": 7,
+      "patients_waiting": 2,
       "occupancy_rate": 71.4
     },
     {
@@ -52,7 +52,7 @@
       "patients_on_stretcher": 3,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 4,
+      "total_patients": 3,
       "patients_waiting": 1,
       "occupancy_rate": 42.9
     },
@@ -60,12 +60,12 @@
       "name": "HÔPITAL DE NOTRE-DAME-DU-LAC",
       "region": "1",
       "total_stretchers": 5,
-      "patients_on_stretcher": 1,
+      "patients_on_stretcher": 2,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 5,
-      "patients_waiting": 0,
-      "occupancy_rate": 20.0
+      "total_patients": 6,
+      "patients_waiting": 1,
+      "occupancy_rate": 40.0
     },
     {
       "name": "HÔPITAL D'AMQUI",
@@ -85,8 +85,8 @@
       "patients_on_stretcher": 9,
       "patients_over_24h": 2,
       "patients_over_48h": 0,
-      "total_patients": 19,
-      "patients_waiting": 9,
+      "total_patients": 18,
+      "patients_waiting": 6,
       "occupancy_rate": 75.0
     },
     {
@@ -107,31 +107,31 @@
       "patients_on_stretcher": 34,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 48,
-      "patients_waiting": 10,
+      "total_patients": 44,
+      "patients_waiting": 7,
       "occupancy_rate": 82.9
     },
     {
       "name": "HÔPITAL DE DOLBEAU-MISTASSINI",
       "region": "2",
       "total_stretchers": 10,
-      "patients_on_stretcher": 7,
+      "patients_on_stretcher": 6,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 12,
-      "patients_waiting": 3,
-      "occupancy_rate": 70.0
+      "total_patients": 10,
+      "patients_waiting": 2,
+      "occupancy_rate": 60.0
     },
     {
       "name": "HÔPITAL D'ALMA",
       "region": "2",
       "total_stretchers": 17,
-      "patients_on_stretcher": 9,
+      "patients_on_stretcher": 8,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 24,
-      "patients_waiting": 10,
-      "occupancy_rate": 52.9
+      "total_patients": 11,
+      "patients_waiting": 1,
+      "occupancy_rate": 47.1
     },
     {
       "name": "HÔPITAL DE LA BAIE",
@@ -140,75 +140,75 @@
       "patients_on_stretcher": 2,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 3,
-      "patients_waiting": 0,
+      "total_patients": 4,
+      "patients_waiting": 1,
       "occupancy_rate": 28.6
     },
     {
       "name": "HÔPITAL ET CENTRE DE RÉADAPTATION DE JONQUIÈRE",
       "region": "2",
       "total_stretchers": 16,
-      "patients_on_stretcher": 11,
+      "patients_on_stretcher": 12,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
       "total_patients": 19,
-      "patients_waiting": 7,
-      "occupancy_rate": 68.8
+      "patients_waiting": 5,
+      "occupancy_rate": 75.0
     },
     {
       "name": "HÔPITAL ET CENTRE D'HÉBERGEMENT DE ROBERVAL",
       "region": "2",
       "total_stretchers": 13,
-      "patients_on_stretcher": 10,
+      "patients_on_stretcher": 13,
       "patients_over_24h": 1,
       "patients_over_48h": 0,
-      "total_patients": 11,
+      "total_patients": 13,
       "patients_waiting": 1,
-      "occupancy_rate": 76.9
+      "occupancy_rate": 100.0
     },
     {
       "name": "HÔPITAL DU SAINT-SACREMENT",
       "region": "3",
       "total_stretchers": 22,
-      "patients_on_stretcher": 17,
+      "patients_on_stretcher": 18,
       "patients_over_24h": 1,
       "patients_over_48h": 0,
-      "total_patients": 29,
-      "patients_waiting": 10,
-      "occupancy_rate": 77.3
+      "total_patients": 25,
+      "patients_waiting": 6,
+      "occupancy_rate": 81.8
     },
     {
       "name": "L'HÔTEL-DIEU DE QUÉBEC",
       "region": "3",
       "total_stretchers": 15,
-      "patients_on_stretcher": 17,
+      "patients_on_stretcher": 16,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 20,
-      "patients_waiting": 3,
-      "occupancy_rate": 113.3
+      "total_patients": 21,
+      "patients_waiting": 4,
+      "occupancy_rate": 106.7
     },
     {
       "name": "CENTRE HOSPITALIER DE L'UNIVERSITÉ LAVAL",
       "region": "3",
       "total_stretchers": 43,
-      "patients_on_stretcher": 45,
+      "patients_on_stretcher": 42,
       "patients_over_24h": 7,
       "patients_over_48h": 0,
-      "total_patients": 72,
-      "patients_waiting": 21,
-      "occupancy_rate": 104.7
+      "total_patients": 65,
+      "patients_waiting": 15,
+      "occupancy_rate": 97.7
     },
     {
       "name": "HÔPITAL SAINT-FRANÇOIS D'ASSISE",
       "region": "3",
       "total_stretchers": 34,
-      "patients_on_stretcher": 33,
+      "patients_on_stretcher": 35,
       "patients_over_24h": 4,
       "patients_over_48h": 0,
       "total_patients": 42,
-      "patients_waiting": 7,
-      "occupancy_rate": 97.1
+      "patients_waiting": 6,
+      "occupancy_rate": 102.9
     },
     {
       "name": "CENTRE MULTISERVICES DE SANTÉ ET DE SERVICES SOCIAUX CHAUVEAU",
@@ -225,12 +225,12 @@
       "name": "CENTRE MULTISERVICES DE SANTÉ ET DE SERVICES SOCIAUX DE SAINTE-ANNE-DE-BEAUPRÉ",
       "region": "3",
       "total_stretchers": 4,
-      "patients_on_stretcher": 1,
+      "patients_on_stretcher": 2,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
       "total_patients": 2,
       "patients_waiting": 0,
-      "occupancy_rate": 25.0
+      "occupancy_rate": 50.0
     },
     {
       "name": "HÔPITAL ET CLSC DE LA MALBAIE",
@@ -247,12 +247,12 @@
       "name": "INSTITUT UNIVERSITAIRE DE CARDIOLOGIE ET DE PNEUMOLOGIE DE QUÉBEC",
       "region": "3",
       "total_stretchers": 20,
-      "patients_on_stretcher": 17,
+      "patients_on_stretcher": 19,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 20,
-      "patients_waiting": 2,
-      "occupancy_rate": 85.0
+      "total_patients": 21,
+      "patients_waiting": 0,
+      "occupancy_rate": 95.0
     },
     {
       "name": "HÔPITAL DE L'ENFANT-JÉSUS",
@@ -262,7 +262,7 @@
       "patients_over_24h": 6,
       "patients_over_48h": 2,
       "total_patients": 65,
-      "patients_waiting": 4,
+      "patients_waiting": 3,
       "occupancy_rate": 112.5
     },
     {
@@ -270,7 +270,7 @@
       "region": "3",
       "total_stretchers": 8,
       "patients_on_stretcher": 6,
-      "patients_over_24h": 1,
+      "patients_over_24h": 2,
       "patients_over_48h": 0,
       "total_patients": 6,
       "patients_waiting": 0,
@@ -280,12 +280,12 @@
       "name": "CENTRE MULTISERVICES DE SANTÉ ET DE SERVICES SOCIAUX DE SAINT-RAYMOND",
       "region": "3",
       "total_stretchers": 7,
-      "patients_on_stretcher": 6,
+      "patients_on_stretcher": 5,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 9,
+      "total_patients": 7,
       "patients_waiting": 2,
-      "occupancy_rate": 85.7
+      "occupancy_rate": 71.4
     },
     {
       "name": "CENTRE MULTISERVICES DE SANTÉ ET DE SERVICES SOCIAUX DE SAINT-MARC-DES-CARRIÈRES",
@@ -294,8 +294,8 @@
       "patients_on_stretcher": 0,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 1,
-      "patients_waiting": 1,
+      "total_patients": 0,
+      "patients_waiting": 0,
       "occupancy_rate": 0.0
     },
     {
@@ -390,23 +390,23 @@
       "name": "CHUS - HÔPITAL FLEURIMONT",
       "region": "5",
       "total_stretchers": 36,
-      "patients_on_stretcher": 24,
-      "patients_over_24h": 2,
+      "patients_on_stretcher": 21,
+      "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 48,
-      "patients_waiting": 20,
-      "occupancy_rate": 66.7
+      "total_patients": 45,
+      "patients_waiting": 19,
+      "occupancy_rate": 58.3
     },
     {
       "name": "CHUS - HÔTEL-DIEU DE SHERBROOKE",
       "region": "5",
       "total_stretchers": 44,
-      "patients_on_stretcher": 57,
-      "patients_over_24h": 19,
+      "patients_on_stretcher": 61,
+      "patients_over_24h": 20,
       "patients_over_48h": 9,
-      "total_patients": 73,
-      "patients_waiting": 19,
-      "occupancy_rate": 129.5
+      "total_patients": 75,
+      "patients_waiting": 17,
+      "occupancy_rate": 138.6
     },
     {
       "name": "CENTRE MULTISERVICES DE SANTÉ ET DE SERVICES SOCIAUX DE MEMPHRÉMAGOG",
@@ -415,8 +415,8 @@
       "patients_on_stretcher": 5,
       "patients_over_24h": 2,
       "patients_over_48h": 1,
-      "total_patients": 9,
-      "patients_waiting": 2,
+      "total_patients": 8,
+      "patients_waiting": 0,
       "occupancy_rate": 45.5
     },
     {
@@ -434,23 +434,23 @@
       "name": "HÔPITAL DE GRANBY",
       "region": "5",
       "total_stretchers": 20,
-      "patients_on_stretcher": 20,
+      "patients_on_stretcher": 23,
       "patients_over_24h": 3,
       "patients_over_48h": 0,
-      "total_patients": 43,
-      "patients_waiting": 18,
-      "occupancy_rate": 100.0
+      "total_patients": 41,
+      "patients_waiting": 17,
+      "occupancy_rate": 115.0
     },
     {
       "name": "HÔPITAL BROME-MISSISQUOI-PERKINS",
       "region": "5",
       "total_stretchers": 16,
-      "patients_on_stretcher": 23,
-      "patients_over_24h": 4,
+      "patients_on_stretcher": 24,
+      "patients_over_24h": 5,
       "patients_over_48h": 1,
       "total_patients": 35,
-      "patients_waiting": 17,
-      "occupancy_rate": 143.8
+      "patients_waiting": 16,
+      "occupancy_rate": 150.0
     },
     {
       "name": "CENTRE MULTISERVICES DE SANTÉ ET DE SERVICES SOCIAUX DES SOURCES",
@@ -459,8 +459,8 @@
       "patients_on_stretcher": 0,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 0,
-      "patients_waiting": 0,
+      "total_patients": 1,
+      "patients_waiting": 1,
       "occupancy_rate": 0.0
     },
     {
@@ -490,7 +490,7 @@
       "region": "6",
       "total_stretchers": 54,
       "patients_on_stretcher": 65,
-      "patients_over_24h": 14,
+      "patients_over_24h": 15,
       "patients_over_48h": 1,
       "total_patients": 109,
       "patients_waiting": 47,
@@ -500,12 +500,12 @@
       "name": "HÔPITAL DE VERDUN",
       "region": "6",
       "total_stretchers": 26,
-      "patients_on_stretcher": 28,
-      "patients_over_24h": 0,
+      "patients_on_stretcher": 32,
+      "patients_over_24h": 1,
       "patients_over_48h": 0,
-      "total_patients": 43,
-      "patients_waiting": 9,
-      "occupancy_rate": 107.7
+      "total_patients": 40,
+      "patients_waiting": 6,
+      "occupancy_rate": 123.1
     },
     {
       "name": "CHU SAINTE-JUSTINE",
@@ -514,64 +514,64 @@
       "patients_on_stretcher": 9,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 19,
-      "patients_waiting": 6,
+      "total_patients": 16,
+      "patients_waiting": 2,
       "occupancy_rate": 56.2
     },
     {
       "name": "L'HÔPITAL DE MONTRÉAL POUR ENFANTS",
       "region": "6",
       "total_stretchers": 12,
-      "patients_on_stretcher": 12,
+      "patients_on_stretcher": 9,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 21,
+      "total_patients": 18,
       "patients_waiting": 2,
-      "occupancy_rate": 100.0
+      "occupancy_rate": 75.0
     },
     {
       "name": "HÔPITAL ROYAL VICTORIA",
       "region": "6",
       "total_stretchers": 33,
-      "patients_on_stretcher": 64,
+      "patients_on_stretcher": 66,
       "patients_over_24h": 23,
       "patients_over_48h": 16,
-      "total_patients": 98,
-      "patients_waiting": 30,
-      "occupancy_rate": 193.9
+      "total_patients": 97,
+      "patients_waiting": 31,
+      "occupancy_rate": 200.0
     },
     {
       "name": "HÔPITAL DE LASALLE",
       "region": "6",
       "total_stretchers": 15,
       "patients_on_stretcher": 18,
-      "patients_over_24h": 8,
+      "patients_over_24h": 9,
       "patients_over_48h": 7,
-      "total_patients": 38,
-      "patients_waiting": 14,
+      "total_patients": 35,
+      "patients_waiting": 13,
       "occupancy_rate": 120.0
     },
     {
       "name": "HÔPITAL GÉNÉRAL DU LAKESHORE",
       "region": "6",
       "total_stretchers": 31,
-      "patients_on_stretcher": 49,
+      "patients_on_stretcher": 51,
       "patients_over_24h": 12,
       "patients_over_48h": 1,
-      "total_patients": 63,
-      "patients_waiting": 14,
-      "occupancy_rate": 158.1
+      "total_patients": 61,
+      "patients_waiting": 10,
+      "occupancy_rate": 164.5
     },
     {
       "name": "HÔPITAL DE LACHINE",
       "region": "6",
       "total_stretchers": 14,
-      "patients_on_stretcher": 21,
+      "patients_on_stretcher": 23,
       "patients_over_24h": 8,
       "patients_over_48h": 2,
-      "total_patients": 28,
-      "patients_waiting": 6,
-      "occupancy_rate": 150.0
+      "total_patients": 26,
+      "patients_waiting": 2,
+      "occupancy_rate": 164.3
     },
     {
       "name": "HÔPITAL FLEURY",
@@ -633,10 +633,10 @@
       "region": "6",
       "total_stretchers": 51,
       "patients_on_stretcher": 60,
-      "patients_over_24h": 10,
+      "patients_over_24h": 9,
       "patients_over_48h": 1,
-      "total_patients": 121,
-      "patients_waiting": 52,
+      "total_patients": 123,
+      "patients_waiting": 54,
       "occupancy_rate": 117.6
     },
     {
@@ -644,33 +644,33 @@
       "region": "6",
       "total_stretchers": 35,
       "patients_on_stretcher": 45,
-      "patients_over_24h": 22,
+      "patients_over_24h": 21,
       "patients_over_48h": 18,
-      "total_patients": 60,
-      "patients_waiting": 12,
+      "total_patients": 59,
+      "patients_waiting": 9,
       "occupancy_rate": 128.6
     },
     {
       "name": "INSTITUT DE CARDIOLOGIE DE MONTRÉAL",
       "region": "6",
       "total_stretchers": 22,
-      "patients_on_stretcher": 12,
+      "patients_on_stretcher": 14,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 16,
-      "patients_waiting": 2,
-      "occupancy_rate": 54.5
+      "total_patients": 14,
+      "patients_waiting": 0,
+      "occupancy_rate": 63.6
     },
     {
       "name": "HÔPITAL GÉNÉRAL DE MONTRÉAL",
       "region": "6",
       "total_stretchers": 31,
-      "patients_on_stretcher": 46,
+      "patients_on_stretcher": 45,
       "patients_over_24h": 18,
       "patients_over_48h": 14,
-      "total_patients": 61,
-      "patients_waiting": 4,
-      "occupancy_rate": 148.4
+      "total_patients": 54,
+      "patients_waiting": 1,
+      "occupancy_rate": 145.2
     },
     {
       "name": "CENTRE HOSPITALIER DE ST. MARY",
@@ -679,20 +679,20 @@
       "patients_on_stretcher": 25,
       "patients_over_24h": 2,
       "patients_over_48h": 0,
-      "total_patients": 37,
-      "patients_waiting": 7,
+      "total_patients": 35,
+      "patients_waiting": 6,
       "occupancy_rate": 113.6
     },
     {
       "name": "HÔPITAL GÉNÉRAL JUIF",
       "region": "6",
       "total_stretchers": 53,
-      "patients_on_stretcher": 77,
-      "patients_over_24h": 28,
+      "patients_on_stretcher": 82,
+      "patients_over_24h": 29,
       "patients_over_48h": 14,
-      "total_patients": 93,
-      "patients_waiting": 15,
-      "occupancy_rate": 145.3
+      "total_patients": 97,
+      "patients_waiting": 8,
+      "occupancy_rate": 154.7
     },
     {
       "name": "HÔPITAL EN SANTÉ MENTALE ALBERT-PRÉVOST",
@@ -731,12 +731,12 @@
       "name": "HÔPITAL DE GATINEAU",
       "region": "7",
       "total_stretchers": 28,
-      "patients_on_stretcher": 49,
-      "patients_over_24h": 18,
+      "patients_on_stretcher": 52,
+      "patients_over_24h": 19,
       "patients_over_48h": 9,
-      "total_patients": 83,
-      "patients_waiting": 46,
-      "occupancy_rate": 175.0
+      "total_patients": 81,
+      "patients_waiting": 41,
+      "occupancy_rate": 185.7
     },
     {
       "name": "HÔPITAL DE HULL",
@@ -745,8 +745,8 @@
       "patients_on_stretcher": 29,
       "patients_over_24h": 2,
       "patients_over_48h": 0,
-      "total_patients": 63,
-      "patients_waiting": 37,
+      "total_patients": 60,
+      "patients_waiting": 30,
       "occupancy_rate": 116.0
     },
     {
@@ -756,8 +756,8 @@
       "patients_on_stretcher": 11,
       "patients_over_24h": 7,
       "patients_over_48h": 2,
-      "total_patients": 18,
-      "patients_waiting": 8,
+      "total_patients": 15,
+      "patients_waiting": 5,
       "occupancy_rate": 183.3
     },
     {
@@ -767,8 +767,8 @@
       "patients_on_stretcher": 5,
       "patients_over_24h": 1,
       "patients_over_48h": 0,
-      "total_patients": 14,
-      "patients_waiting": 6,
+      "total_patients": 10,
+      "patients_waiting": 3,
       "occupancy_rate": 125.0
     },
     {
@@ -778,8 +778,8 @@
       "patients_on_stretcher": 14,
       "patients_over_24h": 9,
       "patients_over_48h": 3,
-      "total_patients": 21,
-      "patients_waiting": 7,
+      "total_patients": 20,
+      "patients_waiting": 5,
       "occupancy_rate": 116.7
     },
     {
@@ -797,12 +797,12 @@
       "name": "HÔPITAL DE VAL-D'OR",
       "region": "8",
       "total_stretchers": 11,
-      "patients_on_stretcher": 9,
+      "patients_on_stretcher": 11,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 37,
-      "patients_waiting": 22,
-      "occupancy_rate": 81.8
+      "total_patients": 41,
+      "patients_waiting": 23,
+      "occupancy_rate": 100.0
     },
     {
       "name": "HÔPITAL D'AMOS",
@@ -811,8 +811,8 @@
       "patients_on_stretcher": 9,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 11,
-      "patients_waiting": 1,
+      "total_patients": 14,
+      "patients_waiting": 2,
       "occupancy_rate": 128.6
     },
     {
@@ -822,8 +822,8 @@
       "patients_on_stretcher": 5,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 22,
-      "patients_waiting": 14,
+      "total_patients": 12,
+      "patients_waiting": 6,
       "occupancy_rate": 62.5
     },
     {
@@ -844,7 +844,7 @@
       "patients_on_stretcher": 0,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 1,
+      "total_patients": 0,
       "patients_waiting": 0,
       "occupancy_rate": 0.0
     },
@@ -855,7 +855,7 @@
       "patients_on_stretcher": 4,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 15,
+      "total_patients": 6,
       "patients_waiting": 1,
       "occupancy_rate": 80.0
     },
@@ -885,12 +885,12 @@
       "name": "CLSC ET HÔPITAL LE ROYER",
       "region": "9",
       "total_stretchers": 10,
-      "patients_on_stretcher": 20,
+      "patients_on_stretcher": 21,
       "patients_over_24h": 10,
       "patients_over_48h": 2,
-      "total_patients": 32,
-      "patients_waiting": 11,
-      "occupancy_rate": 200.0
+      "total_patients": 29,
+      "patients_waiting": 6,
+      "occupancy_rate": 210.0
     },
     {
       "name": "HÔPITAL ET CLSC DE SEPT-ÎLES",
@@ -899,8 +899,8 @@
       "patients_on_stretcher": 19,
       "patients_over_24h": 7,
       "patients_over_48h": 5,
-      "total_patients": 26,
-      "patients_waiting": 9,
+      "total_patients": 28,
+      "patients_waiting": 6,
       "occupancy_rate": 190.0
     },
     {
@@ -954,7 +954,7 @@
       "patients_on_stretcher": 7,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 8,
+      "total_patients": 7,
       "patients_waiting": 0,
       "occupancy_rate": 116.7
     },
@@ -965,8 +965,8 @@
       "patients_on_stretcher": 0,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 2,
-      "patients_waiting": 2,
+      "total_patients": 0,
+      "patients_waiting": 0,
       "occupancy_rate": 0.0
     },
     {
@@ -1006,12 +1006,12 @@
       "name": "HÔPITAL DE GASPÉ",
       "region": "11",
       "total_stretchers": 6,
-      "patients_on_stretcher": 3,
+      "patients_on_stretcher": 4,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 4,
-      "patients_waiting": 0,
-      "occupancy_rate": 50.0
+      "total_patients": 5,
+      "patients_waiting": 1,
+      "occupancy_rate": 66.7
     },
     {
       "name": "CLSC ET CENTRE DE SERVICES AMBULATOIRES DE PASPÉBIAC",
@@ -1019,7 +1019,7 @@
       "total_stretchers": 4,
       "patients_on_stretcher": 1,
       "patients_over_24h": 1,
-      "patients_over_48h": 0,
+      "patients_over_48h": 1,
       "total_patients": 1,
       "patients_waiting": 0,
       "occupancy_rate": 25.0
@@ -1039,12 +1039,12 @@
       "name": "HÔPITAL DE CHANDLER",
       "region": "11",
       "total_stretchers": 8,
-      "patients_on_stretcher": 7,
+      "patients_on_stretcher": 9,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 11,
-      "patients_waiting": 1,
-      "occupancy_rate": 87.5
+      "total_patients": 10,
+      "patients_waiting": 0,
+      "occupancy_rate": 112.5
     },
     {
       "name": "HÔPITAL DE L'ARCHIPEL",
@@ -1053,8 +1053,8 @@
       "patients_on_stretcher": 9,
       "patients_over_24h": 1,
       "patients_over_48h": 0,
-      "total_patients": 9,
-      "patients_waiting": 0,
+      "total_patients": 11,
+      "patients_waiting": 2,
       "occupancy_rate": 150.0
     },
     {
@@ -1064,8 +1064,8 @@
       "patients_on_stretcher": 8,
       "patients_over_24h": 1,
       "patients_over_48h": 0,
-      "total_patients": 8,
-      "patients_waiting": 0,
+      "total_patients": 9,
+      "patients_waiting": 1,
       "occupancy_rate": 80.0
     },
     {
@@ -1083,12 +1083,12 @@
       "name": "HÔPITAL ET CLSC DE SAINTE-ANNE-DES-MONTS",
       "region": "11",
       "total_stretchers": 6,
-      "patients_on_stretcher": 3,
+      "patients_on_stretcher": 4,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 3,
-      "patients_waiting": 1,
-      "occupancy_rate": 50.0
+      "total_patients": 4,
+      "patients_waiting": 0,
+      "occupancy_rate": 66.7
     },
     {
       "name": "HÔTEL-DIEU DE LÉVIS",
@@ -1096,9 +1096,9 @@
       "total_stretchers": 43,
       "patients_on_stretcher": 71,
       "patients_over_24h": 19,
-      "patients_over_48h": 12,
-      "total_patients": 103,
-      "patients_waiting": 28,
+      "patients_over_48h": 13,
+      "total_patients": 98,
+      "patients_waiting": 25,
       "occupancy_rate": 165.1
     },
     {
@@ -1108,8 +1108,8 @@
       "patients_on_stretcher": 22,
       "patients_over_24h": 9,
       "patients_over_48h": 2,
-      "total_patients": 26,
-      "patients_waiting": 3,
+      "total_patients": 24,
+      "patients_waiting": 1,
       "occupancy_rate": 104.8
     },
     {
@@ -1138,45 +1138,45 @@
       "name": "HÔPITAL DE THETFORD",
       "region": "12",
       "total_stretchers": 15,
-      "patients_on_stretcher": 13,
+      "patients_on_stretcher": 14,
       "patients_over_24h": 4,
       "patients_over_48h": 0,
-      "total_patients": 27,
-      "patients_waiting": 11,
-      "occupancy_rate": 86.7
+      "total_patients": 26,
+      "patients_waiting": 8,
+      "occupancy_rate": 93.3
     },
     {
       "name": "HÔPITAL DE LA CITÉ-DE-LA-SANTÉ",
       "region": "13",
       "total_stretchers": 49,
       "patients_on_stretcher": 69,
-      "patients_over_24h": 5,
+      "patients_over_24h": 6,
       "patients_over_48h": 0,
-      "total_patients": 116,
-      "patients_waiting": 43,
+      "total_patients": 108,
+      "patients_waiting": 33,
       "occupancy_rate": 140.8
     },
     {
       "name": "HÔPITAL PIERRE-LE GARDEUR",
       "region": "14",
       "total_stretchers": 47,
-      "patients_on_stretcher": 55,
+      "patients_on_stretcher": 57,
       "patients_over_24h": 5,
       "patients_over_48h": 0,
-      "total_patients": 108,
-      "patients_waiting": 59,
-      "occupancy_rate": 117.0
+      "total_patients": 111,
+      "patients_waiting": 55,
+      "occupancy_rate": 121.3
     },
     {
       "name": "HÔPITAL DE LANAUDIÈRE ET CENTRE D'HÉBERGEMENT PARPHILIA-FERLAND",
       "region": "14",
       "total_stretchers": 42,
-      "patients_on_stretcher": 43,
-      "patients_over_24h": 5,
+      "patients_on_stretcher": 42,
+      "patients_over_24h": 4,
       "patients_over_48h": 0,
-      "total_patients": 79,
-      "patients_waiting": 36,
-      "occupancy_rate": 102.4
+      "total_patients": 74,
+      "patients_waiting": 29,
+      "occupancy_rate": 100.0
     },
     {
       "name": "HÔPITAL DE MONT-LAURIER",
@@ -1185,8 +1185,8 @@
       "patients_on_stretcher": 16,
       "patients_over_24h": 7,
       "patients_over_48h": 3,
-      "total_patients": 23,
-      "patients_waiting": 9,
+      "total_patients": 16,
+      "patients_waiting": 0,
       "occupancy_rate": 200.0
     },
     {
@@ -1204,100 +1204,100 @@
       "name": "HÔPITAL DE SAINT-EUSTACHE",
       "region": "15",
       "total_stretchers": 35,
-      "patients_on_stretcher": 47,
+      "patients_on_stretcher": 50,
       "patients_over_24h": 11,
       "patients_over_48h": 1,
-      "total_patients": 88,
-      "patients_waiting": 37,
-      "occupancy_rate": 134.3
+      "total_patients": 90,
+      "patients_waiting": 34,
+      "occupancy_rate": 142.9
     },
     {
       "name": "HÔPITAL DE SAINT-JÉRÔME",
       "region": "15",
       "total_stretchers": 47,
       "patients_on_stretcher": 64,
-      "patients_over_24h": 25,
+      "patients_over_24h": 27,
       "patients_over_48h": 5,
-      "total_patients": 103,
-      "patients_waiting": 41,
+      "total_patients": 98,
+      "patients_waiting": 33,
       "occupancy_rate": 136.2
     },
     {
       "name": "CENTRE MULTISERVICES DE SANTÉ ET DE SERVICES SOCIAUX D'ARGENTEUIL",
       "region": "15",
       "total_stretchers": 8,
-      "patients_on_stretcher": 10,
+      "patients_on_stretcher": 9,
       "patients_over_24h": 1,
       "patients_over_48h": 0,
-      "total_patients": 25,
-      "patients_waiting": 12,
-      "occupancy_rate": 125.0
+      "total_patients": 21,
+      "patients_waiting": 8,
+      "occupancy_rate": 112.5
     },
     {
       "name": "CENTRE MULTISERVICES DE SANTÉ ET DE SERVICES SOCIAUX DE SAINTE-AGATHE",
       "region": "15",
       "total_stretchers": 18,
-      "patients_on_stretcher": 39,
+      "patients_on_stretcher": 40,
       "patients_over_24h": 11,
       "patients_over_48h": 1,
       "total_patients": 67,
       "patients_waiting": 27,
-      "occupancy_rate": 216.7
+      "occupancy_rate": 222.2
     },
     {
       "name": "HÔPITAL BARRIE MEMORIAL / BARRIE MEMORIAL HOSPITAL",
       "region": "16",
       "total_stretchers": 5,
-      "patients_on_stretcher": 8,
+      "patients_on_stretcher": 7,
       "patients_over_24h": 0,
       "patients_over_48h": 0,
-      "total_patients": 19,
-      "patients_waiting": 16,
-      "occupancy_rate": 160.0
+      "total_patients": 20,
+      "patients_waiting": 17,
+      "occupancy_rate": 140.0
     },
     {
       "name": "HÔPITAL PIERRE-BOUCHER",
       "region": "16",
       "total_stretchers": 47,
-      "patients_on_stretcher": 57,
+      "patients_on_stretcher": 60,
       "patients_over_24h": 20,
-      "patients_over_48h": 3,
-      "total_patients": 97,
-      "patients_waiting": 38,
-      "occupancy_rate": 121.3
+      "patients_over_48h": 4,
+      "total_patients": 102,
+      "patients_waiting": 44,
+      "occupancy_rate": 127.7
     },
     {
       "name": "HÔPITAL DU HAUT-RICHELIEU",
       "region": "16",
       "total_stretchers": 37,
-      "patients_on_stretcher": 41,
-      "patients_over_24h": 10,
+      "patients_on_stretcher": 45,
+      "patients_over_24h": 12,
       "patients_over_48h": 1,
-      "total_patients": 60,
-      "patients_waiting": 14,
-      "occupancy_rate": 110.8
+      "total_patients": 56,
+      "patients_waiting": 10,
+      "occupancy_rate": 121.6
     },
     {
       "name": "HÔTEL-DIEU DE SOREL",
       "region": "16",
       "total_stretchers": 17,
       "patients_on_stretcher": 34,
-      "patients_over_24h": 15,
+      "patients_over_24h": 16,
       "patients_over_48h": 2,
-      "total_patients": 50,
-      "patients_waiting": 19,
+      "total_patients": 48,
+      "patients_waiting": 18,
       "occupancy_rate": 200.0
     },
     {
       "name": "HÔPITAL DU SUROÎT",
       "region": "16",
       "total_stretchers": 32,
-      "patients_on_stretcher": 47,
-      "patients_over_24h": 27,
+      "patients_on_stretcher": 49,
+      "patients_over_24h": 28,
       "patients_over_48h": 18,
-      "total_patients": 56,
-      "patients_waiting": 4,
-      "occupancy_rate": 146.9
+      "total_patients": 55,
+      "patients_waiting": 1,
+      "occupancy_rate": 153.1
     },
     {
       "name": "HÔPITAL ANNA-LABERGE",
@@ -1305,32 +1305,32 @@
       "total_stretchers": 32,
       "patients_on_stretcher": 33,
       "patients_over_24h": 11,
-      "patients_over_48h": 2,
-      "total_patients": 59,
-      "patients_waiting": 27,
+      "patients_over_48h": 4,
+      "total_patients": 55,
+      "patients_waiting": 23,
       "occupancy_rate": 103.1
     },
     {
       "name": "HÔPITAL HONORÉ-MERCIER",
       "region": "16",
       "total_stretchers": 26,
-      "patients_on_stretcher": 28,
-      "patients_over_24h": 4,
+      "patients_on_stretcher": 29,
+      "patients_over_24h": 5,
       "patients_over_48h": 1,
-      "total_patients": 63,
-      "patients_waiting": 32,
-      "occupancy_rate": 107.7
+      "total_patients": 58,
+      "patients_waiting": 27,
+      "occupancy_rate": 111.5
     },
     {
       "name": "HÔPITAL CHARLES-LE MOYNE",
       "region": "16",
       "total_stretchers": 43,
-      "patients_on_stretcher": 45,
+      "patients_on_stretcher": 44,
       "patients_over_24h": 5,
       "patients_over_48h": 0,
-      "total_patients": 140,
-      "patients_waiting": 97,
-      "occupancy_rate": 104.7
+      "total_patients": 125,
+      "patients_waiting": 79,
+      "occupancy_rate": 102.3
     }
   ]
 }
