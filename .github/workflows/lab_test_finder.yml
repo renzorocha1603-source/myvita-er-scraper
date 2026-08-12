@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
+    inputs:
+      postal_code:
+        description: 'Postal code (optional — reads from Firestore if not provided)'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   check:
@@ -24,5 +30,6 @@ jobs:
       
       - name: Run Bot
         env:
+          POSTAL_CODE: ${{ github.event.inputs.postal_code }}
           FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
         run: python bot.py
