@@ -1,7 +1,7 @@
 {
   "status": "healthy",
-  "last_successful_run": "2026-08-17T22:27:08.271143",
+  "last_successful_run": "2026-08-17T23:25:41.724081",
   "data_freshness": "live",
   "total_hospitals": 120,
-  "avg_occupancy": 87.7
+  "avg_occupancy": 85.4
 }
