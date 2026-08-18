@@ -21,9 +21,15 @@ jobs:
       - name: Install dependencies
         run: |
           pip install firebase-admin
+          pip install requests
       
       - name: Run medication shortages sync
         env:
-          FIREBASE_CREDENTIALS_JSON: ${{ secrets.MYVITA_FIREBASE_SERVICE_ACCOUNT }}
+          MYVITA_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MYVITA_FIREBASE_SERVICE_ACCOUNT }}
         run: |
           python medication_shortages_sync.py
+      
+      - name: Log completion
+        if: always()
+        run: |
+          echo "Medication shortages sync completed at $(date -u)"
