@@ -1,0 +1,36 @@
+name: Medication Shortages Sync
+
+on:
+  schedule:
+    # Run every 12 hours (00:00 and 12:00 UTC)
+    - cron: '0 */12 * * *'
+  workflow_dispatch:  # Allow manual trigger
+  
+jobs:
+  sync-shortages:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install firebase-admin
+          pip install requests
+      
+      - name: Run medication shortages sync
+        env:
+          FIREBASE_CREDENTIALS_JSON: ${{ secrets.FIREBASE_CREDENTIALS_JSON }}
+        run: |
+          python medication_shortages_sync.py
+      
+      - name: Log completion
+        if: always()
+        run: |
+          echo "Medication shortages sync completed at $(date -u)"
