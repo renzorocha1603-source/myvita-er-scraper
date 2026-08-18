@@ -23,7 +23,7 @@ from firebase_admin import credentials, firestore
 BASE_URL = "https://www.drugshortagescanada.ca"
 SEARCH_PATH = "/search"
 FIRESTORE_COLLECTION = "medication_shortages"
-FIREBASE_CREDENTIALS_JSON = os.environ.get("FIREBASE_CREDENTIALS_JSON", "")
+FIREBASE_CREDENTIALS_JSON = os.environ.get("MYVITA_FIREBASE_SERVICE_ACCOUNT", "")
 
 # Active statuses to fetch
 ACTIVE_STATUSES = ["active_confirmed", "anticipated_shortage", "avoided_shortage"]
