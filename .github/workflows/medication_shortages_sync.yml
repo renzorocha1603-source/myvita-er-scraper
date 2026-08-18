@@ -24,6 +24,6 @@ jobs:
       
       - name: Run medication shortages sync
         env:
-          FIREBASE_CREDENTIALS_JSON: ${{ secrets.FIREBASE_CREDENTIALS_JSON }}
+          FIREBASE_CREDENTIALS_JSON: ${{ secrets.MYVITA_FIREBASE_SERVICE_ACCOUNT }}
         run: |
           python medication_shortages_sync.py
