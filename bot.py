@@ -151,14 +151,24 @@ def is_peak_hours() -> bool:
     return 8 <= hour < 10
 
 def get_user_token_for_user(user_id: str):
+    """Get FCM token from user document — checks both field names."""
     if db is None:
         return None
     try:
         user_doc = db.collection('users').document(user_id).get()
         if user_doc.exists:
-            return user_doc.to_dict().get('fcmToken')
-    except:
-        pass
+            user_data = user_doc.to_dict()
+            # Check both field names for compatibility
+            token = user_data.get('fcm_token') or user_data.get('fcmToken')
+            if token:
+                print(f"   📱 Found FCM token: {token[:30]}...")
+            else:
+                print(f"   ⚠️ No FCM token found for user {user_id}")
+            return token
+        else:
+            print(f"   ⚠️ User document not found: {user_id}")
+    except Exception as e:
+        print(f"   ❌ Error reading user token: {e}")
     return None
 
 def save_to_firestore(postal_code: str, places_found: list, user_id: str, request_doc=None):
