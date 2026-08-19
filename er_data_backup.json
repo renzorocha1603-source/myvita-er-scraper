@@ -1,9 +1,9 @@
 {
-  "last_update": "2026-08-19T11:27:24.831618",
+  "last_update": "2026-08-19T12:52:32.263829",
   "source": "MSSS / Gouvernement du Québec",
   "source_url": "https://www.msss.gouv.qc.ca/professionnels/statistiques/documents/urgences/Releve_horaire_urgences_7jours_nbpers.csv",
   "gov_data_timestamp": "2026-08-19T06:45:00",
-  "data_freshness": "live",
+  "data_freshness": "cached",
   "global_stats": {
     "total_patients": 3123,
     "total_waiting": 824,
