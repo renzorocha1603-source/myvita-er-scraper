@@ -59,165 +59,191 @@ def parse_time_to_minutes(time_str):
 
 
 # ═══════════════════════════════════════════════════════════════
-# LAYER 1: HTML SCRAPER WITH PLAYWRIGHT (JS-rendered page)
+# LAYER 1: PLAYWRIGHT HTML SCRAPER (all 12 pages)
 # ═══════════════════════════════════════════════════════════════
 
+def parse_hospitals_from_html(html):
+    """Parse hospital data from rendered HTML"""
+    hospitals = []
+    gov_time = ""
+
+    # Extract last update time
+    last_update_match = re.search(
+        r'Derni[èe]re mise[^:]*:\s*([^<\n]+)',
+        html,
+        re.IGNORECASE
+    )
+    if last_update_match:
+        gov_time = last_update_match.group(1).strip()
+
+    # Find all hospital blocks
+    hospital_blocks = re.split(
+        r'(?=(?:Centre|H[oô]pital|CHU|CHSLD|CLSC|Institut|Pavillon)[^<\n]{2,})',
+        html
+    )
+
+    for block in hospital_blocks:
+        name_match = re.search(
+            r'((?:Centre|H[oô]pital|CHU|CHSLD|CLSC|Institut|Pavillon)[^<\n]{2,80})',
+            block
+        )
+        if not name_match:
+            continue
+
+        name = name_match.group(1).strip()
+
+        if 'Trouver' in name or 'Résultats' in name or 'Pagination' in name:
+            continue
+
+        postal_match = re.search(r'[A-Z]\d[A-Z]\s?\d[A-Z]\d', block)
+        postal = postal_match.group(0) if postal_match else ""
+
+        if not postal:
+            continue
+
+        # Wait time
+        wait_match = re.search(
+            r'(?:Temps d[^:]*:\s*)(\d{2}:\d{2})',
+            block,
+            re.IGNORECASE
+        )
+        wait_time_str = wait_match.group(1) if wait_match else ""
+        wait_time_minutes = parse_time_to_minutes(wait_time_str) if wait_time_str else 0
+
+        # People waiting
+        waiting_match = re.search(
+            r'(?:Nombre de personnes qui attendent[^:]*:\s*)(\d+)',
+            block,
+            re.IGNORECASE
+        )
+        patients_waiting = safe_int(waiting_match.group(1)) if waiting_match else 0
+
+        # Total patients
+        total_match = re.search(
+            r'(?:Nombre total de personnes[^:]*:\s*)(\d+)',
+            block,
+            re.IGNORECASE
+        )
+        total_patients = safe_int(total_match.group(1)) if total_match else 0
+
+        # Occupancy
+        occ_match = re.search(
+            r'(?:Taux d[^:]*:\s*)(\d+)%',
+            block,
+            re.IGNORECASE
+        )
+        occupancy_rate = safe_int(occ_match.group(1)) if occ_match else 0
+
+        # Region
+        region_match = re.search(
+            r'(?:Montréal|Laval|Montérégie|Capitale-Nationale|Outaouais|'
+            r'Mauricie|Estrie|Lanaudière|Laurentides|Saguenay|'
+            r'Bas-Saint-Laurent|Chaudière-Appalaches|Abitibi-Témiscamingue|'
+            r'Côte-Nord|Nord-du-Québec|Gaspésie|Centre-du-Québec|Eeyou)',
+            block
+        )
+        region = region_match.group(0) if region_match else ""
+
+        # Stay in waiting room
+        stay_room_match = re.search(
+            r'(?:Durée moyenne de séjour[^:]*salle d[^:]*:\s*)(\d{2}:\d{2})',
+            block,
+            re.IGNORECASE
+        )
+        stay_room_str = stay_room_match.group(1) if stay_room_match else ""
+        stay_room_minutes = parse_time_to_minutes(stay_room_str) if stay_room_str else 0
+
+        # Stay on stretcher
+        stay_stretcher_match = re.search(
+            r'(?:Durée moyenne de séjour[^:]*civi[èe]re[^:]*:\s*)(\d{2}:\d{2})',
+            block,
+            re.IGNORECASE
+        )
+        stay_stretcher_str = stay_stretcher_match.group(1) if stay_stretcher_match else ""
+        stay_stretcher_minutes = parse_time_to_minutes(stay_stretcher_str) if stay_stretcher_str else 0
+
+        h = {
+            "name": name,
+            "region": region,
+            "total_stretchers": 0,
+            "patients_on_stretcher": 0,
+            "patients_over_24h": 0,
+            "patients_over_48h": 0,
+            "total_patients": total_patients,
+            "patients_waiting": patients_waiting,
+            "occupancy_rate": occupancy_rate,
+            "wait_time_minutes": wait_time_minutes,
+            "wait_time_str": wait_time_str,
+            "stay_room_minutes": stay_room_minutes,
+            "stay_stretcher_minutes": stay_stretcher_minutes,
+            "postal_code": postal,
+        }
+
+        hospitals.append(h)
+
+    return hospitals, gov_time
+
+
 def get_live_data_html():
-    """Layer 1: Scrape the Quebec.ca ER page using Playwright"""
+    """Layer 1: Scrape all pages using Playwright"""
     print("   [Layer 1] HTML Scraper (Playwright + Quebec.ca)...")
 
     try:
         from playwright.sync_api import sync_playwright
+
+        all_hospitals = []
+        gov_time = ""
+        seen_names = set()
 
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
 
             page.goto(HTML_PAGE_URL, wait_until='networkidle', timeout=60000)
-
-            # Wait for data to render
             page.wait_for_timeout(8000)
 
-            # Get the rendered HTML
+            # Page 1
             html = page.content()
+            hospitals, gov_time = parse_hospitals_from_html(html)
+            for h in hospitals:
+                if h['name'] not in seen_names:
+                    seen_names.add(h['name'])
+                    all_hospitals.append(h)
+            print(f"   Page 1: {len(hospitals)} hospitals (total: {len(all_hospitals)})")
+
+            # Pages 2-12
+            for page_num in range(2, 13):
+                try:
+                    page_link = page.locator(f'ul.pagination a:has-text("{page_num}")').first
+                    if page_link.is_visible():
+                        page_link.click()
+                        page.wait_for_timeout(5000)
+
+                        html = page.content()
+                        hospitals, _ = parse_hospitals_from_html(html)
+
+                        new_count = 0
+                        for h in hospitals:
+                            if h['name'] not in seen_names:
+                                seen_names.add(h['name'])
+                                all_hospitals.append(h)
+                                new_count += 1
+
+                        print(f"   Page {page_num}: {new_count} new (total: {len(all_hospitals)})")
+                    else:
+                        print(f"   Page {page_num}: link not visible, stopping")
+                        break
+                except Exception as e:
+                    print(f"   Page {page_num} error: {e}")
+                    break
 
             browser.close()
 
-        print(f"   Debug: Rendered HTML length = {len(html)}")
-
-        # Check if data is present
-        if 'Temps d' not in html and 'temps d' not in html:
-            print(f"   ⚠️ No ER data found in rendered HTML")
-            return None, None
-
-        hospitals = []
-        gov_time = ""
-
-        # Extract last update time
-        last_update_match = re.search(
-            r'Derni[èe]re mise[^:]*:\s*([^<\n]+)',
-            html,
-            re.IGNORECASE
-        )
-        if last_update_match:
-            gov_time = last_update_match.group(1).strip()
-            print(f"   Gov time: {gov_time}")
-
-        # Find all hospital blocks
-        hospital_blocks = re.split(
-            r'(?=(?:Centre|H[oô]pital|CHU|CHSLD|CLSC|Institut|Pavillon)[^<\n]{2,})',
-            html
-        )
-
-        for block in hospital_blocks:
-            # Extract hospital name
-            name_match = re.search(
-                r'((?:Centre|H[oô]pital|CHU|CHSLD|CLSC|Institut|Pavillon)[^<\n]{2,80})',
-                block
-            )
-            if not name_match:
-                continue
-
-            name = name_match.group(1).strip()
-
-            # Skip navigation blocks
-            if 'Trouver' in name or 'Résultats' in name or 'Pagination' in name:
-                continue
-
-            # Extract postal code
-            postal_match = re.search(r'[A-Z]\d[A-Z]\s?\d[A-Z]\d', block)
-            postal = postal_match.group(0) if postal_match else ""
-
-            # Skip if no postal code (not a facility block)
-            if not postal:
-                continue
-
-            # Extract wait time (HH:MM)
-            wait_match = re.search(
-                r'(?:Temps d[^:]*:\s*)(\d{2}:\d{2})',
-                block,
-                re.IGNORECASE
-            )
-            wait_time_str = wait_match.group(1) if wait_match else ""
-            wait_time_minutes = parse_time_to_minutes(wait_time_str) if wait_time_str else 0
-
-            # Extract people waiting
-            waiting_match = re.search(
-                r'(?:Nombre de personnes qui attendent[^:]*:\s*)(\d+)',
-                block,
-                re.IGNORECASE
-            )
-            patients_waiting = safe_int(waiting_match.group(1)) if waiting_match else 0
-
-            # Extract total patients
-            total_match = re.search(
-                r'(?:Nombre total de personnes[^:]*:\s*)(\d+)',
-                block,
-                re.IGNORECASE
-            )
-            total_patients = safe_int(total_match.group(1)) if total_match else 0
-
-            # Extract occupancy rate
-            occ_match = re.search(
-                r'(?:Taux d[^:]*:\s*)(\d+)%',
-                block,
-                re.IGNORECASE
-            )
-            occupancy_rate = safe_int(occ_match.group(1)) if occ_match else 0
-
-            # Extract region
-            region_match = re.search(
-                r'(?:Montréal|Laval|Montérégie|Capitale-Nationale|Outaouais|'
-                r'Mauricie|Estrie|Lanaudière|Laurentides|Saguenay|'
-                r'Bas-Saint-Laurent|Chaudière-Appalaches|Abitibi-Témiscamingue|'
-                r'Côte-Nord|Nord-du-Québec|Gaspésie|Centre-du-Québec|Eeyou)',
-                block
-            )
-            region = region_match.group(0) if region_match else ""
-
-            # Extract average stay in waiting room (HH:MM)
-            stay_room_match = re.search(
-                r'(?:Durée moyenne de séjour[^:]*salle d[^:]*:\s*)(\d{2}:\d{2})',
-                block,
-                re.IGNORECASE
-            )
-            stay_room_str = stay_room_match.group(1) if stay_room_match else ""
-            stay_room_minutes = parse_time_to_minutes(stay_room_str) if stay_room_str else 0
-
-            # Extract average stay on stretcher (HH:MM)
-            stay_stretcher_match = re.search(
-                r'(?:Durée moyenne de séjour[^:]*civi[èe]re[^:]*:\s*)(\d{2}:\d{2})',
-                block,
-                re.IGNORECASE
-            )
-            stay_stretcher_str = stay_stretcher_match.group(1) if stay_stretcher_match else ""
-            stay_stretcher_minutes = parse_time_to_minutes(stay_stretcher_str) if stay_stretcher_str else 0
-
-            # Build hospital dict
-            h = {
-                "name": name,
-                "region": region,
-                "total_stretchers": 0,
-                "patients_on_stretcher": 0,
-                "patients_over_24h": 0,
-                "patients_over_48h": 0,
-                "total_patients": total_patients,
-                "patients_waiting": patients_waiting,
-                "occupancy_rate": occupancy_rate,
-                "wait_time_minutes": wait_time_minutes,
-                "wait_time_str": wait_time_str,
-                "stay_room_minutes": stay_room_minutes,
-                "stay_stretcher_minutes": stay_stretcher_minutes,
-                "postal_code": postal,
-            }
-
-            hospitals.append(h)
-
-        if hospitals:
-            print(f"   ✅ Layer 1 SUCCESS: {len(hospitals)} hospitals from rendered HTML")
-            return hospitals, gov_time
+        if all_hospitals:
+            print(f"   ✅ Layer 1 SUCCESS: {len(all_hospitals)} hospitals total")
+            return all_hospitals, gov_time
         else:
-            print(f"   ⚠️ No hospitals parsed from HTML")
+            print(f"   ⚠️ No hospitals parsed")
 
     except Exception as e:
         print(f"   ❌ Layer 1 error: {e}")
@@ -502,7 +528,7 @@ def main():
     gov_time = ""
     freshness = "live"
 
-    # Layer 1: Playwright HTML Scraper (Quebec.ca ER page)
+    # Layer 1: Playwright HTML Scraper (all 12 pages)
     hospitals, gov_time = get_live_data_html()
 
     # Layer 2: CKAN API (old — might come back)
