@@ -19,7 +19,6 @@ OUTPUT_FILE = "er_data.json"
 BACKUP_FILE = "er_data_backup.json"
 HEALTH_FILE = "health_check.json"
 
-# ★ STEALTH: Realistic headers to avoid 403 blocks
 STEALTH_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,text/csv,application/csv,application/json,*/*;q=0.8',
@@ -58,32 +57,37 @@ def parse_time_to_minutes(time_str):
     except:
         return 0
 
+
 # ═══════════════════════════════════════════════════════════════
-# LAYER 1: HTML SCRAPER (Quebec.ca ER page)
+# LAYER 1: HTML SCRAPER WITH PLAYWRIGHT (JS-rendered page)
 # ═══════════════════════════════════════════════════════════════
 
 def get_live_data_html():
-    """Layer 1: Scrape the Quebec.ca ER wait times HTML page"""
-    print("   [Layer 1] HTML Scraper (Quebec.ca ER page)...")
+    """Layer 1: Scrape the Quebec.ca ER page using Playwright"""
+    print("   [Layer 1] HTML Scraper (Playwright + Quebec.ca)...")
 
     try:
-        response = requests.get(
-            HTML_PAGE_URL,
-            headers=STEALTH_HEADERS,
-            timeout=30
-        )
+        from playwright.sync_api import sync_playwright
 
-        print(f"   Debug: HTTP Status = {response.status_code}")
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
 
-        if response.status_code != 200:
-            print(f"   ❌ HTTP {response.status_code}")
-            return None, None
+            page.goto(HTML_PAGE_URL, wait_until='networkidle', timeout=60000)
 
-        html = response.text
+            # Wait for data to render
+            page.wait_for_timeout(8000)
 
-        # Check if data is in the HTML
+            # Get the rendered HTML
+            html = page.content()
+
+            browser.close()
+
+        print(f"   Debug: Rendered HTML length = {len(html)}")
+
+        # Check if data is present
         if 'Temps d' not in html and 'temps d' not in html:
-            print(f"   ⚠️ No ER data found in HTML (might be JS-rendered)")
+            print(f"   ⚠️ No ER data found in rendered HTML")
             return None, None
 
         hospitals = []
@@ -97,10 +101,9 @@ def get_live_data_html():
         )
         if last_update_match:
             gov_time = last_update_match.group(1).strip()
+            print(f"   Gov time: {gov_time}")
 
         # Find all hospital blocks
-        # Each hospital block contains: name, address, region, wait time, etc.
-        # Split by hospital name pattern
         hospital_blocks = re.split(
             r'(?=(?:Centre|H[oô]pital|CHU|CHSLD|CLSC|Institut|Pavillon)[^<\n]{2,})',
             html
@@ -117,7 +120,7 @@ def get_live_data_html():
 
             name = name_match.group(1).strip()
 
-            # Skip if this is a navigation block
+            # Skip navigation blocks
             if 'Trouver' in name or 'Résultats' in name or 'Pagination' in name:
                 continue
 
@@ -129,17 +132,7 @@ def get_live_data_html():
             if not postal:
                 continue
 
-            # Extract region
-            region_match = re.search(
-                r'(?:Montréal|Laval|Montérégie|Capitale-Nationale|Outaouais|'
-                r'Mauricie|Estrie|Lanaudière|Laurentides|Saguenay|'
-                r'Bas-Saint-Laurent|Chaudière-Appalaches|Abitibi-Témiscamingue|'
-                r'Côte-Nord|Nord-du-Québec|Gaspésie|Centre-du-Québec|Eeyou)',
-                block
-            )
-            region = region_match.group(0) if region_match else ""
-
-            # Extract wait time (HH:MM) — "Temps d'attente estimé... 01:14"
+            # Extract wait time (HH:MM)
             wait_match = re.search(
                 r'(?:Temps d[^:]*:\s*)(\d{2}:\d{2})',
                 block,
@@ -172,6 +165,16 @@ def get_live_data_html():
             )
             occupancy_rate = safe_int(occ_match.group(1)) if occ_match else 0
 
+            # Extract region
+            region_match = re.search(
+                r'(?:Montréal|Laval|Montérégie|Capitale-Nationale|Outaouais|'
+                r'Mauricie|Estrie|Lanaudière|Laurentides|Saguenay|'
+                r'Bas-Saint-Laurent|Chaudière-Appalaches|Abitibi-Témiscamingue|'
+                r'Côte-Nord|Nord-du-Québec|Gaspésie|Centre-du-Québec|Eeyou)',
+                block
+            )
+            region = region_match.group(0) if region_match else ""
+
             # Extract average stay in waiting room (HH:MM)
             stay_room_match = re.search(
                 r'(?:Durée moyenne de séjour[^:]*salle d[^:]*:\s*)(\d{2}:\d{2})',
@@ -194,7 +197,7 @@ def get_live_data_html():
             h = {
                 "name": name,
                 "region": region,
-                "total_stretchers": 0,  # Not directly in HTML — will estimate
+                "total_stretchers": 0,
                 "patients_on_stretcher": 0,
                 "patients_over_24h": 0,
                 "patients_over_48h": 0,
@@ -208,17 +211,10 @@ def get_live_data_html():
                 "postal_code": postal,
             }
 
-            # Estimate stretchers from occupancy if possible
-            if occupancy_rate > 0 and total_patients > 0:
-                # Rough estimate: stretchers = occupied / (occ_rate/100)
-                # We don't have occupied count directly, so use total_patients as proxy
-                h["total_stretchers"] = max(1, round(total_patients / (occupancy_rate / 100))) if occupancy_rate > 0 else 0
-                h["patients_on_stretcher"] = round(total_patients * (occupancy_rate / 100))
-
             hospitals.append(h)
 
         if hospitals:
-            print(f"   ✅ Layer 1 SUCCESS: {len(hospitals)} hospitals from HTML")
+            print(f"   ✅ Layer 1 SUCCESS: {len(hospitals)} hospitals from rendered HTML")
             return hospitals, gov_time
         else:
             print(f"   ⚠️ No hospitals parsed from HTML")
@@ -506,7 +502,7 @@ def main():
     gov_time = ""
     freshness = "live"
 
-    # Layer 1: HTML Scraper (Quebec.ca ER page)
+    # Layer 1: Playwright HTML Scraper (Quebec.ca ER page)
     hospitals, gov_time = get_live_data_html()
 
     # Layer 2: CKAN API (old — might come back)
