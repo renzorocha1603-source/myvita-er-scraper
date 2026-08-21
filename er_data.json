@@ -1,7 +1,7 @@
 {
-  "last_update": "2026-08-20T23:28:03.949983",
+  "last_update": "2026-08-21T00:42:02.597076",
   "source": "MSSS / Gouvernement du Québec",
-  "source_url": "https://www.quebec.ca/sante/systeme-et-services-de-sante/organisation-des-services/donnees-systeme-sante-quebecois-services/situation-urgences",
+  "source_url": "https://www.msss.gouv.qc.ca/professionnels/statistiques/documents/urgences/Releve_horaire_urgences_7jours_nbpers.csv",
   "gov_data_timestamp": "",
   "data_freshness": "live",
   "global_stats": {
