@@ -1,9 +1,33 @@
+import csv
+import io
 import json
 import os
 import re
 import time
 import requests
 from datetime import datetime
+
+import firebase_admin
+from firebase_admin import credentials, firestore
+
+# ============================================================
+# FIREBASE SETUP
+# ============================================================
+FIREBASE_CREDENTIALS_JSON = os.environ.get("FIREBASE_CREDENTIALS", "")
+
+db = None
+if FIREBASE_CREDENTIALS_JSON:
+    try:
+        cred_dict = json.loads(FIREBASE_CREDENTIALS_JSON)
+        cred = credentials.Certificate(cred_dict)
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred, {'projectId': 'myvita-app-c5ecd'})
+        db = firestore.client()
+        print("✅ Firebase initialized (GitHub Secret)")
+    except Exception as e:
+        print(f"⚠️ Firebase init error: {e}")
+else:
+    print("⚠️ No Firebase credentials found — saving to JSON only")
 
 # ============================================================
 # DATA SOURCES (12 page URLs + Quebec average)
@@ -45,13 +69,11 @@ def extract_hospital_full_text(body_text):
     current_name = None
     current_lines = []
     
-    # Keywords that indicate a new hospital starts
     hospital_start_pattern = re.compile(
         r'^(Centre|H[oô]pital|CHU|CHSLD|CLSC|Institut|Pavillon)',
         re.IGNORECASE
     )
     
-    # Keywords that indicate END of results
     end_markers = [
         'Trouver une installation',
         'Résultats de la recherche',
@@ -73,7 +95,6 @@ def extract_hospital_full_text(body_text):
         if not line_stripped:
             continue
         
-        # Check if this is the end of results
         if any(marker in line_stripped for marker in end_markers):
             if current_name and current_lines:
                 hospitals.append({
@@ -84,24 +105,19 @@ def extract_hospital_full_text(body_text):
             current_lines = []
             continue
         
-        # Check if this is a new hospital start
         if hospital_start_pattern.match(line_stripped):
-            # Save previous hospital
             if current_name and current_lines:
                 hospitals.append({
                     'name': current_name,
                     'full_text': '\n'.join(current_lines)
                 })
             
-            # Start new hospital
             current_name = line_stripped
             current_lines = [line_stripped]
         
         elif current_name:
-            # Continue adding lines to current hospital
             current_lines.append(line_stripped)
     
-    # Save last hospital
     if current_name and current_lines:
         hospitals.append({
             'name': current_name,
@@ -129,12 +145,9 @@ def get_all_hospitals():
                 print(f"   Page {i}/12...")
                 
                 page.goto(url, wait_until='networkidle', timeout=60000)
-                page.wait_for_timeout(15000)  # Wait for JS to render
+                page.wait_for_timeout(15000)
                 
-                # Get body text
                 body_text = page.locator('body').inner_text()
-                
-                # Extract hospitals from this page
                 hospitals = extract_hospital_full_text(body_text)
                 
                 new_count = 0
@@ -171,7 +184,6 @@ def get_quebec_average():
             page.wait_for_timeout(15000)
             
             body_text = page.locator('body').inner_text()
-            
             browser.close()
         
         print(f"   ✅ Quebec Average loaded ({len(body_text)} chars)")
@@ -199,6 +211,7 @@ def save_all(hospitals, quebec_average_text):
         "hospitals": hospitals
     }
     
+    # Save to JSON files
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     
@@ -214,8 +227,22 @@ def save_all(hospitals, quebec_average_text):
     with open(HEALTH_FILE, "w", encoding="utf-8") as f:
         json.dump(health, f, indent=2)
     
+    # ★ Save to Firestore
+    if db:
+        try:
+            db.collection('er_live_data').document('current').set({
+                'last_update': now.isoformat(),
+                'source': 'MSSS / Gouvernement du Québec',
+                'data_freshness': 'live',
+                'total_hospitals': len(hospitals),
+                'quebec_average_text': quebec_average_text,
+                'hospitals': hospitals,
+            })
+            print(f"   ✅ Saved to Firestore: er_live_data/current")
+        except Exception as e:
+            print(f"   ❌ Firestore save failed: {e}")
+    
     print(f"\n✅ SAVED: {len(hospitals)} hospitals + Quebec average")
-    print(f"   File: {OUTPUT_FILE}")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -224,13 +251,10 @@ def save_all(hospitals, quebec_average_text):
 
 def main():
     print("=" * 60)
-    print(f"MyVita ER Scraper (Copy-Paste) — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"MyVita ER Scraper (Copy-Paste + Firestore) — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
     
-    # Get all hospitals
     hospitals = get_all_hospitals()
-    
-    # Get Quebec average
     quebec_avg_text = get_quebec_average()
     
     if hospitals:
