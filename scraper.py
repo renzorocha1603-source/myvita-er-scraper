@@ -60,7 +60,7 @@ def parse_time_to_minutes(time_str):
 
 
 # ═══════════════════════════════════════════════════════════════
-# LAYER 1: CSV DOWNLOAD (MSSS Direct — WORKS with Referer header)
+# LAYER 1: CSV DOWNLOAD (MSSS Direct)
 # ═══════════════════════════════════════════════════════════════
 
 def download_csv_as_json(url):
@@ -100,9 +100,6 @@ def download_csv_as_json(url):
 
         reader = csv.DictReader(io.StringIO(text))
         headers = reader.fieldnames or []
-
-        # Print detected headers for debugging
-        print(f"   Headers: {headers[:8]}")
 
         def find_column(headers, keywords):
             for header in headers:
@@ -167,7 +164,7 @@ def download_csv_as_json(url):
 
 
 # ═══════════════════════════════════════════════════════════════
-# LAYER 2: PLAYWRIGHT HTML SCRAPER (fallback)
+# LAYER 2: PLAYWRIGHT HTML SCRAPER (URL pagination - WORKS!)
 # ═══════════════════════════════════════════════════════════════
 
 def parse_hospitals_from_html(html):
@@ -277,8 +274,8 @@ def parse_hospitals_from_html(html):
 
 
 def get_live_data_html():
-    """Layer 2: Scrape the Quebec.ca page using Playwright"""
-    print("   [Layer 2] HTML Scraper (Playwright + Quebec.ca)...")
+    """Layer 2: Scrape ALL 12 pages using URL navigation"""
+    print("   [Layer 2] HTML Scraper (URL pagination 12 pages)...")
 
     try:
         from playwright.sync_api import sync_playwright
@@ -291,16 +288,29 @@ def get_live_data_html():
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
 
-            page.goto(HTML_PAGE_URL, wait_until='networkidle', timeout=60000)
-            page.wait_for_timeout(8000)
-
-            html = page.content()
-            hospitals, gov_time = parse_hospitals_from_html(html)
-            for h in hospitals:
-                if h['name'] not in seen_names:
-                    seen_names.add(h['name'])
-                    all_hospitals.append(h)
-            print(f"   Page 1: {len(hospitals)} hospitals (total: {len(all_hospitals)})")
+            for page_num in range(1, 13):
+                if page_num == 1:
+                    url = HTML_PAGE_URL
+                else:
+                    url = f"{HTML_PAGE_URL}?tx_solr%5Bpage%5D={page_num}"
+                
+                page.goto(url, wait_until='domcontentloaded', timeout=60000)
+                page.wait_for_timeout(5000)
+                
+                html = page.content()
+                hospitals, page_gov_time = parse_hospitals_from_html(html)
+                
+                if not gov_time and page_gov_time:
+                    gov_time = page_gov_time
+                
+                new_count = 0
+                for h in hospitals:
+                    if h['name'] not in seen_names:
+                        seen_names.add(h['name'])
+                        all_hospitals.append(h)
+                        new_count += 1
+                
+                print(f"   Page {page_num}: {new_count} new (total: {len(all_hospitals)})")
 
             browser.close()
 
@@ -428,7 +438,7 @@ def save_all(hospitals, global_stats, gov_time, freshness):
     data = {
         "last_update": now.isoformat(),
         "source": "MSSS / Gouvernement du Québec",
-        "source_url": MSSS_DIRECT_URL,
+        "source_url": HTML_PAGE_URL,
         "gov_data_timestamp": gov_time,
         "data_freshness": freshness,
         "global_stats": global_stats,
@@ -467,14 +477,14 @@ def main():
     gov_time = ""
     freshness = "live"
 
-    # Layer 1: CSV download (MSSS direct — WORKS with Referer header)
-    hospitals, gov_time = download_csv_as_json(MSSS_DIRECT_URL)
+    # Layer 1: HTML Scraper (URL pagination - WORKS!)
+    hospitals, gov_time = get_live_data_html()
 
-    # Layer 2: Playwright HTML scraper
+    # Layer 2: CSV download (may get 403 from GitHub)
     if not hospitals:
-        hospitals, gov_time = get_live_data_html()
+        hospitals, gov_time = download_csv_as_json(MSSS_DIRECT_URL)
 
-    # Layer 3: CKAN API
+    # Layer 3: CKAN API (old)
     if not hospitals:
         hospitals, gov_time = get_live_data_ckan()
 
