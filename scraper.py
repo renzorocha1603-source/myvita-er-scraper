@@ -30,17 +30,13 @@ else:
     print("⚠️ No Firebase credentials found — saving to JSON only")
 
 # ============================================================
-# DATA SOURCES (12 page URLs + Quebec average)
+# DATA SOURCES
 # ============================================================
 BASE_URL = "https://www.quebec.ca/sante/systeme-et-services-de-sante/organisation-des-services/donnees-systeme-sante-quebecois-services/situation-urgences"
 
-# All 12 page URLs
 PAGE_URLS = [BASE_URL] + [
     f"{BASE_URL}?tx_solr%5Bpage%5D={n}" for n in range(2, 13)
 ]
-
-# Quebec province average URL
-PROVINCE_AVERAGE_URL = "https://www.quebec.ca/en/health/health-system-and-services/service-organization/quebec-health-system-and-its-services/situation-in-emergency-rooms-in-quebec?id=24981&tx_solr%5Blocation%5D=&tx_solr%5Bpt%5D=&tx_solr%5Bsfield%5D=geolocation_location&tx_solr%5Bpage%5D=4#situation-urgences-tab2"
 
 OUTPUT_FILE = "er_data.json"
 BACKUP_FILE = "er_data_backup.json"
@@ -59,10 +55,7 @@ STEALTH_HEADERS = {
 # ═══════════════════════════════════════════════════════════════
 
 def extract_hospital_full_text(body_text):
-    """
-    Extract each hospital's FULL TEXT from the body.
-    Uses postal code detection to prevent merging hospitals.
-    """
+    """Extract each hospital's FULL TEXT from the body."""
     hospitals = []
     lines = body_text.split('\n')
     
@@ -98,7 +91,6 @@ def extract_hospital_full_text(body_text):
         if not line_stripped:
             continue
         
-        # Check if end of results
         if any(marker in line_stripped for marker in end_markers):
             if current_hospital:
                 hospitals.append(current_hospital)
@@ -107,13 +99,10 @@ def extract_hospital_full_text(body_text):
             current_has_postal = False
             continue
         
-        # Check if this is a new hospital start
         if hospital_start_pattern.match(line_stripped):
-            # Save previous hospital
             if current_hospital:
                 hospitals.append(current_hospital)
             
-            # Start new hospital
             current_hospital = {
                 'name': line_stripped,
                 'full_text': line_stripped
@@ -122,16 +111,11 @@ def extract_hospital_full_text(body_text):
             current_has_postal = False
         
         elif current_hospital:
-            # Check if this line contains a postal code
             has_postal = bool(postal_pattern.search(line_stripped))
             
-            # If we already have a postal code for this hospital AND
-            # we see another postal code, this is a NEW hospital
             if has_postal and current_has_postal:
-                # Save previous and start new (this line is an address)
                 hospitals.append(current_hospital)
                 
-                # Try to get the name from previous line
                 prev_name = current_lines[-1] if current_lines else line_stripped
                 current_hospital = {
                     'name': prev_name,
@@ -140,13 +124,11 @@ def extract_hospital_full_text(body_text):
                 current_lines = [prev_name, line_stripped]
                 current_has_postal = True
             else:
-                # Continue adding to current hospital
                 current_lines.append(line_stripped)
                 current_hospital['full_text'] = '\n'.join(current_lines)
                 if has_postal:
                     current_has_postal = True
     
-    # Save last hospital
     if current_hospital:
         hospitals.append(current_hospital)
     
@@ -160,14 +142,12 @@ def extract_hospital_full_text(body_text):
             final_hospitals.append(h)
             continue
         
-        # This block has multiple hospitals - split by postal code lines
         text_lines = full_text.split('\n')
         blocks = []
         current_block = []
         
         for line in text_lines:
             if postal_pattern.search(line.strip()):
-                # Postal code line - this is an address
                 if current_block:
                     blocks.append(current_block)
                 current_block = [line]
@@ -177,12 +157,10 @@ def extract_hospital_full_text(body_text):
         if current_block:
             blocks.append(current_block)
         
-        # Convert blocks to hospitals
         for block in blocks:
             if not block:
                 continue
             block_text = '\n'.join(block)
-            # Try to find name (first non-address line)
             name = ''
             for bl in block:
                 stripped = bl.strip()
@@ -242,36 +220,54 @@ def get_all_hospitals():
         return None
 
 
-def get_quebec_average():
-    """Fetch the Quebec province average text"""
-    print("   [Quebec Average] Loading...")
+# ═══════════════════════════════════════════════════════════════
+# CALCULATE GLOBAL STATS FROM HOSPITAL DATA
+# ═══════════════════════════════════════════════════════════════
+
+def calculate_global_stats(hospitals):
+    """Calculate Quebec-wide totals from hospital data"""
+    total_patients = 0
+    total_waiting = 0
+    total_occupancy = 0
+    count_with_occupancy = 0
+    count_with_patients = 0
     
-    try:
-        from playwright.sync_api import sync_playwright
+    for h in hospitals:
+        full_text = h.get('full_text', '')
         
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
-            
-            page.goto(PROVINCE_AVERAGE_URL, wait_until='networkidle', timeout=60000)
-            page.wait_for_timeout(15000)
-            
-            body_text = page.locator('body').inner_text()
-            browser.close()
+        # Extract total patients
+        match = re.search(r'total de personnes[^:]*:\s*(\d+)', full_text, re.IGNORECASE)
+        if match:
+            total_patients += int(match.group(1))
+            count_with_patients += 1
         
-        print(f"   ✅ Quebec Average loaded ({len(body_text)} chars)")
-        return body_text
+        # Extract people waiting
+        match = re.search(r'personnes qui attendent[^:]*:\s*(\d+)', full_text, re.IGNORECASE)
+        if match:
+            total_waiting += int(match.group(1))
+        
+        # Extract occupancy rate
+        match = re.search(r'Taux d[^0-9]*(\d+)', full_text, re.IGNORECASE)
+        if match:
+            total_occupancy += int(match.group(1))
+            count_with_occupancy += 1
     
-    except Exception as e:
-        print(f"   ❌ Quebec Average error: {e}")
-        return ""
+    avg_occupancy = round(total_occupancy / count_with_occupancy, 1) if count_with_occupancy > 0 else 0
+    
+    return {
+        'total_patients': total_patients,
+        'total_waiting': total_waiting,
+        'avg_occupancy': avg_occupancy,
+        'hospitals_with_data': count_with_patients,
+        'hospitals_with_occupancy': count_with_occupancy,
+    }
 
 
 # ═══════════════════════════════════════════════════════════════
 # SAVE
 # ═══════════════════════════════════════════════════════════════
 
-def save_all(hospitals, quebec_average_text):
+def save_all(hospitals, global_stats):
     now = datetime.now()
     
     data = {
@@ -280,7 +276,7 @@ def save_all(hospitals, quebec_average_text):
         "source_url": BASE_URL,
         "data_freshness": "live",
         "total_hospitals": len(hospitals),
-        "quebec_average_text": quebec_average_text,
+        "global_stats": global_stats,
         "hospitals": hospitals
     }
     
@@ -296,6 +292,7 @@ def save_all(hospitals, quebec_average_text):
         "last_successful_run": now.isoformat(),
         "data_freshness": "live",
         "total_hospitals": len(hospitals),
+        "avg_occupancy": global_stats['avg_occupancy'],
     }
     with open(HEALTH_FILE, "w", encoding="utf-8") as f:
         json.dump(health, f, indent=2)
@@ -308,14 +305,17 @@ def save_all(hospitals, quebec_average_text):
                 'source': 'MSSS / Gouvernement du Québec',
                 'data_freshness': 'live',
                 'total_hospitals': len(hospitals),
-                'quebec_average_text': quebec_average_text,
+                'global_stats': global_stats,
                 'hospitals': hospitals,
             })
             print(f"   ✅ Saved to Firestore: er_live_data/current")
         except Exception as e:
             print(f"   ❌ Firestore save failed: {e}")
     
-    print(f"\n✅ SAVED: {len(hospitals)} hospitals + Quebec average")
+    print(f"\n✅ SAVED: {len(hospitals)} hospitals")
+    print(f"   Total patients: {global_stats['total_patients']}")
+    print(f"   Total waiting: {global_stats['total_waiting']}")
+    print(f"   Avg occupancy: {global_stats['avg_occupancy']}%")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -324,14 +324,14 @@ def save_all(hospitals, quebec_average_text):
 
 def main():
     print("=" * 60)
-    print(f"MyVita ER Scraper (Copy-Paste + Firestore + Anti-Merge) — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"MyVita ER Scraper (Copy-Paste + Calculated Stats) — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
     
     hospitals = get_all_hospitals()
-    quebec_avg_text = get_quebec_average()
     
     if hospitals:
-        save_all(hospitals, quebec_avg_text)
+        global_stats = calculate_global_stats(hospitals)
+        save_all(hospitals, global_stats)
         print("\n✅ Scrape complete!")
     else:
         print("\n❌ No hospitals found")
