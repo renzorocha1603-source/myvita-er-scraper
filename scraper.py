@@ -55,24 +55,27 @@ STEALTH_HEADERS = {
 
 
 # ═══════════════════════════════════════════════════════════════
-# COPY-PASTE SCRAPER
+# COPY-PASTE SCRAPER (with anti-merge)
 # ═══════════════════════════════════════════════════════════════
 
 def extract_hospital_full_text(body_text):
     """
     Extract each hospital's FULL TEXT from the body.
-    Each hospital block starts with a name and includes all metrics.
+    Uses postal code detection to prevent merging hospitals.
     """
     hospitals = []
     lines = body_text.split('\n')
     
-    current_name = None
+    current_hospital = None
     current_lines = []
+    current_has_postal = False
     
     hospital_start_pattern = re.compile(
         r'^(Centre|H[oô]pital|CHU|CHSLD|CLSC|Institut|Pavillon)',
         re.IGNORECASE
     )
+    
+    postal_pattern = re.compile(r'[A-Z]\d[A-Z]\s?\d[A-Z]\d')
     
     end_markers = [
         'Trouver une installation',
@@ -95,36 +98,106 @@ def extract_hospital_full_text(body_text):
         if not line_stripped:
             continue
         
+        # Check if end of results
         if any(marker in line_stripped for marker in end_markers):
-            if current_name and current_lines:
-                hospitals.append({
-                    'name': current_name,
-                    'full_text': '\n'.join(current_lines)
-                })
-            current_name = None
+            if current_hospital:
+                hospitals.append(current_hospital)
+            current_hospital = None
             current_lines = []
+            current_has_postal = False
             continue
         
+        # Check if this is a new hospital start
         if hospital_start_pattern.match(line_stripped):
-            if current_name and current_lines:
-                hospitals.append({
-                    'name': current_name,
-                    'full_text': '\n'.join(current_lines)
-                })
+            # Save previous hospital
+            if current_hospital:
+                hospitals.append(current_hospital)
             
-            current_name = line_stripped
+            # Start new hospital
+            current_hospital = {
+                'name': line_stripped,
+                'full_text': line_stripped
+            }
             current_lines = [line_stripped]
+            current_has_postal = False
         
-        elif current_name:
-            current_lines.append(line_stripped)
+        elif current_hospital:
+            # Check if this line contains a postal code
+            has_postal = bool(postal_pattern.search(line_stripped))
+            
+            # If we already have a postal code for this hospital AND
+            # we see another postal code, this is a NEW hospital
+            if has_postal and current_has_postal:
+                # Save previous and start new (this line is an address)
+                hospitals.append(current_hospital)
+                
+                # Try to get the name from previous line
+                prev_name = current_lines[-1] if current_lines else line_stripped
+                current_hospital = {
+                    'name': prev_name,
+                    'full_text': prev_name + '\n' + line_stripped
+                }
+                current_lines = [prev_name, line_stripped]
+                current_has_postal = True
+            else:
+                # Continue adding to current hospital
+                current_lines.append(line_stripped)
+                current_hospital['full_text'] = '\n'.join(current_lines)
+                if has_postal:
+                    current_has_postal = True
     
-    if current_name and current_lines:
-        hospitals.append({
-            'name': current_name,
-            'full_text': '\n'.join(current_lines)
-        })
+    # Save last hospital
+    if current_hospital:
+        hospitals.append(current_hospital)
     
-    return hospitals
+    # Post-process: Split hospitals that still have multiple postal codes
+    final_hospitals = []
+    for h in hospitals:
+        full_text = h['full_text']
+        postal_codes = postal_pattern.findall(full_text)
+        
+        if len(postal_codes) <= 1:
+            final_hospitals.append(h)
+            continue
+        
+        # This block has multiple hospitals - split by postal code lines
+        text_lines = full_text.split('\n')
+        blocks = []
+        current_block = []
+        
+        for line in text_lines:
+            if postal_pattern.search(line.strip()):
+                # Postal code line - this is an address
+                if current_block:
+                    blocks.append(current_block)
+                current_block = [line]
+            else:
+                current_block.append(line)
+        
+        if current_block:
+            blocks.append(current_block)
+        
+        # Convert blocks to hospitals
+        for block in blocks:
+            if not block:
+                continue
+            block_text = '\n'.join(block)
+            # Try to find name (first non-address line)
+            name = ''
+            for bl in block:
+                stripped = bl.strip()
+                if stripped and not postal_pattern.search(stripped):
+                    name = stripped
+                    break
+            if not name:
+                name = block[0].strip() if block else 'Unknown'
+            
+            final_hospitals.append({
+                'name': name,
+                'full_text': block_text
+            })
+    
+    return final_hospitals
 
 
 def get_all_hospitals():
@@ -227,7 +300,7 @@ def save_all(hospitals, quebec_average_text):
     with open(HEALTH_FILE, "w", encoding="utf-8") as f:
         json.dump(health, f, indent=2)
     
-    # ★ Save to Firestore
+    # Save to Firestore
     if db:
         try:
             db.collection('er_live_data').document('current').set({
@@ -251,7 +324,7 @@ def save_all(hospitals, quebec_average_text):
 
 def main():
     print("=" * 60)
-    print(f"MyVita ER Scraper (Copy-Paste + Firestore) — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"MyVita ER Scraper (Copy-Paste + Firestore + Anti-Merge) — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
     
     hospitals = get_all_hospitals()
