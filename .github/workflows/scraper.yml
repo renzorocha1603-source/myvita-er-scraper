@@ -22,9 +22,12 @@ jobs:
         run: |
           pip install requests
           pip install playwright
+          pip install firebase-admin
           python -m playwright install chromium
 
       - name: Run scraper
+        env:
+          FIREBASE_CREDENTIALS: ${{ secrets.MYVITA_FIREBASE_SERVICE_ACCOUNT }}
         run: python scraper.py
 
       - name: Show files after scrape
