@@ -8,11 +8,11 @@ import requests
 from datetime import datetime
 
 # ============================================================
-# DATA SOURCES (4 layers)
+# DATA SOURCES
 # ============================================================
 HTML_PAGE_URL = "https://www.quebec.ca/sante/systeme-et-services-de-sante/organisation-des-services/donnees-systeme-sante-quebecois-services/situation-urgences"
+PROVINCE_AVERAGE_URL = "https://www.quebec.ca/en/health/health-system-and-services/service-organization/quebec-health-system-and-its-services/situation-in-emergency-rooms-in-quebec?id=24981&tx_solr%5Blocation%5D=&tx_solr%5Bpt%5D=&tx_solr%5Bsfield%5D=geolocation_location&tx_solr%5Bpage%5D=4#situation-urgences-tab2"
 CKAN_DATASTORE_API = "https://www.donneesquebec.ca/api/3/action/datastore_search?resource_id=b256f87f-40ec-4c79-bdba-a23e9c50e741"
-CKAN_RESOURCE_API = "https://www.donneesquebec.ca/api/3/action/resource_show?id=b256f87f-40ec-4c79-bdba-a23e9c50e741"
 MSSS_DIRECT_URL = "https://www.msss.gouv.qc.ca/professionnels/statistiques/documents/urgences/Releve_horaire_urgences_7jours_nbpers.csv"
 
 OUTPUT_FILE = "er_data.json"
@@ -46,242 +46,102 @@ def safe_str(value):
         return value.strip()
     return str(value).strip()
 
-def parse_time_to_minutes(time_str):
-    """Convert HH:MM to minutes"""
-    try:
-        parts = time_str.strip().split(':')
-        if len(parts) == 2:
-            hours = int(parts[0])
-            minutes = int(parts[1])
-            return hours * 60 + minutes
-        return 0
-    except:
-        return 0
-
 
 # ═══════════════════════════════════════════════════════════════
-# LAYER 1: CSV DOWNLOAD (MSSS Direct)
+# LAYER 1: PLAYWRIGHT BODY TEXT PARSER (WORKS!)
 # ═══════════════════════════════════════════════════════════════
 
-def download_csv_as_json(url):
-    """Layer 1: Download CSV from MSSS and parse it"""
-    print(f"   [Layer 1] Downloading CSV from MSSS...")
-
-    try:
-        response = requests.get(
-            url,
-            headers=STEALTH_HEADERS,
-            timeout=30
-        )
-        
-        print(f"   Debug: HTTP Status = {response.status_code}")
-        
-        if response.status_code != 200:
-            print(f"   ❌ HTTP {response.status_code}")
-            time.sleep(2)
-            response = requests.get(url, headers=STEALTH_HEADERS, timeout=30)
-            if response.status_code != 200:
-                print(f"   ❌ Retry also failed: HTTP {response.status_code}")
-                return None, None
-
-        content = response.content
-        text = None
-        for encoding in ['utf-8-sig', 'utf-8', 'latin-1', 'iso-8859-1']:
-            try:
-                text = content.decode(encoding)
-                if 'installation' in text.lower() or 'etablissement' in text.lower():
-                    break
-            except:
-                continue
-
-        if not text:
-            print("   ❌ Could not decode CSV")
-            return None, None
-
-        reader = csv.DictReader(io.StringIO(text))
-        headers = reader.fieldnames or []
-
-        def find_column(headers, keywords):
-            for header in headers:
-                header_lower = header.lower().strip()
-                if all(kw.lower() in header_lower for kw in keywords):
-                    return header
-            for header in headers:
-                if keywords[0].lower() in header.lower().strip():
-                    return header
-            return ""
-
-        col_nom = find_column(headers, ["installation"])
-        col_region = find_column(headers, ["RSS", "region"])
-        col_civieres_fonc = find_column(headers, ["civiere", "fonctionnelle"])
-        col_civieres_occ = find_column(headers, ["civiere", "occupee"])
-        col_24h = find_column(headers, ["24", "heures"])
-        col_48h = find_column(headers, ["48", "heures"])
-        col_total = find_column(headers, ["total", "patients", "urgence"])
-        col_attente = find_column(headers, ["attente", "PEC"])
-
-        hospitals = []
-        gov_time = ""
-
-        for row in reader:
-            nom = safe_str(row.get(col_nom, ""))
-            if not nom or "Total" in nom or "Ensemble" in nom:
-                continue
-
-            total_civieres = safe_int(row.get(col_civieres_fonc, "0"))
-            civieres_occupees = safe_int(row.get(col_civieres_occ, "0"))
-
-            h = {
-                "name": nom,
-                "region": safe_str(row.get(col_region, "")),
-                "total_stretchers": total_civieres,
-                "patients_on_stretcher": civieres_occupees,
-                "patients_over_24h": safe_int(row.get(col_24h, "0")),
-                "patients_over_48h": safe_int(row.get(col_48h, "0")),
-                "total_patients": safe_int(row.get(col_total, "0")),
-                "patients_waiting": safe_int(row.get(col_attente, "0")),
-                "occupancy_rate": 0,
-                "wait_time_minutes": 0,
-                "wait_time_str": "",
-                "stay_room_minutes": 0,
-                "stay_stretcher_minutes": 0,
-                "postal_code": "",
-            }
-            h["occupancy_rate"] = round((civieres_occupees / total_civieres) * 100, 1) if total_civieres > 0 else 0
-            hospitals.append(h)
-
-        if hospitals:
-            print(f"   ✅ Layer 1 SUCCESS: {len(hospitals)} hospitals from CSV")
-            return hospitals, gov_time
-        else:
-            print(f"   ⚠️ No hospitals parsed from CSV")
-
-    except Exception as e:
-        print(f"   ❌ CSV error: {e}")
-
-    print("   ❌ Layer 1 failed")
-    return None, None
-
-
-# ═══════════════════════════════════════════════════════════════
-# LAYER 2: PLAYWRIGHT HTML SCRAPER (URL pagination - WORKS!)
-# ═══════════════════════════════════════════════════════════════
-
-def parse_hospitals_from_html(html):
-    """Parse hospital data from rendered HTML"""
+def parse_hospital_data(body_text):
+    """Parse hospital data from plain body text"""
     hospitals = []
-    gov_time = ""
-
-    last_update_match = re.search(
-        r'Derni[èe]re mise[^:]*:\s*([^<\n]+)',
-        html,
-        re.IGNORECASE
-    )
-    if last_update_match:
-        gov_time = last_update_match.group(1).strip()
-
-    hospital_blocks = re.split(
-        r'(?=(?:Centre|H[oô]pital|CHU|CHSLD|CLSC|Institut|Pavillon)[^<\n]{2,})',
-        html
-    )
-
-    for block in hospital_blocks:
-        name_match = re.search(
-            r'((?:Centre|H[oô]pital|CHU|CHSLD|CLSC|Institut|Pavillon)[^<\n]{2,80})',
-            block
-        )
-        if not name_match:
+    lines = body_text.split('\n')
+    
+    current_hospital = None
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
             continue
-
-        name = name_match.group(1).strip()
-
-        if 'Trouver' in name or 'Résultats' in name or 'Pagination' in name:
-            continue
-
-        postal_match = re.search(r'[A-Z]\d[A-Z]\s?\d[A-Z]\d', block)
-        postal = postal_match.group(0) if postal_match else ""
-
-        if not postal:
-            continue
-
-        wait_match = re.search(
-            r'(?:Temps d[^:]*:\s*)(\d{1,2})\s*h\s*(\d{2})',
-            block,
-            re.IGNORECASE
-        )
-        if wait_match:
-            wait_time_str = f"{wait_match.group(1)}:{wait_match.group(2)}"
-        else:
-            wait_match = re.search(
-                r'(?:Temps d[^:]*:\s*)(\d{2}:\d{2})',
-                block,
-                re.IGNORECASE
-            )
-            wait_time_str = wait_match.group(1) if wait_match else ""
         
-        wait_time_minutes = parse_time_to_minutes(wait_time_str) if wait_time_str else 0
-
-        waiting_match = re.search(
-            r'(?:Nombre de personnes qui attendent[^:]*:\s*)(\d+)',
-            block,
-            re.IGNORECASE
-        )
-        patients_waiting = safe_int(waiting_match.group(1)) if waiting_match else 0
-
-        total_match = re.search(
-            r'(?:Nombre total de personnes[^:]*:\s*)(\d+)',
-            block,
-            re.IGNORECASE
-        )
-        total_patients = safe_int(total_match.group(1)) if total_match else 0
-
-        occ_match = re.search(
-            r'(?:Taux d[^:]*:\s*)(\d+)%',
-            block,
-            re.IGNORECASE
-        )
-        occupancy_rate = safe_int(occ_match.group(1)) if occ_match else 0
-
-        region_match = re.search(
-            r'(?:Montréal|Laval|Montérégie|Capitale-Nationale|Outaouais|'
-            r'Mauricie|Estrie|Lanaudière|Laurentides|Saguenay|'
-            r'Bas-Saint-Laurent|Chaudière-Appalaches|Abitibi-Témiscamingue|'
-            r'Côte-Nord|Nord-du-Québec|Gaspésie|Centre-du-Québec|Eeyou)',
-            block
-        )
-        region = region_match.group(0) if region_match else ""
-
-        h = {
-            "name": name,
-            "region": region,
-            "total_stretchers": 0,
-            "patients_on_stretcher": 0,
-            "patients_over_24h": 0,
-            "patients_over_48h": 0,
-            "total_patients": total_patients,
-            "patients_waiting": patients_waiting,
-            "occupancy_rate": occupancy_rate,
-            "wait_time_minutes": wait_time_minutes,
-            "wait_time_str": wait_time_str,
-            "stay_room_minutes": 0,
-            "stay_stretcher_minutes": 0,
-            "postal_code": postal,
-        }
-
-        hospitals.append(h)
-
-    return hospitals, gov_time
+        # Detect hospital start (Name pattern)
+        if re.match(r'^(Centre|H[oô]pital|CHU|CHSLD|CLSC|Institut|Pavillon)', line):
+            if current_hospital:
+                hospitals.append(current_hospital)
+            
+            current_hospital = {
+                'name': line,
+                'address': '',
+                'region': '',
+                'wait_time': '',
+                'people_waiting': 0,
+                'total_patients': 0,
+                'occupancy': 0,
+                'room_duration': '',
+                'stretcher_duration': '',
+            }
+        
+        elif current_hospital:
+            # Address (contains postal code)
+            if re.search(r'[A-Z]\d[A-Z]\s?\d[A-Z]\d', line) and not current_hospital['address']:
+                current_hospital['address'] = line
+            
+            # Region
+            elif re.match(r'^(Montréal|Laval|Montérégie|Capitale-Nationale|Outaouais|Mauricie|Estrie|Lanaudière|Laurentides|Saguenay|Bas-Saint-Laurent|Chaudière-Appalaches|Abitibi|Côte-Nord|Nord-du-Québec|Gaspésie|Centre-du-Québec|Eeyou)', line):
+                current_hospital['region'] = line
+            
+            # Wait time
+            elif 'Temps d' in line:
+                match = re.search(r'(\d{1,2})\s*h\s*(\d{1,2})', line)
+                if match:
+                    current_hospital['wait_time'] = f"{match.group(1)}:{match.group(2)}"
+                else:
+                    current_hospital['wait_time'] = 'N/A'
+            
+            # People waiting
+            elif 'personnes qui attendent' in line:
+                match = re.search(r'(\d+)', line)
+                if match:
+                    current_hospital['people_waiting'] = int(match.group(1))
+            
+            # Total patients
+            elif 'total de personnes' in line:
+                match = re.search(r'(\d+)', line)
+                if match:
+                    current_hospital['total_patients'] = int(match.group(1))
+            
+            # Occupancy
+            elif 'Taux d' in line:
+                match = re.search(r'(\d+)', line)
+                if match:
+                    current_hospital['occupancy'] = int(match.group(1))
+            
+            # Room duration
+            elif 'salle d' in line:
+                match = re.search(r'(\d{1,2})\s*h\s*(\d{1,2})', line)
+                if match:
+                    current_hospital['room_duration'] = f"{match.group(1)}:{match.group(2)}"
+            
+            # Stretcher duration
+            elif 'civière' in line and 'durée' in line.lower():
+                match = re.search(r'(\d{1,2})\s*h\s*(\d{1,2})', line)
+                if match:
+                    current_hospital['stretcher_duration'] = f"{match.group(1)}:{match.group(2)}"
+    
+    # Add last hospital
+    if current_hospital:
+        hospitals.append(current_hospital)
+    
+    return hospitals
 
 
 def get_live_data_html():
-    """Layer 2: Scrape ALL 12 pages using URL navigation"""
-    print("   [Layer 2] HTML Scraper (URL pagination 12 pages)...")
+    """Layer 1: Scrape all 12 pages using URL navigation + body text parsing"""
+    print("   [Layer 1] HTML Scraper (12 pages)...")
 
     try:
         from playwright.sync_api import sync_playwright
 
         all_hospitals = []
-        gov_time = ""
         seen_names = set()
 
         with sync_playwright() as p:
@@ -294,14 +154,11 @@ def get_live_data_html():
                 else:
                     url = f"{HTML_PAGE_URL}?tx_solr%5Bpage%5D={page_num}"
                 
-                page.goto(url, wait_until='domcontentloaded', timeout=60000)
+                page.goto(url, wait_until='networkidle', timeout=60000)
                 page.wait_for_timeout(5000)
                 
-                html = page.content()
-                hospitals, page_gov_time = parse_hospitals_from_html(html)
-                
-                if not gov_time and page_gov_time:
-                    gov_time = page_gov_time
+                body_text = page.locator('body').inner_text()
+                hospitals = parse_hospital_data(body_text)
                 
                 new_count = 0
                 for h in hospitals:
@@ -315,97 +172,89 @@ def get_live_data_html():
             browser.close()
 
         if all_hospitals:
-            print(f"   ✅ Layer 2 SUCCESS: {len(all_hospitals)} hospitals total")
-            return all_hospitals, gov_time
-        else:
-            print(f"   ⚠️ No hospitals parsed")
+            print(f"   ✅ Layer 1 SUCCESS: {len(all_hospitals)} hospitals total")
+            return all_hospitals, ""
 
     except Exception as e:
-        print(f"   ❌ Layer 2 error: {e}")
+        print(f"   ❌ Layer 1 error: {e}")
 
-    print("   ❌ Layer 2 failed")
+    print("   ❌ Layer 1 failed")
     return None, None
 
 
 # ═══════════════════════════════════════════════════════════════
-# LAYER 3: CKAN DATASTORE API (old API)
+# LAYER 2: CSV DOWNLOAD (fallback)
 # ═══════════════════════════════════════════════════════════════
 
-def get_live_data_ckan():
-    """Layer 3: CKAN Datastore API"""
-    print("   [Layer 3] CKAN Datastore API...")
-
-    url = f"{CKAN_DATASTORE_API}&limit=200"
+def download_csv_as_json(url):
+    """Layer 2: Download CSV from MSSS"""
+    print(f"   [Layer 2] Downloading CSV...")
 
     try:
-        response = requests.get(
-            url,
-            headers=STEALTH_HEADERS,
-            timeout=30
-        )
+        response = requests.get(url, headers=STEALTH_HEADERS, timeout=30)
+        
+        if response.status_code != 200:
+            print(f"   ❌ HTTP {response.status_code}")
+            return None, None
 
-        print(f"   Debug: HTTP Status = {response.status_code}")
+        content = response.content
+        text = None
+        for encoding in ['utf-8-sig', 'utf-8', 'latin-1']:
+            try:
+                text = content.decode(encoding)
+                break
+            except:
+                continue
 
-        if response.status_code == 200:
-            data = response.json()
-            records = data.get("result", {}).get("records", [])
-            print(f"   Debug: {len(records)} records")
+        if not text:
+            return None, None
 
-            if records:
-                hospitals = []
-                gov_time = ""
+        reader = csv.DictReader(io.StringIO(text))
+        hospitals = []
 
-                for record in records:
-                    nom = safe_str(record.get("Nom_installation", ""))
-                    if not nom or "Total" in nom or "Ensemble" in nom:
-                        continue
+        for row in reader:
+            nom = safe_str(row.get('Nom_installation', ''))
+            if not nom or 'Total' in nom:
+                continue
 
-                    h = {
-                        "name": nom,
-                        "region": safe_str(record.get("RSS", "")),
-                        "total_stretchers": safe_int(record.get("Nombre_de_civieres_fonctionnelles", 0)),
-                        "patients_on_stretcher": safe_int(record.get("Nombre_de_civieres_occupees", 0)),
-                        "patients_over_24h": safe_int(record.get("Nombre_de_patients_sur_civiere_plus_de_24_heures", 0)),
-                        "patients_over_48h": safe_int(record.get("Nombre_de_patients_sur_civiere_plus_de_48_heures", 0)),
-                        "total_patients": safe_int(record.get("Nombre_total_de_patients_presents_a_lurgence", 0)),
-                        "patients_waiting": safe_int(record.get("Nombre_total_de_patients_en_attente_de_PEC", 0)),
-                        "occupancy_rate": 0,
-                        "wait_time_minutes": 0,
-                        "wait_time_str": "",
-                        "stay_room_minutes": 0,
-                        "stay_stretcher_minutes": 0,
-                        "postal_code": "",
-                    }
-                    h["occupancy_rate"] = round((h["patients_on_stretcher"] / h["total_stretchers"]) * 100, 1) if h["total_stretchers"] > 0 else 0
-                    hospitals.append(h)
+            h = {
+                'name': nom,
+                'address': '',
+                'region': safe_str(row.get('Region', '')),
+                'wait_time': '',
+                'people_waiting': safe_int(row.get('Nombre_total_de_patients_en_attente_de_PEC', 0)),
+                'total_patients': safe_int(row.get('Nombre_total_de_patients_presents_a_lurgence', 0)),
+                'occupancy': 0,
+                'room_duration': '',
+                'stretcher_duration': '',
+            }
+            hospitals.append(h)
 
-                if hospitals:
-                    print(f"   ✅ Layer 3 SUCCESS: {len(hospitals)} hospitals")
-                    return hospitals, gov_time
+        if hospitals:
+            print(f"   ✅ Layer 2 SUCCESS: {len(hospitals)} hospitals")
+            return hospitals, ""
 
     except Exception as e:
-        print(f"   ❌ Layer 3 error: {e}")
+        print(f"   ❌ CSV error: {e}")
 
-    print("   ❌ Layer 3 failed")
     return None, None
 
 
 # ═══════════════════════════════════════════════════════════════
-# LAYER 4: BACKUP FILE
+# LAYER 3: BACKUP FILE
 # ═══════════════════════════════════════════════════════════════
 
 def get_backup_data():
-    """Layer 4: Load backup JSON file"""
-    print("   [Layer 4] Backup file...")
+    """Layer 3: Load backup JSON file"""
+    print("   [Layer 3] Backup file...")
     if os.path.exists(BACKUP_FILE):
         try:
             with open(BACKUP_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
             hospitals = data.get("hospitals", [])
-            gov_time = data.get("gov_data_timestamp", "")
             if hospitals:
-                print(f"   ✅ Layer 4 SUCCESS: {len(hospitals)} hospitals from backup")
-                return hospitals, gov_time
+                print(f"   ✅ Layer 3 SUCCESS: {len(hospitals)} hospitals from backup")
+                return hospitals, ""
         except:
             pass
     print("   ❌ No backup available")
@@ -418,28 +267,25 @@ def get_backup_data():
 
 def calculate_global_stats(hospitals):
     if not hospitals:
-        return {"total_patients": 0, "total_waiting": 0, "avg_occupancy": 0, "total_over_24h": 0, "total_over_48h": 0}
+        return {"total_patients": 0, "total_waiting": 0, "avg_occupancy": 0}
 
-    with_stretchers = [h for h in hospitals if h.get("total_stretchers", 0) > 0]
-    avg_occ = round(sum(h["occupancy_rate"] for h in with_stretchers) / len(with_stretchers), 1) if with_stretchers else 0
+    total_occ = sum(h.get('occupancy', 0) for h in hospitals)
+    avg_occ = round(total_occ / len(hospitals), 1) if hospitals else 0
 
     return {
-        "total_patients": sum(h.get("total_patients", 0) for h in hospitals),
-        "total_waiting": sum(h.get("patients_waiting", 0) for h in hospitals),
+        "total_patients": sum(h.get('total_patients', 0) for h in hospitals),
+        "total_waiting": sum(h.get('people_waiting', 0) for h in hospitals),
         "avg_occupancy": avg_occ,
-        "total_over_24h": sum(h.get("patients_over_24h", 0) for h in hospitals),
-        "total_over_48h": sum(h.get("patients_over_48h", 0) for h in hospitals),
     }
 
 
-def save_all(hospitals, global_stats, gov_time, freshness):
+def save_all(hospitals, global_stats, freshness):
     now = datetime.now()
 
     data = {
         "last_update": now.isoformat(),
         "source": "MSSS / Gouvernement du Québec",
         "source_url": HTML_PAGE_URL,
-        "gov_data_timestamp": gov_time,
         "data_freshness": freshness,
         "global_stats": global_stats,
         "hospitals": hospitals
@@ -474,31 +320,26 @@ def main():
     print("=" * 60)
 
     hospitals = None
-    gov_time = ""
     freshness = "live"
 
-    # Layer 1: HTML Scraper (URL pagination - WORKS!)
-    hospitals, gov_time = get_live_data_html()
+    # Layer 1: Playwright HTML scraper (12 pages)
+    hospitals, _ = get_live_data_html()
 
-    # Layer 2: CSV download (may get 403 from GitHub)
+    # Layer 2: CSV download
     if not hospitals:
-        hospitals, gov_time = download_csv_as_json(MSSS_DIRECT_URL)
+        hospitals, _ = download_csv_as_json(MSSS_DIRECT_URL)
 
-    # Layer 3: CKAN API (old)
+    # Layer 3: Backup
     if not hospitals:
-        hospitals, gov_time = get_live_data_ckan()
-
-    # Layer 4: Backup
-    if not hospitals:
-        hospitals, gov_time = get_backup_data()
+        hospitals, _ = get_backup_data()
         freshness = "cached"
 
     if hospitals:
         global_stats = calculate_global_stats(hospitals)
-        save_all(hospitals, global_stats, gov_time, freshness)
+        save_all(hospitals, global_stats, freshness)
         print("\n✅ Scrape complete!")
     else:
-        print("\n❌ CRITICAL: All 4 layers failed!")
+        print("\n❌ CRITICAL: All 3 layers failed!")
 
 
 if __name__ == "__main__":
