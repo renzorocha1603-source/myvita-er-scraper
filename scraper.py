@@ -189,6 +189,53 @@ def get_coordinates_from_postal(postal_code):
     return None
 
 # ============================================================
+# IN-HOUSE OCCUPANCY CALCULATION
+# ============================================================
+def calculate_hospital_occupancy(full_text):
+    """Calculate in-house occupancy from total patients, waiting, and wait time"""
+    total_patients = 0
+    people_waiting = 0
+    wait_time_minutes = 0
+    
+    # Parse total patients
+    match = re.search(r'total de personnes[^:]*:\s*(\d+)', full_text, re.IGNORECASE)
+    if match:
+        total_patients = int(match.group(1))
+    
+    # Parse people waiting
+    match = re.search(r'personnes qui attendent[^:]*:\s*(\d+)', full_text, re.IGNORECASE)
+    if match:
+        people_waiting = int(match.group(1))
+    
+    # Parse wait time
+    match = re.search(r'Temps d[^:]*:\s*(\d{1,2})\s*h\s*(\d{1,2})', full_text, re.IGNORECASE)
+    if match:
+        wait_time_minutes = int(match.group(1)) * 60 + int(match.group(2))
+    
+    # Check if any data exists
+    if total_patients == 0 and people_waiting == 0 and wait_time_minutes == 0:
+        return -1  # N/A
+    
+    # In-house calculation
+    score = 0
+    weight_sum = 0
+    
+    if total_patients > 0:
+        score += (total_patients / 20.0) * 100
+        weight_sum += 2
+    if people_waiting > 0:
+        score += (people_waiting / 10.0) * 100
+        weight_sum += 1
+    if wait_time_minutes > 0:
+        score += (wait_time_minutes / 300.0) * 100
+        weight_sum += 1
+    
+    if weight_sum > 0:
+        return max(1, min(300, round(score / weight_sum)))
+    
+    return -1
+
+# ============================================================
 # DATA SOURCES
 # ============================================================
 BASE_URL = "https://www.quebec.ca/sante/systeme-et-services-de-sante/organisation-des-services/donnees-systeme-sante-quebecois-services/situation-urgences"
@@ -210,11 +257,11 @@ STEALTH_HEADERS = {
 
 
 # ═══════════════════════════════════════════════════════════════
-# COPY-PASTE SCRAPER (with anti-merge + GPS coordinates)
+# COPY-PASTE SCRAPER (with anti-merge + GPS coordinates + occupancy)
 # ═══════════════════════════════════════════════════════════════
 
 def extract_hospital_full_text(body_text):
-    """Extract each hospital's FULL TEXT and GPS coordinates."""
+    """Extract each hospital's FULL TEXT, GPS coordinates, and occupancy."""
     hospitals = []
     lines = body_text.split('\n')
     
@@ -291,7 +338,7 @@ def extract_hospital_full_text(body_text):
     if current_hospital:
         hospitals.append(current_hospital)
     
-    # Post-process: Add GPS coordinates
+    # Post-process: Add GPS coordinates + occupancy
     final_hospitals = []
     for h in hospitals:
         full_text = h['full_text']
@@ -310,13 +357,16 @@ def extract_hospital_full_text(body_text):
             h['latitude'] = None
             h['longitude'] = None
         
+        # ★ ADD IN-HOUSE OCCUPANCY
+        h['occupancy'] = calculate_hospital_occupancy(full_text)
+        
         final_hospitals.append(h)
     
     return final_hospitals
 
 
 def get_all_hospitals():
-    """Scrape all 12 pages and return all hospitals with GPS coordinates"""
+    """Scrape all 12 pages and return all hospitals with GPS + occupancy"""
     print("   [Copy-Paste Scraper] Loading all 12 pages...")
     
     try:
@@ -349,9 +399,9 @@ def get_all_hospitals():
             
             browser.close()
         
-        # Count how many have GPS coordinates
         with_coords = sum(1 for h in all_hospitals if h.get('latitude') is not None)
-        print(f"   ✅ Copy-Paste SUCCESS: {len(all_hospitals)} hospitals ({with_coords} with GPS)")
+        with_occ = sum(1 for h in all_hospitals if h.get('occupancy', -1) >= 0)
+        print(f"   ✅ SUCCESS: {len(all_hospitals)} hospitals ({with_coords} GPS, {with_occ} occupancy)")
         return all_hospitals
     
     except Exception as e:
@@ -360,14 +410,18 @@ def get_all_hospitals():
 
 
 # ═══════════════════════════════════════════════════════════════
-# CALCULATE GLOBAL STATS
+# CALCULATE GLOBAL STATS (from in-house occupancy)
 # ═══════════════════════════════════════════════════════════════
 
 def calculate_global_stats(hospitals):
     total_patients = 0
     total_waiting = 0
-    total_occupancy = 0
-    count_with_occupancy = 0
+    
+    # Calculate average from in-house occupancy
+    occupancies = [h.get('occupancy', -1) for h in hospitals]
+    valid_occupancies = [o for o in occupancies if o >= 0]
+    
+    avg_occupancy = round(sum(valid_occupancies) / len(valid_occupancies)) if valid_occupancies else 0
     
     for h in hospitals:
         full_text = h.get('full_text', '')
@@ -379,13 +433,6 @@ def calculate_global_stats(hospitals):
         match = re.search(r'personnes qui attendent[^:]*:\s*(\d+)', full_text, re.IGNORECASE)
         if match:
             total_waiting += int(match.group(1))
-        
-        match = re.search(r'Taux d[^0-9]*(\d+)', full_text, re.IGNORECASE)
-        if match:
-            total_occupancy += int(match.group(1))
-            count_with_occupancy += 1
-    
-    avg_occupancy = round(total_occupancy / count_with_occupancy) if count_with_occupancy > 0 else 0
     
     return {
         'total_patients': int(total_patients),
@@ -443,7 +490,7 @@ def save_all(hospitals, global_stats):
 
 def main():
     print("=" * 60)
-    print(f"MyVita ER Scraper (with GPS) — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"MyVita ER Scraper (GPS + In-House Occupancy) — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
     
     hospitals = get_all_hospitals()
