@@ -1,13 +1,13 @@
 """
 MyVita — Medication Shortages Sync
 Fetches Health Product Shortages Canada data and syncs to Firestore.
-Uses requests + string parsing (no regex, no HTML parser complexity).
+Uses Playwright (browser) to bypass 403 blocks + string parsing.
 Runs every 12 hours via GitHub Actions.
 """
 
 import json
 import os
-import requests
+import time
 from datetime import datetime, timezone
 from typing import List, Dict, Any
 
@@ -25,17 +25,6 @@ FIREBASE_CREDENTIALS_JSON = os.environ.get("MYVITA_FIREBASE_SERVICE_ACCOUNT", ""
 
 # Active statuses to fetch
 ACTIVE_STATUSES = ["active_confirmed", "anticipated_shortage", "avoided_shortage"]
-
-# User-Agent to avoid blocking
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9,fr;q=0.8",
-}
-
-# Timeout in seconds
-TIMEOUT = 15
-
 
 # ═══════════════════════════════════════════════════════════════
 # FIREBASE INITIALIZATION
@@ -143,7 +132,6 @@ def parse_row(row_html: str) -> Dict[str, str]:
             shortage['status'] = row_html[td_content_start:td_content_end].strip()
 
     # Extract strength (look for pattern after title)
-    # Simple approach: get text between the 3rd and 4th <td>
     tds = []
     td_pos = 0
     while True:
@@ -162,35 +150,47 @@ def parse_row(row_html: str) -> Dict[str, str]:
     return shortage
 
 
+# ═══════════════════════════════════════════════════════════════
+# PLAYWRIGHT FETCH (bypasses 403)
+# ═══════════════════════════════════════════════════════════════
+
+def fetch_page_with_playwright(url: str, wait_seconds: int = 8000) -> str:
+    """Fetch a page using Playwright to bypass bot detection."""
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        
+        page.goto(url, wait_until='networkidle', timeout=60000)
+        page.wait_for_timeout(wait_seconds)
+        
+        html_content = page.content()
+        browser.close()
+    
+    return html_content
+
+
 def fetch_search_results(status: str, page: int = 1, limit: int = 100) -> List[Dict[str, str]]:
-    """Fetch search results for a specific status."""
+    """Fetch search results for a specific status using Playwright."""
+    import urllib.parse
+
+    params = {
+        "status": status,
+        "limit": limit,
+        "page": page,
+        "report_published": "1",
+    }
+    full_url = f"{BASE_URL}{SEARCH_PATH}?{urllib.parse.urlencode(params)}"
+
     try:
-        response = requests.get(
-            f"{BASE_URL}{SEARCH_PATH}",
-            params={
-                "status": status,
-                "limit": limit,
-                "page": page,
-                "report_published": "1",
-            },
-            headers=HEADERS,
-            timeout=TIMEOUT,
-        )
-
-        if response.status_code != 200:
-            print(f"  HTTP {response.status_code} for {status} page {page}")
-            return []
-
-        rows = extract_rows_from_html(response.text)
+        print(f"  Fetching {status} page {page} via Playwright...")
+        html_content = fetch_page_with_playwright(full_url)
+        
+        rows = extract_rows_from_html(html_content)
         print(f"  {status} page {page}: {len(rows)} results")
         return rows
 
-    except requests.exceptions.Timeout:
-        print(f"  TIMEOUT for {status} page {page}")
-        return []
-    except requests.exceptions.ConnectionError as e:
-        print(f"  Connection error for {status}: {e}")
-        return []
     except Exception as e:
         print(f"  Error fetching {status} page {page}: {e}")
         return []
@@ -204,7 +204,7 @@ def fetch_all_shortages() -> List[Dict[str, str]]:
         print(f"Fetching status: {status}...")
         page = 1
 
-        while page <= 5:  # Max 5 pages per status (500 items)
+        while page <= 3:  # Max 3 pages per status (300 items each)
             results = fetch_search_results(status, page=page, limit=100)
             if not results:
                 break
@@ -264,7 +264,7 @@ def transform_shortage(raw: Dict[str, str], status_filter: str) -> Dict[str, Any
         'strength': raw.get('strength', ''),
         'status': status_filter,
         'is_active': True,
-        'tier_3': False,  # Will be updated separately from Tier 3 page
+        'tier_3': False,
         'search_keywords': generate_search_keywords(raw),
         'updated_at': datetime.now(timezone.utc),
     }
@@ -327,7 +327,7 @@ def sync_to_firestore(db: firestore.Client, shortages: List[Dict[str, Any]]):
 
 def main():
     print("=" * 60)
-    print("MyVita — Medication Shortages Sync")
+    print("MyVita — Medication Shortages Sync (Playwright)")
     print(f"Started at: {datetime.now(timezone.utc).isoformat()}")
     print("=" * 60)
 
@@ -339,7 +339,6 @@ def main():
 
     transformed = []
     for raw in raw_shortages:
-        # Determine which status filter this came from
         status = raw.get('status', 'active_confirmed')
         transformed.append(transform_shortage(raw, status))
 
