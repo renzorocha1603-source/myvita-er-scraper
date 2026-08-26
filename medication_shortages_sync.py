@@ -1,7 +1,7 @@
 """
 MyVita — Medication Shortages Sync
 Fetches Health Product Shortages Canada data and syncs to Firestore.
-Uses Playwright + inner_text debugging.
+Uses Playwright with anti-Cloudflare measures.
 Runs every 12 hours via GitHub Actions.
 """
 
@@ -64,39 +64,80 @@ def parse_status(status_text: str) -> str:
 
 
 # ═══════════════════════════════════════════════════════════════
-# PLAYWRIGHT FETCH WITH DEBUG
+# ANTI-CLOUDFLARE PLAYWRIGHT FETCH
 # ═══════════════════════════════════════════════════════════════
 
-def fetch_page_text_with_playwright(url: str) -> str:
-    """Fetch page using Playwright and return body inner_text with debug."""
+def fetch_with_anti_cloudflare(url: str) -> str:
+    """Fetch page with anti-bot detection measures."""
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+        browser = p.chromium.launch(
+            headless=True,
+            args=[
+                '--disable-blink-features=AutomationControlled',
+                '--no-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-web-security',
+                '--disable-features=IsolateOrigins,site-per-process',
+            ]
+        )
         
-        page.goto(url, wait_until='domcontentloaded', timeout=45000)
-        page.wait_for_timeout(10000)
+        context = browser.new_context(
+            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            viewport={'width': 1920, 'height': 1080},
+            locale='fr-CA',
+            timezone_id='America/Montreal',
+            has_touch=False,
+            is_mobile=False,
+        )
+        
+        # Hide webdriver
+        context.add_init_script(
+            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+        )
+        context.add_init_script(
+            "delete navigator.__proto__.webdriver"
+        )
+        context.add_init_script(
+            "window.chrome = {runtime: {}}"
+        )
+        context.add_init_script(
+            "Object.defineProperty(navigator, 'languages', {get: () => ['fr-CA', 'fr', 'en-CA', 'en']})"
+        )
+        context.add_init_script(
+            "Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]})"
+        )
+        
+        page = context.new_page()
+        
+        # Random mouse movement to look human
+        page.mouse.move(500, 500)
+        page.wait_for_timeout(500)
+        page.mouse.move(800, 300)
+        
+        page.goto(url, wait_until='networkidle', timeout=60000)
+        
+        # Wait for Cloudflare to verify
+        page.wait_for_timeout(15000)
+        
+        # Check if Cloudflare challenge is present
+        for attempt in range(3):
+            body_text = page.locator('body').inner_text()
+            if 'Pénurie' in body_text or 'Shortage' in body_text or 'OMEGA' in body_text:
+                break
+            # Still on Cloudflare page, wait more
+            print(f"   Cloudflare detected, waiting... (attempt {attempt+1})")
+            page.wait_for_timeout(15000)
         
         body_text = page.locator('body').inner_text()
-        
-        # ★ DEBUG OUTPUT
-        print(f"   Body text length: {len(body_text)}")
-        print(f"   Contains tab character: {chr(9) in body_text}")
-        print(f"   Contains 'Pénurie': {'Pénurie' in body_text}")
-        print(f"   Contains 'Shortage': {'Shortage' in body_text}")
-        print(f"   Contains 'OMEGA': {'OMEGA' in body_text}")
-        print(f"   First 2000 chars:")
-        print(body_text[:2000])
-        print(f"   --- END DEBUG ---")
-        
         browser.close()
     
     return body_text
 
 
 # ═══════════════════════════════════════════════════════════════
-# PARSER (will be refined after seeing debug output)
+# PARSER (tab-separated table data)
 # ═══════════════════════════════════════════════════════════════
 
 def parse_shortages_from_text(body_text: str) -> List[Dict[str, str]]:
@@ -104,34 +145,25 @@ def parse_shortages_from_text(body_text: str) -> List[Dict[str, str]]:
     shortages = []
     lines = body_text.split('\n')
     
-    print(f"   Total lines: {len(lines)}")
-    
-    # Print first 50 lines with line numbers
-    for i, line in enumerate(lines[:50]):
-        print(f"   Line {i}: '{line.strip()[:100]}'")
-    
     for line in lines:
         line_stripped = line.strip()
         if not line_stripped:
             continue
         
-        # Skip headers and non-data lines
-        if any(skip in line_stripped for skip in ['Nom de marque', 'Brand name', 'Liste des rapports', 'Rapports de']):
+        # Skip non-data lines
+        if any(skip in line_stripped for skip in ['Nom de marque', 'Brand name', 'Liste des rapports', 'Rapports de', 'Légende']):
             continue
         
-        # Check if line contains tab-separated data
+        # Check for tab-separated data
         if '\t' in line_stripped:
-            parts = line_stripped.split('\t')
-            parts = [p.strip() for p in parts if p.strip()]
-            
+            parts = [p.strip() for p in line_stripped.split('\t') if p.strip()]
             if len(parts) >= 4:
                 brand_name = parts[0]
-                company_name = parts[1] if len(parts) > 1 else ''
-                status_text = parts[2] if len(parts) > 2 else ''
-                strength = parts[3] if len(parts) > 3 else ''
+                company_name = parts[1]
+                status_text = parts[2]
+                strength = parts[3]
                 report_id = ''
                 
-                # Find report ID in last part
                 for part in reversed(parts):
                     match = re.search(r'(\d{6})', part)
                     if match:
@@ -156,7 +188,7 @@ def parse_shortages_from_text(body_text: str) -> List[Dict[str, str]]:
 
 def fetch_all_shortages() -> List[Dict[str, str]]:
     """Fetch all shortages from the website."""
-    print("   [Scraper] Loading pages...")
+    print("   [Anti-Cloudflare Scraper] Loading pages...")
     
     all_shortages = []
     seen_report_ids = set()
@@ -167,21 +199,22 @@ def fetch_all_shortages() -> List[Dict[str, str]]:
     ]
     
     body_text = None
-    used_url = None
     
     for url in urls_to_try:
         try:
             print(f"   Trying: {url}")
-            body_text = fetch_page_text_with_playwright(url)
-            if body_text and len(body_text) > 500:
-                used_url = url
-                print(f"   ✅ Page loaded ({len(body_text)} chars)")
+            body_text = fetch_with_anti_cloudflare(url)
+            
+            if body_text and ('Pénurie' in body_text or 'Shortage' in body_text or 'OMEGA' in body_text):
+                print(f"   ✅ Data loaded ({len(body_text)} chars)")
                 break
+            else:
+                print(f"   ⚠️ Cloudflare still blocking, trying next URL")
         except Exception as e:
             print(f"   ❌ Failed: {e}")
     
-    if not body_text:
-        print("   ❌ Could not load any page")
+    if not body_text or ('Pénurie' not in body_text and 'Shortage' not in body_text):
+        print("   ❌ Could not bypass Cloudflare")
         return []
     
     shortages = parse_shortages_from_text(body_text)
@@ -289,7 +322,7 @@ def sync_to_firestore(db, shortages):
 
 def main():
     print("=" * 60)
-    print("MyVita — Medication Shortages Sync (Debug)")
+    print("MyVita — Medication Shortages Sync (Anti-Cloudflare)")
     print(f"Started at: {datetime.now(timezone.utc).isoformat()}")
     print("=" * 60)
     
