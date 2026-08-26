@@ -1,7 +1,6 @@
 """
-MyVita — Medication Shortages Sync (RAMQ Quebec)
+MyVita — Medication Shortages Sync (RAMQ Quebec + DEBUG)
 Fetches Quebec-specific medication shortages from RAMQ.
-No Cloudflare, government source.
 """
 
 import json
@@ -36,105 +35,132 @@ def init_firebase():
 
 
 # ═══════════════════════════════════════════════════════════════
-# PLAYWRIGHT FETCH
+# PLAYWRIGHT FETCH WITH DEBUG
 # ═══════════════════════════════════════════════════════════════
 
 def fetch_page_with_playwright(url: str) -> str:
-    """Fetch RAMQ page using Playwright."""
+    """Fetch RAMQ page using Playwright with debug output."""
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
+        
         page.goto(url, wait_until='domcontentloaded', timeout=45000)
-        page.wait_for_timeout(8000)
+        page.wait_for_timeout(10000)
+        
         body_text = page.locator('body').inner_text()
+        
+        # ★ DEBUG OUTPUT
+        print(f"   Body text length: {len(body_text)}")
+        print(f"   Contains 'Dénomination': {'Dénomination' in body_text}")
+        print(f"   Contains 'Marque': {'Marque' in body_text}")
+        print(f"   Contains 'DIN': {'DIN' in body_text}")
+        print(f"   First 3000 chars:")
+        print(body_text[:3000])
+        print(f"   --- END DEBUG ---")
+        
+        # Also check if page loaded correctly
+        html_content = page.content()
+        print(f"   HTML length: {len(html_content)}")
+        print(f"   HTML contains table: {'<table' in html_content}")
+        print(f"   HTML contains 'rupture': {'rupture' in html_content.lower()}")
+        
         browser.close()
+    
     return body_text
 
 
 # ═══════════════════════════════════════════════════════════════
-# PARSER FOR RAMQ TABLE
+# STATUS MAPPING
 # ═══════════════════════════════════════════════════════════════
 
 STATUS_MAP = {
-    'Ce produit ou un produit de l\'encadré est disponible': 'available',
-    'Ce produit ou un produit de l\'encadré sera disponible sous peu': 'available_soon',
+    "Ce produit ou un produit de l'encadré est disponible": 'available',
+    "Ce produit ou un produit de l'encadré sera disponible sous peu": 'available_soon',
     'En cours de vérification': 'verification',
     'Produit retiré après commercialisation': 'withdrawn',
     'Rupture confirmée': 'confirmed_shortage',
 }
 
 
+# ═══════════════════════════════════════════════════════════════
+# PARSER
+# ═══════════════════════════════════════════════════════════════
+
 def parse_ramq_table(body_text: str) -> List[Dict[str, str]]:
     """Parse the RAMQ medication shortage table."""
     shortages = []
     lines = body_text.split('\n')
     
-    # Find table start
+    print(f"   Total lines: {len(lines)}")
+    
+    # Print first 60 lines
+    for i, line in enumerate(lines[:60]):
+        print(f"   Line {i}: '{line.strip()[:120]}'")
+    
+    # Find table data
     start_idx = -1
     for i, line in enumerate(lines):
-        if 'Dénomination commune' in line and 'Marque de commerce' in line:
+        if 'Dénomination' in line and 'Marque' in line:
             start_idx = i
             break
     
     if start_idx == -1:
+        print("   ❌ Could not find table headers")
         return []
     
+    print(f"   Table starts at line {start_idx}")
+    
+    # Parse entries after header
     current_entry = []
     
     for line in lines[start_idx+1:]:
         line_stripped = line.strip()
         
-        # Stop at pagination or page footer
+        # Stop conditions
         if 'Page ' in line_stripped and 'de' in line_stripped:
             break
         if 'Évaluer la page' in line_stripped:
             break
+        if 'Il reste' in line_stripped:
+            break
         
-        # Skip header
-        if 'Dénomination commune' in line_stripped or 'Marque de commerce' in line_stripped:
+        # Skip header rows
+        if 'Dénomination' in line_stripped or 'Marque de commerce' in line_stripped:
             continue
         
         if not line_stripped:
             if current_entry:
-                shortage = parse_ramq_entry(current_entry)
+                shortage = parse_entry_with_debug(current_entry)
                 if shortage:
                     shortages.append(shortage)
                 current_entry = []
             continue
         
-        # Skip non-data lines
-        if line_stripped.startswith(('Page', 'Évaluer', 'RAMQ', 'À propos', 'Nous', 'Suivre', 'Accessibilité', 'Politique', '©')):
+        # Skip footer/site nav lines
+        if any(skip in line_stripped for skip in ['RAMQ', 'À propos', 'Nous joindre', 'Nous suivre', 'Suivre la RAMQ', 'Accessibilité', 'Politique', '©', 'Application de']):
             continue
         
         current_entry.append(line_stripped)
     
-    # Don't forget last entry
     if current_entry:
-        shortage = parse_ramq_entry(current_entry)
+        shortage = parse_entry_with_debug(current_entry)
         if shortage:
             shortages.append(shortage)
     
+    print(f"   Parsed: {len(shortages)} entries")
     return shortages
 
 
-def parse_ramq_entry(lines: List[str]) -> Dict[str, str]:
-    """
-    Parse a RAMQ entry from collected lines.
-    Structure:
-    [common_name]
-    [brand_name]
-    [form]
-    [strength]
-    [DIN]
-    [status]
-    [date]
-    """
-    if len(lines) < 4:
+def parse_entry_with_debug(lines: List[str]) -> Dict[str, str]:
+    """Parse entry with debug output."""
+    if len(lines) < 3:
         return None
     
-    common_name = lines[0].strip() if len(lines) > 0 else ''
+    print(f"   Entry ({len(lines)} lines): {lines[:5]}")
+    
+    generic_name = lines[0].strip()
     brand_name = lines[1].strip() if len(lines) > 1 else ''
     form = lines[2].strip() if len(lines) > 2 else ''
     strength = lines[3].strip() if len(lines) > 3 else ''
@@ -142,7 +168,7 @@ def parse_ramq_entry(lines: List[str]) -> Dict[str, str]:
     status_text = ''
     date = ''
     
-    # Find DIN (8-digit number)
+    # Find DIN (8 digits)
     for line in lines:
         match = re.search(r'\b(\d{8})\b', line.strip())
         if match:
@@ -152,38 +178,41 @@ def parse_ramq_entry(lines: List[str]) -> Dict[str, str]:
     # Find status
     for line in lines:
         stripped = line.strip()
-        if stripped in STATUS_MAP or any(kw in stripped for kw in STATUS_MAP.keys()):
+        if stripped in STATUS_MAP:
             status_text = stripped
             break
+        for kw in STATUS_MAP.keys():
+            if kw in stripped:
+                status_text = kw
+                break
     
-    # Find date (YYYY-MM-DD)
+    # Find date
     for line in lines:
         match = re.search(r'(\d{4}-\d{2}-\d{2})', line.strip())
         if match:
             date = match.group(1)
             break
     
-    if not common_name or not din:
+    if not din:
         return None
     
-    internal_status = STATUS_MAP.get(status_text, status_text)
-    is_active = internal_status in ['confirmed_shortage', 'verification']
+    internal_status = STATUS_MAP.get(status_text, status_text.lower().replace(' ', '_'))
     
     return {
         'report_id': din,
-        'brand_name': brand_name or common_name,
-        'generic_name': common_name,
+        'brand_name': brand_name or generic_name,
+        'generic_name': generic_name,
         'form': form,
         'strength': strength,
         'din': din,
         'status': internal_status,
-        'is_active': is_active,
+        'is_active': internal_status in ['confirmed_shortage', 'verification'],
         'date': date,
     }
 
 
 # ═══════════════════════════════════════════════════════════════
-# FETCH ALL DATA
+# FETCH ALL
 # ═══════════════════════════════════════════════════════════════
 
 def fetch_all_shortages() -> List[Dict[str, str]]:
@@ -193,17 +222,15 @@ def fetch_all_shortages() -> List[Dict[str, str]]:
     all_shortages = []
     seen_dins = set()
     
-    # Try pages 1-3
     for page_num in range(1, 4):
-        url = RAMQ_URL
-        if page_num > 1:
-            url = f"{RAMQ_URL}?page={page_num}"
+        url = RAMQ_URL if page_num == 1 else f"{RAMQ_URL}?page={page_num}"
         
         try:
-            print(f"   Page {page_num}: {url}")
+            print(f"   Page {page_num}...")
             body_text = fetch_page_with_playwright(url)
             
             if not body_text or len(body_text) < 200:
+                print(f"   Page {page_num}: empty, stopping")
                 break
             
             shortages = parse_ramq_table(body_text)
@@ -218,7 +245,7 @@ def fetch_all_shortages() -> List[Dict[str, str]]:
             
             print(f"   Page {page_num}: {new_count} new (total: {len(all_shortages)})")
             
-            if new_count == 0:
+            if new_count == 0 and page_num > 1:
                 break
                 
         except Exception as e:
@@ -230,7 +257,7 @@ def fetch_all_shortages() -> List[Dict[str, str]]:
 
 
 # ═══════════════════════════════════════════════════════════════
-# DATA TRANSFORMATION
+# TRANSFORM + SYNC
 # ═══════════════════════════════════════════════════════════════
 
 def generate_search_keywords(shortage: Dict[str, str]) -> List[str]:
@@ -271,10 +298,6 @@ def transform_shortage(raw: Dict[str, str]) -> Dict[str, Any]:
     }
 
 
-# ═══════════════════════════════════════════════════════════════
-# FIRESTORE SYNC
-# ═══════════════════════════════════════════════════════════════
-
 def sync_to_firestore(db, shortages):
     collection_ref = db.collection(FIRESTORE_COLLECTION)
     synced_ids = set()
@@ -297,22 +320,6 @@ def sync_to_firestore(db, shortages):
     if batch_count > 0:
         batch.commit()
     
-    existing_docs = collection_ref.where('is_active', '==', True).stream()
-    stale_batch = db.batch()
-    stale_count = 0
-    
-    for doc in existing_docs:
-        if doc.id not in synced_ids:
-            stale_batch.update(doc.reference, {'is_active': False})
-            stale_count += 1
-            if stale_count >= 400:
-                stale_batch.commit()
-                stale_batch = db.batch()
-                stale_count = 0
-    
-    if stale_count > 0:
-        stale_batch.commit()
-    
     print(f"Synced {len(synced_ids)} shortages to Firestore")
 
 
@@ -322,7 +329,7 @@ def sync_to_firestore(db, shortages):
 
 def main():
     print("=" * 60)
-    print("MyVita — Medication Shortages Sync (RAMQ Quebec)")
+    print("MyVita — Medication Shortages Sync (RAMQ + DEBUG)")
     print(f"Started at: {datetime.now(timezone.utc).isoformat()}")
     print("=" * 60)
     
