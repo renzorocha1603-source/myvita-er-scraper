@@ -30,10 +30,9 @@ else:
     print("⚠️ No Firebase credentials found — saving to JSON only")
 
 # ============================================================
-# FSA COORDINATES TABLE (Postal code → GPS coordinates)
+# FSA COORDINATES TABLE
 # ============================================================
 FSA_COORDINATES = {
-    # Montreal Island
     'H1A': (45.60, -73.52), 'H1B': (45.65, -73.49), 'H1C': (45.66, -73.45),
     'H1E': (45.63, -73.55), 'H1G': (45.60, -73.58), 'H1H': (45.58, -73.58),
     'H1J': (45.59, -73.58), 'H1K': (45.61, -73.55), 'H1L': (45.60, -73.53),
@@ -76,7 +75,6 @@ FSA_COORDINATES = {
     'H9E': (45.47, -73.87), 'H9G': (45.46, -73.85), 'H9H': (45.45, -73.85),
     'H9J': (45.43, -73.87), 'H9K': (45.44, -73.87), 'H9R': (45.41, -73.80),
     'H9S': (45.44, -73.79), 'H9W': (45.42, -73.83),
-    # Quebec City
     'G1A': (46.80, -71.20), 'G1B': (46.88, -71.15), 'G1C': (46.88, -71.15),
     'G1E': (46.84, -71.20), 'G1G': (46.82, -71.22), 'G1H': (46.84, -71.22),
     'G1J': (46.83, -71.23), 'G1K': (46.81, -71.22), 'G1L': (46.83, -71.24),
@@ -84,17 +82,14 @@ FSA_COORDINATES = {
     'G1R': (46.80, -71.22), 'G1S': (46.78, -71.23), 'G1T': (46.78, -71.24),
     'G1V': (46.77, -71.27), 'G1W': (46.76, -71.28),
     'G2A': (46.85, -71.28), 'G2B': (46.86, -71.30),
-    # Gatineau
     'J8P': (45.48, -75.65), 'J8R': (45.48, -75.65), 'J8T': (45.48, -75.65),
     'J8V': (45.48, -75.65), 'J8W': (45.48, -75.65), 'J8X': (45.43, -75.70),
     'J8Y': (45.44, -75.73), 'J9A': (45.42, -75.73), 'J9H': (45.42, -75.73),
     'J9J': (45.42, -75.73),
-    # Sherbrooke
     'J1A': (45.40, -71.89), 'J1C': (45.40, -71.89), 'J1E': (45.40, -71.89),
     'J1G': (45.40, -71.89), 'J1H': (45.40, -71.89), 'J1J': (45.40, -71.89),
     'J1K': (45.40, -71.89), 'J1L': (45.40, -71.89), 'J1M': (45.40, -71.89),
     'J1N': (45.40, -71.89),
-    # Longueuil
     'J4A': (45.53, -73.52), 'J4B': (45.53, -73.52), 'J4C': (45.53, -73.52),
     'J4G': (45.53, -73.52), 'J4H': (45.53, -73.52), 'J4J': (45.53, -73.52),
     'J4K': (45.53, -73.52), 'J4L': (45.53, -73.52), 'J4M': (45.53, -73.52),
@@ -102,7 +97,6 @@ FSA_COORDINATES = {
     'J4S': (45.53, -73.52), 'J4T': (45.53, -73.52), 'J4V': (45.53, -73.52),
     'J4W': (45.53, -73.52), 'J4X': (45.53, -73.52), 'J4Y': (45.53, -73.52),
     'J4Z': (45.53, -73.52),
-    # Repentigny / Lanaudière
     'J5W': (45.77, -73.45), 'J5Y': (45.76, -73.44), 'J5Z': (45.77, -73.43),
     'J6A': (45.77, -73.44), 'J6B': (45.76, -73.43), 'J6C': (45.75, -73.42),
     'J6D': (45.74, -73.41), 'J6E': (45.73, -73.40), 'J6G': (45.76, -73.42),
@@ -118,24 +112,19 @@ FSA_COORDINATES = {
     'J7K': (45.79, -73.69), 'J7L': (45.80, -73.70), 'J7M': (45.81, -73.71),
     'J7N': (45.82, -73.72), 'J7P': (45.83, -73.73), 'J7R': (45.84, -73.74),
     'J7S': (45.85, -73.75), 'J7T': (45.86, -73.76), 'J7V': (45.87, -73.77),
-    # Saguenay
     'G7A': (48.43, -71.07), 'G7B': (48.43, -71.07), 'G7G': (48.43, -71.07),
     'G7H': (48.43, -71.07), 'G7J': (48.43, -71.07), 'G7K': (48.43, -71.07),
     'G7N': (48.43, -71.07), 'G7P': (48.43, -71.07), 'G7S': (48.43, -71.07),
     'G7T': (48.43, -71.07), 'G7X': (48.43, -71.07), 'G7Y': (48.43, -71.07),
-    # Trois-Rivières
     'G8T': (46.34, -72.58), 'G8V': (46.34, -72.58), 'G8W': (46.34, -72.58),
     'G8Y': (46.34, -72.58), 'G8Z': (46.34, -72.58), 'G9A': (46.34, -72.58),
     'G9B': (46.34, -72.58), 'G9C': (46.34, -72.58),
-    # Rimouski
     'G5L': (48.45, -68.52), 'G5M': (48.45, -68.52), 'G5N': (48.45, -68.52),
-    # Outaouais
     'J8A': (45.48, -75.62), 'J8B': (45.49, -75.63), 'J8C': (45.50, -75.64),
     'J8D': (45.51, -75.65), 'J8E': (45.52, -75.66), 'J8F': (45.53, -75.67),
     'J8G': (45.54, -75.68), 'J8H': (45.55, -75.69), 'J8J': (45.56, -75.70),
     'J8K': (45.57, -75.71), 'J8L': (45.58, -75.72), 'J8M': (45.59, -75.73),
     'J8N': (45.60, -75.74),
-    # Montérégie
     'J3A': (45.48, -73.29), 'J3B': (45.48, -73.29), 'J3E': (45.48, -73.29),
     'J3G': (45.48, -73.29), 'J3H': (45.48, -73.29), 'J3J': (45.48, -73.29),
     'J3K': (45.48, -73.29), 'J3L': (45.48, -73.29), 'J3M': (45.48, -73.29),
@@ -143,43 +132,22 @@ FSA_COORDINATES = {
     'J3S': (45.48, -73.29), 'J3T': (45.48, -73.29), 'J3V': (45.48, -73.29),
     'J3W': (45.48, -73.29), 'J3X': (45.48, -73.29), 'J3Y': (45.48, -73.29),
     'J3Z': (45.48, -73.29),
-    # Estrie
-    'J1A': (45.40, -71.89), 'J1C': (45.40, -71.89), 'J1E': (45.40, -71.89),
-    'J1G': (45.40, -71.89), 'J1H': (45.40, -71.89), 'J1J': (45.40, -71.89),
-    'J1K': (45.40, -71.89), 'J1L': (45.40, -71.89), 'J1M': (45.40, -71.89),
-    'J1N': (45.40, -71.89),
-    # Bas-Saint-Laurent
     'G0A': (47.50, -69.50), 'G0L': (47.80, -69.30), 'G5R': (47.40, -69.50),
     'G5V': (47.30, -69.10), 'G5W': (47.20, -69.00),
-    # Côte-Nord
     'G0G': (50.30, -66.50), 'G0T': (48.90, -69.20), 'G4R': (50.20, -66.40),
     'G5B': (49.20, -68.15), 'G5C': (49.10, -68.10),
-    # Gaspésie
     'G0C': (48.80, -64.60), 'G0E': (48.90, -65.50), 'G4X': (48.80, -64.50),
     'G4V': (48.80, -64.60), 'G0J': (48.60, -65.80),
-    # Abitibi
     'J9P': (48.10, -77.80), 'J9T': (48.20, -78.10), 'J9V': (48.50, -78.40),
     'J9X': (48.80, -79.20), 'J9Y': (48.60, -78.40),
-    # Mauricie
     'G9X': (47.40, -72.80), 'G9W': (47.30, -72.60), 'G9H': (47.20, -72.50),
-    # Chaudière-Appalaches
     'G6E': (46.20, -71.00), 'G6G': (46.10, -71.00), 'G6H': (46.00, -71.00),
     'G6J': (45.90, -71.00), 'G6K': (45.80, -71.00), 'G6L': (45.70, -71.00),
-    # Laurentides
     'J0R': (45.80, -74.00), 'J0T': (45.90, -74.10), 'J0W': (46.00, -74.20),
-    'J0X': (45.60, -75.00), 'J8C': (45.50, -75.60),
-    # Laval
-    'H7A': (45.66, -73.63), 'H7B': (45.66, -73.64), 'H7C': (45.66, -73.65),
-    'H7E': (45.64, -73.62), 'H7G': (45.65, -73.67), 'H7H': (45.65, -73.68),
-    'H7J': (45.66, -73.68), 'H7K': (45.67, -73.69), 'H7L': (45.64, -73.68),
-    'H7M': (45.66, -73.70), 'H7N': (45.70, -73.70), 'H7P': (45.62, -73.72),
-    'H7R': (45.63, -73.72), 'H7S': (45.64, -73.72), 'H7T': (45.65, -73.72),
-    'H7V': (45.63, -73.72), 'H7W': (45.62, -73.72), 'H7X': (45.62, -73.72),
-    'H7Y': (45.63, -73.72),
+    'J0X': (45.60, -75.00),
 }
 
 def get_coordinates_from_postal(postal_code):
-    """Get GPS coordinates from postal code FSA"""
     if not postal_code or len(postal_code) < 3:
         return None
     fsa = postal_code[:3].upper()
@@ -189,49 +157,52 @@ def get_coordinates_from_postal(postal_code):
     return None
 
 # ============================================================
-# IN-HOUSE OCCUPANCY CALCULATION
+# IN-HOUSE OCCUPANCY (calibrated less aggressively)
 # ============================================================
 def calculate_hospital_occupancy(full_text):
-    """Calculate in-house occupancy from total patients, waiting, and wait time"""
+    """Calculate in-house occupancy with realistic caps."""
     total_patients = 0
     people_waiting = 0
     wait_time_minutes = 0
     
-    # Parse total patients
     match = re.search(r'total de personnes[^:]*:\s*(\d+)', full_text, re.IGNORECASE)
     if match:
         total_patients = int(match.group(1))
     
-    # Parse people waiting
     match = re.search(r'personnes qui attendent[^:]*:\s*(\d+)', full_text, re.IGNORECASE)
     if match:
         people_waiting = int(match.group(1))
     
-    # Parse wait time
     match = re.search(r'Temps d[^:]*:\s*(\d{1,2})\s*h\s*(\d{1,2})', full_text, re.IGNORECASE)
     if match:
         wait_time_minutes = int(match.group(1)) * 60 + int(match.group(2))
     
-    # Check if any data exists
     if total_patients == 0 and people_waiting == 0 and wait_time_minutes == 0:
-        return -1  # N/A
+        return -1
     
-    # In-house calculation
     score = 0
     weight_sum = 0
     
     if total_patients > 0:
-        score += (total_patients / 20.0) * 100
+        # 20 patients = 100%, cap at 200%
+        patient_score = min((total_patients / 20.0) * 100, 200.0)
+        score += patient_score
         weight_sum += 2
+    
     if people_waiting > 0:
-        score += (people_waiting / 10.0) * 100
+        # ★ 40 people waiting = 100% (less aggressive)
+        waiting_score = min((people_waiting / 40.0) * 100, 150.0)
+        score += waiting_score
         weight_sum += 1
+    
     if wait_time_minutes > 0:
-        score += (wait_time_minutes / 300.0) * 100
+        # ★ 7 hours wait = 100% (less aggressive)
+        wait_score = min((wait_time_minutes / 420.0) * 100, 150.0)
+        score += wait_score
         weight_sum += 1
     
     if weight_sum > 0:
-        return max(1, min(300, round(score / weight_sum)))
+        return max(1, min(200, round(score / weight_sum)))
     
     return -1
 
@@ -255,13 +226,11 @@ STEALTH_HEADERS = {
     'Referer': 'https://www.quebec.ca/',
 }
 
-
 # ═══════════════════════════════════════════════════════════════
-# COPY-PASTE SCRAPER (with anti-merge + GPS coordinates + occupancy)
+# COPY-PASTE SCRAPER
 # ═══════════════════════════════════════════════════════════════
 
 def extract_hospital_full_text(body_text):
-    """Extract each hospital's FULL TEXT, GPS coordinates, and occupancy."""
     hospitals = []
     lines = body_text.split('\n')
     
@@ -321,7 +290,6 @@ def extract_hospital_full_text(body_text):
             
             if has_postal and current_has_postal:
                 hospitals.append(current_hospital)
-                
                 prev_name = current_lines[-1] if current_lines else line_stripped
                 current_hospital = {
                     'name': prev_name,
@@ -338,7 +306,6 @@ def extract_hospital_full_text(body_text):
     if current_hospital:
         hospitals.append(current_hospital)
     
-    # Post-process: Add GPS coordinates + occupancy
     final_hospitals = []
     for h in hospitals:
         full_text = h['full_text']
@@ -357,16 +324,13 @@ def extract_hospital_full_text(body_text):
             h['latitude'] = None
             h['longitude'] = None
         
-        # ★ ADD IN-HOUSE OCCUPANCY
         h['occupancy'] = calculate_hospital_occupancy(full_text)
-        
         final_hospitals.append(h)
     
     return final_hospitals
 
 
 def get_all_hospitals():
-    """Scrape all 12 pages and return all hospitals with GPS + occupancy"""
     print("   [Copy-Paste Scraper] Loading all 12 pages...")
     
     try:
@@ -382,8 +346,8 @@ def get_all_hospitals():
             for i, url in enumerate(PAGE_URLS, 1):
                 print(f"   Page {i}/12...")
                 
-                page.goto(url, wait_until='networkidle', timeout=60000)
-                page.wait_for_timeout(15000)
+                page.goto(url, wait_until='domcontentloaded', timeout=45000)
+                page.wait_for_timeout(8000)
                 
                 body_text = page.locator('body').inner_text()
                 hospitals = extract_hospital_full_text(body_text)
@@ -409,18 +373,12 @@ def get_all_hospitals():
         return None
 
 
-# ═══════════════════════════════════════════════════════════════
-# CALCULATE GLOBAL STATS (from in-house occupancy)
-# ═══════════════════════════════════════════════════════════════
-
 def calculate_global_stats(hospitals):
     total_patients = 0
     total_waiting = 0
     
-    # Calculate average from in-house occupancy
     occupancies = [h.get('occupancy', -1) for h in hospitals]
     valid_occupancies = [o for o in occupancies if o >= 0]
-    
     avg_occupancy = round(sum(valid_occupancies) / len(valid_occupancies)) if valid_occupancies else 0
     
     for h in hospitals:
@@ -440,10 +398,6 @@ def calculate_global_stats(hospitals):
         'avg_occupancy': int(avg_occupancy),
     }
 
-
-# ═══════════════════════════════════════════════════════════════
-# SAVE
-# ═══════════════════════════════════════════════════════════════
 
 def save_all(hospitals, global_stats):
     now = datetime.now()
@@ -484,13 +438,9 @@ def save_all(hospitals, global_stats):
     print(f"   Avg occupancy: {global_stats['avg_occupancy']}%")
 
 
-# ═══════════════════════════════════════════════════════════════
-# MAIN
-# ═══════════════════════════════════════════════════════════════
-
 def main():
     print("=" * 60)
-    print(f"MyVita ER Scraper (GPS + In-House Occupancy) — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"MyVita ER Scraper — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
     
     hospitals = get_all_hospitals()
