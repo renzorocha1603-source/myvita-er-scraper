@@ -1,7 +1,7 @@
 """
 MyVita — Medication Shortages Sync
 Fetches Health Product Shortages Canada data and syncs to Firestore.
-Uses Playwright + JavaScript table extraction.
+Uses Playwright + inner_text debugging.
 Runs every 12 hours via GitHub Actions.
 """
 
@@ -64,14 +64,11 @@ def parse_status(status_text: str) -> str:
 
 
 # ═══════════════════════════════════════════════════════════════
-# PLAYWRIGHT TABLE EXTRACTION
+# PLAYWRIGHT FETCH WITH DEBUG
 # ═══════════════════════════════════════════════════════════════
 
-def extract_tables_with_playwright(url: str) -> List[List[str]]:
-    """
-    Extract ALL table rows using JavaScript.
-    Returns list of rows, each row is a list of cell texts.
-    """
+def fetch_page_text_with_playwright(url: str) -> str:
+    """Fetch page using Playwright and return body inner_text with debug."""
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as p:
@@ -81,95 +78,74 @@ def extract_tables_with_playwright(url: str) -> List[List[str]]:
         page.goto(url, wait_until='domcontentloaded', timeout=45000)
         page.wait_for_timeout(10000)
         
-        # JavaScript to extract all table data
-        table_data = page.evaluate('''() => {
-            const tables = document.querySelectorAll('table');
-            const results = [];
-            
-            tables.forEach(table => {
-                const rows = table.querySelectorAll('tr');
-                rows.forEach(row => {
-                    const cells = row.querySelectorAll('td, th');
-                    if (cells.length >= 4) {
-                        const rowData = [];
-                        cells.forEach(cell => {
-                            // Get text content, clean whitespace
-                            let text = cell.innerText.trim().replace(/\\s+/g, ' ');
-                            rowData.push(text);
-                        });
-                        // Only add rows with actual data
-                        if (rowData.length > 0 && rowData[0].length > 0) {
-                            results.push(rowData);
-                        }
-                    }
-                });
-            });
-            
-            return results;
-        }''')
+        body_text = page.locator('body').inner_text()
         
-        # Also get the page HTML to find report IDs in links
-        html_content = page.content()
+        # ★ DEBUG OUTPUT
+        print(f"   Body text length: {len(body_text)}")
+        print(f"   Contains tab character: {chr(9) in body_text}")
+        print(f"   Contains 'Pénurie': {'Pénurie' in body_text}")
+        print(f"   Contains 'Shortage': {'Shortage' in body_text}")
+        print(f"   Contains 'OMEGA': {'OMEGA' in body_text}")
+        print(f"   First 2000 chars:")
+        print(body_text[:2000])
+        print(f"   --- END DEBUG ---")
         
         browser.close()
     
-    return table_data, html_content
+    return body_text
 
 
-def extract_report_ids_from_html(html_content: str) -> List[str]:
-    """Extract all report IDs from href links in the HTML."""
-    report_ids = re.findall(r'/shortage/(\d+)', html_content)
-    discontinuation_ids = re.findall(r'/discontinuance/(\d+)', html_content)
-    return report_ids + discontinuation_ids
+# ═══════════════════════════════════════════════════════════════
+# PARSER (will be refined after seeing debug output)
+# ═══════════════════════════════════════════════════════════════
 
-
-def parse_table_rows(table_data: List[List[str]], report_ids: List[str]) -> List[Dict[str, str]]:
-    """
-    Parse table rows into shortage entries.
-    Each row has: [Brand Name, Company, Status, Strength, Update Type, Date, Report Link]
-    """
+def parse_shortages_from_text(body_text: str) -> List[Dict[str, str]]:
+    """Parse shortage data from body text."""
     shortages = []
+    lines = body_text.split('\n')
     
-    for row_idx, row in enumerate(table_data):
-        if len(row) < 3:
+    print(f"   Total lines: {len(lines)}")
+    
+    # Print first 50 lines with line numbers
+    for i, line in enumerate(lines[:50]):
+        print(f"   Line {i}: '{line.strip()[:100]}'")
+    
+    for line in lines:
+        line_stripped = line.strip()
+        if not line_stripped:
             continue
         
-        brand_name = row[0] if len(row) > 0 else ''
-        company_name = row[1] if len(row) > 1 else ''
-        status_text = row[2] if len(row) > 2 else ''
-        strength = row[3] if len(row) > 3 else ''
-        
-        # Skip header rows
-        if not brand_name or 'Nom de marque' in brand_name or 'Brand name' in brand_name:
+        # Skip headers and non-data lines
+        if any(skip in line_stripped for skip in ['Nom de marque', 'Brand name', 'Liste des rapports', 'Rapports de']):
             continue
         
-        # Find report ID - check if the row has one or use the row index
-        report_id = ''
-        
-        # Look for 6-digit number in any cell
-        for cell in row:
-            match = re.search(r'(\d{6})', cell)
-            if match:
-                report_id = match.group(1)
-                break
-        
-        # If no report ID in row, use the report_ids list
-        if not report_id and row_idx < len(report_ids):
-            report_id = report_ids[row_idx]
-        
-        if not report_id:
-            continue
-        
-        # Map status
-        internal_status = parse_status(status_text)
-        
-        shortages.append({
-            'report_id': report_id,
-            'brand_name': brand_name,
-            'company_name': company_name,
-            'strength': strength,
-            'status': internal_status,
-        })
+        # Check if line contains tab-separated data
+        if '\t' in line_stripped:
+            parts = line_stripped.split('\t')
+            parts = [p.strip() for p in parts if p.strip()]
+            
+            if len(parts) >= 4:
+                brand_name = parts[0]
+                company_name = parts[1] if len(parts) > 1 else ''
+                status_text = parts[2] if len(parts) > 2 else ''
+                strength = parts[3] if len(parts) > 3 else ''
+                report_id = ''
+                
+                # Find report ID in last part
+                for part in reversed(parts):
+                    match = re.search(r'(\d{6})', part)
+                    if match:
+                        report_id = match.group(1)
+                        break
+                
+                if brand_name and report_id:
+                    shortages.append({
+                        'report_id': report_id,
+                        'brand_name': brand_name,
+                        'company_name': company_name,
+                        'strength': strength,
+                        'status': parse_status(status_text),
+                    })
     
     return shortages
 
@@ -179,8 +155,8 @@ def parse_table_rows(table_data: List[List[str]], report_ids: List[str]) -> List
 # ═══════════════════════════════════════════════════════════════
 
 def fetch_all_shortages() -> List[Dict[str, str]]:
-    """Fetch all shortages and discontinuations from the website."""
-    print("   [Table Extraction] Loading pages...")
+    """Fetch all shortages from the website."""
+    print("   [Scraper] Loading pages...")
     
     all_shortages = []
     seen_report_ids = set()
@@ -190,32 +166,25 @@ def fetch_all_shortages() -> List[Dict[str, str]]:
         f"{BASE_URL_EN}{SEARCH_PATH}",
     ]
     
-    table_data = None
-    html_content = None
+    body_text = None
     used_url = None
     
     for url in urls_to_try:
         try:
             print(f"   Trying: {url}")
-            table_data, html_content = extract_tables_with_playwright(url)
-            
-            if table_data and len(table_data) > 0:
+            body_text = fetch_page_text_with_playwright(url)
+            if body_text and len(body_text) > 500:
                 used_url = url
-                print(f"   ✅ Tables extracted: {len(table_data)} rows")
+                print(f"   ✅ Page loaded ({len(body_text)} chars)")
                 break
         except Exception as e:
             print(f"   ❌ Failed: {e}")
     
-    if not table_data:
-        print("   ❌ Could not extract any table data")
+    if not body_text:
+        print("   ❌ Could not load any page")
         return []
     
-    # Extract report IDs from HTML
-    report_ids = extract_report_ids_from_html(html_content)
-    print(f"   Report IDs found: {len(report_ids)}")
-    
-    # Parse table rows
-    shortages = parse_table_rows(table_data, report_ids)
+    shortages = parse_shortages_from_text(body_text)
     
     for s in shortages:
         rid = s.get('report_id', '')
@@ -320,7 +289,7 @@ def sync_to_firestore(db, shortages):
 
 def main():
     print("=" * 60)
-    print("MyVita — Medication Shortages Sync (Table Extraction)")
+    print("MyVita — Medication Shortages Sync (Debug)")
     print(f"Started at: {datetime.now(timezone.utc).isoformat()}")
     print("=" * 60)
     
@@ -330,13 +299,15 @@ def main():
     raw_shortages = fetch_all_shortages()
     print(f"Fetched {len(raw_shortages)} raw records")
     
-    transformed = []
-    for raw in raw_shortages:
-        transformed.append(transform_shortage(raw))
-    
-    print(f"Transformed {len(transformed)} records")
-    
-    sync_to_firestore(db, transformed)
+    if raw_shortages:
+        transformed = []
+        for raw in raw_shortages:
+            transformed.append(transform_shortage(raw))
+        
+        print(f"Transformed {len(transformed)} records")
+        sync_to_firestore(db, transformed)
+    else:
+        print("No data to sync")
     
     print("=" * 60)
     print(f"Completed at: {datetime.now(timezone.utc).isoformat()}")
