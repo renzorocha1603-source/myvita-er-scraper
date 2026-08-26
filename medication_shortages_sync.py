@@ -1,7 +1,7 @@
 """
 MyVita — Medication Shortages Sync
 Fetches Health Product Shortages Canada data and syncs to Firestore.
-Uses Playwright copy-paste method (like ER scraper).
+Uses Playwright + JavaScript table extraction.
 Runs every 12 hours via GitHub Actions.
 """
 
@@ -21,6 +21,7 @@ from firebase_admin import credentials, firestore
 
 BASE_URL = "https://penuriesdeproduitsdesante.ca"
 SEARCH_PATH = "/search"
+BASE_URL_EN = "https://www.drugshortagescanada.ca"
 FIRESTORE_COLLECTION = "medication_shortages"
 FIREBASE_CREDENTIALS_JSON = os.environ.get("MYVITA_FIREBASE_SERVICE_ACCOUNT", "")
 
@@ -36,27 +37,6 @@ def init_firebase():
     if not firebase_admin._apps:
         firebase_admin.initialize_app(cred)
     return firestore.client()
-
-
-# ═══════════════════════════════════════════════════════════════
-# PLAYWRIGHT COPY-PASTE FETCH
-# ═══════════════════════════════════════════════════════════════
-
-def fetch_page_text_with_playwright(url: str) -> str:
-    """Fetch page using Playwright and return body inner_text."""
-    from playwright.sync_api import sync_playwright
-
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        
-        page.goto(url, wait_until='domcontentloaded', timeout=45000)
-        page.wait_for_timeout(10000)
-        
-        body_text = page.locator('body').inner_text()
-        browser.close()
-    
-    return body_text
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -80,178 +60,118 @@ STATUS_MAP = {
 
 
 def parse_status(status_text: str) -> str:
-    """Convert French/English status to internal name."""
     return STATUS_MAP.get(status_text.strip(), status_text.strip().lower().replace(' ', '_'))
 
 
 # ═══════════════════════════════════════════════════════════════
-# COPY-PASTE PARSER (like ER scraper)
+# PLAYWRIGHT TABLE EXTRACTION
 # ═══════════════════════════════════════════════════════════════
 
-def parse_shortages_from_text(body_text: str) -> List[Dict[str, str]]:
+def extract_tables_with_playwright(url: str) -> List[List[str]]:
     """
-    Parse shortage data from body text.
-    The page has a table with these columns:
-    Nom de marque | Nom de l'entreprise | État | Concentration(s) | Mise à jour | Dernière mise à jour | Afficher
-    Each row is separated by newlines in inner_text().
+    Extract ALL table rows using JavaScript.
+    Returns list of rows, each row is a list of cell texts.
+    """
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        
+        page.goto(url, wait_until='domcontentloaded', timeout=45000)
+        page.wait_for_timeout(10000)
+        
+        # JavaScript to extract all table data
+        table_data = page.evaluate('''() => {
+            const tables = document.querySelectorAll('table');
+            const results = [];
+            
+            tables.forEach(table => {
+                const rows = table.querySelectorAll('tr');
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td, th');
+                    if (cells.length >= 4) {
+                        const rowData = [];
+                        cells.forEach(cell => {
+                            // Get text content, clean whitespace
+                            let text = cell.innerText.trim().replace(/\\s+/g, ' ');
+                            rowData.push(text);
+                        });
+                        // Only add rows with actual data
+                        if (rowData.length > 0 && rowData[0].length > 0) {
+                            results.push(rowData);
+                        }
+                    }
+                });
+            });
+            
+            return results;
+        }''')
+        
+        # Also get the page HTML to find report IDs in links
+        html_content = page.content()
+        
+        browser.close()
+    
+    return table_data, html_content
+
+
+def extract_report_ids_from_html(html_content: str) -> List[str]:
+    """Extract all report IDs from href links in the HTML."""
+    report_ids = re.findall(r'/shortage/(\d+)', html_content)
+    discontinuation_ids = re.findall(r'/discontinuance/(\d+)', html_content)
+    return report_ids + discontinuation_ids
+
+
+def parse_table_rows(table_data: List[List[str]], report_ids: List[str]) -> List[Dict[str, str]]:
+    """
+    Parse table rows into shortage entries.
+    Each row has: [Brand Name, Company, Status, Strength, Update Type, Date, Report Link]
     """
     shortages = []
-    lines = body_text.split('\n')
     
-    # Find where the shortage table starts
-    start_idx = -1
-    for i, line in enumerate(lines):
-        if 'Rapports de pénurie' in line or 'Shortage Reports' in line:
-            start_idx = i
-            break
-    
-    if start_idx == -1:
-        # Try without section header
-        start_idx = 0
-    
-    # Process lines after finding the table
-    current_entry = []
-    
-    for line in lines[start_idx+1:]:
-        line_stripped = line.strip()
+    for row_idx, row in enumerate(table_data):
+        if len(row) < 3:
+            continue
         
-        # Stop when we hit the discontinuation section
-        if 'Rapports de cessation' in line_stripped or 'Discontinuation Reports' in line_stripped:
-            break
+        brand_name = row[0] if len(row) > 0 else ''
+        company_name = row[1] if len(row) > 1 else ''
+        status_text = row[2] if len(row) > 2 else ''
+        strength = row[3] if len(row) > 3 else ''
         
         # Skip header rows
-        if 'Nom de marque' in line_stripped or 'Brand name' in line_stripped or 'Liste des rapports' in line_stripped:
+        if not brand_name or 'Nom de marque' in brand_name or 'Brand name' in brand_name:
             continue
         
-        if not line_stripped:
-            if current_entry:
-                shortage = parse_entry(current_entry)
-                if shortage:
-                    shortages.append(shortage)
-                current_entry = []
+        # Find report ID - check if the row has one or use the row index
+        report_id = ''
+        
+        # Look for 6-digit number in any cell
+        for cell in row:
+            match = re.search(r'(\d{6})', cell)
+            if match:
+                report_id = match.group(1)
+                break
+        
+        # If no report ID in row, use the report_ids list
+        if not report_id and row_idx < len(report_ids):
+            report_id = report_ids[row_idx]
+        
+        if not report_id:
             continue
         
-        # Skip non-data lines
-        if line_stripped.startswith(('Rapports', 'Liste', 'Légende', 'Ci-dessous', 'Télécharger', 'Drug', 'Bienvenue', 'Page')):
-            continue
+        # Map status
+        internal_status = parse_status(status_text)
         
-        current_entry.append(line_stripped)
-    
-    # Don't forget the last entry
-    if current_entry:
-        shortage = parse_entry(current_entry)
-        if shortage:
-            shortages.append(shortage)
+        shortages.append({
+            'report_id': report_id,
+            'brand_name': brand_name,
+            'company_name': company_name,
+            'strength': strength,
+            'status': internal_status,
+        })
     
     return shortages
-
-
-def parse_entry(lines: List[str]) -> Dict[str, str]:
-    """
-    Parse a shortage entry from collected lines.
-    The structure from inner_text() is typically:
-    [brand_name]
-    [company_name]
-    [status]
-    [strength]
-    [update_type]
-    [date]
-    [report_id]
-    """
-    if len(lines) < 3:
-        return None
-    
-    brand_name = lines[0].strip()
-    company_name = lines[1].strip() if len(lines) > 1 else ''
-    status_text = ''
-    strength = ''
-    report_id = ''
-    
-    # Find status (look for known status words)
-    for line in lines:
-        stripped = line.strip()
-        if stripped in STATUS_MAP:
-            status_text = stripped
-            break
-    
-    # Find strength (contains MG, MCG, %, or numeric)
-    for line in lines:
-        stripped = line.strip()
-        if re.search(r'(MG|MCG|%)', stripped.upper()):
-            strength = stripped
-            break
-    
-    # Find report ID (6-digit number)
-    for line in reversed(lines):
-        match = re.search(r'(\d{6})', line.strip())
-        if match:
-            report_id = match.group(1)
-            break
-    
-    if not brand_name or not report_id:
-        return None
-    
-    # Map status
-    internal_status = parse_status(status_text) if status_text else 'resolved'
-    
-    return {
-        'report_id': report_id,
-        'brand_name': brand_name,
-        'company_name': company_name,
-        'strength': strength,
-        'status': internal_status,
-    }
-
-
-def parse_discontinuations_from_text(body_text: str) -> List[Dict[str, str]]:
-    """
-    Parse discontinuation reports from the same page.
-    These appear after "Rapports de cessation de vente" section.
-    """
-    discontinuations = []
-    lines = body_text.split('\n')
-    
-    # Find where the discontinuation table starts
-    start_idx = -1
-    for i, line in enumerate(lines):
-        if 'Rapports de cessation' in line or 'Discontinuation Reports' in line:
-            start_idx = i
-            break
-    
-    if start_idx == -1:
-        return []
-    
-    current_entry = []
-    
-    for line in lines[start_idx+1:]:
-        line_stripped = line.strip()
-        
-        # Stop at page end
-        if 'Télécharger' in line_stripped or 'Google Play' in line_stripped:
-            break
-        
-        if 'Nom de marque' in line_stripped or 'Liste des rapports' in line_stripped:
-            continue
-        
-        if not line_stripped:
-            if current_entry:
-                shortage = parse_entry(current_entry)
-                if shortage:
-                    discontinuations.append(shortage)
-                current_entry = []
-            continue
-        
-        if line_stripped.startswith(('Rapports', 'Liste', 'Légende', 'Télécharger')):
-            continue
-        
-        current_entry.append(line_stripped)
-    
-    if current_entry:
-        shortage = parse_entry(current_entry)
-        if shortage:
-            discontinuations.append(shortage)
-    
-    return discontinuations
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -260,52 +180,48 @@ def parse_discontinuations_from_text(body_text: str) -> List[Dict[str, str]]:
 
 def fetch_all_shortages() -> List[Dict[str, str]]:
     """Fetch all shortages and discontinuations from the website."""
-    print("   [Copy-Paste Scraper] Loading pages...")
+    print("   [Table Extraction] Loading pages...")
     
     all_shortages = []
     seen_report_ids = set()
     
-    # Try the search page which has both shortages and discontinuations
     urls_to_try = [
         f"{BASE_URL}{SEARCH_PATH}",
-        "https://www.drugshortagescanada.ca/search",
+        f"{BASE_URL_EN}{SEARCH_PATH}",
     ]
     
-    body_text = None
+    table_data = None
+    html_content = None
+    used_url = None
     
     for url in urls_to_try:
         try:
             print(f"   Trying: {url}")
-            body_text = fetch_page_text_with_playwright(url)
-            if body_text and len(body_text) > 1000:
-                print(f"   ✅ Page loaded ({len(body_text)} chars)")
+            table_data, html_content = extract_tables_with_playwright(url)
+            
+            if table_data and len(table_data) > 0:
+                used_url = url
+                print(f"   ✅ Tables extracted: {len(table_data)} rows")
                 break
         except Exception as e:
             print(f"   ❌ Failed: {e}")
     
-    if not body_text:
-        print("   ❌ Could not load any page")
+    if not table_data:
+        print("   ❌ Could not extract any table data")
         return []
     
-    # Parse shortages
-    shortages = parse_shortages_from_text(body_text)
+    # Extract report IDs from HTML
+    report_ids = extract_report_ids_from_html(html_content)
+    print(f"   Report IDs found: {len(report_ids)}")
+    
+    # Parse table rows
+    shortages = parse_table_rows(table_data, report_ids)
+    
     for s in shortages:
         rid = s.get('report_id', '')
         if rid and rid not in seen_report_ids:
             seen_report_ids.add(rid)
             all_shortages.append(s)
-    
-    print(f"   Shortages: {len(shortages)} found")
-    
-    # Parse discontinuations
-    discontinuations = parse_discontinuations_from_text(body_text)
-    for d in discontinuations:
-        rid = d.get('report_id', '')
-        if rid and rid not in seen_report_ids:
-            seen_report_ids.add(rid)
-            all_shortages.append(d)
-    
-    print(f"   Discontinuations: {len(discontinuations)} found")
     
     print(f"   ✅ TOTAL: {len(all_shortages)} unique entries")
     return all_shortages
@@ -404,7 +320,7 @@ def sync_to_firestore(db, shortages):
 
 def main():
     print("=" * 60)
-    print("MyVita — Medication Shortages Sync (Copy-Paste)")
+    print("MyVita — Medication Shortages Sync (Table Extraction)")
     print(f"Started at: {datetime.now(timezone.utc).isoformat()}")
     print("=" * 60)
     
