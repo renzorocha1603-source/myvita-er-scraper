@@ -54,19 +54,16 @@ def extract_rows_from_html(html: str) -> List[Dict[str, str]]:
     current_pos = 0
 
     while True:
-        # Find next row start
         row_start = html.find('<tr data-index=', current_pos)
         if row_start == -1:
             break
 
-        # Find row end
         row_end = html.find('</tr>', row_start)
         if row_end == -1:
             break
 
         row_html = html[row_start:row_end]
 
-        # Only include rows with shortage/discontinuance links
         if '/shortage/' in row_html or '/discontinuance/' in row_html:
             shortage = parse_row(row_html)
             if shortage:
@@ -101,7 +98,7 @@ def parse_row(row_html: str) -> Dict[str, str]:
         if id_end > id_start:
             shortage['report_id'] = row_html[id_start:id_end].strip()
 
-    # Extract all titles (brand name and company name)
+    # Extract titles
     titles = []
     t_pos = 0
     while True:
@@ -117,13 +114,12 @@ def parse_row(row_html: str) -> Dict[str, str]:
             titles.append(title_text)
         t_pos = title_content_end
 
-    # First title is typically brand name, second is company name
     if len(titles) >= 1:
         shortage['brand_name'] = titles[0]
     if len(titles) >= 2:
         shortage['company_name'] = titles[1]
 
-    # Extract status from first <td> cell
+    # Extract status
     td_start = row_html.find('<td>')
     if td_start >= 0:
         td_content_start = td_start + len('<td>')
@@ -131,7 +127,7 @@ def parse_row(row_html: str) -> Dict[str, str]:
         if td_content_end > td_content_start:
             shortage['status'] = row_html[td_content_start:td_content_end].strip()
 
-    # Extract strength (look for pattern after title)
+    # Extract strength
     tds = []
     td_pos = 0
     while True:
@@ -154,7 +150,7 @@ def parse_row(row_html: str) -> Dict[str, str]:
 # PLAYWRIGHT FETCH (bypasses 403)
 # ═══════════════════════════════════════════════════════════════
 
-def fetch_page_with_playwright(url: str, wait_seconds: int = 8000) -> str:
+def fetch_page_with_playwright(url: str, wait_seconds: int = 5000) -> str:
     """Fetch a page using Playwright to bypass bot detection."""
     from playwright.sync_api import sync_playwright
 
@@ -162,7 +158,8 @@ def fetch_page_with_playwright(url: str, wait_seconds: int = 8000) -> str:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         
-        page.goto(url, wait_until='networkidle', timeout=60000)
+        # ★ FIXED: Use domcontentloaded instead of networkidle (much faster)
+        page.goto(url, wait_until='domcontentloaded', timeout=45000)
         page.wait_for_timeout(wait_seconds)
         
         html_content = page.content()
@@ -204,7 +201,7 @@ def fetch_all_shortages() -> List[Dict[str, str]]:
         print(f"Fetching status: {status}...")
         page = 1
 
-        while page <= 3:  # Max 3 pages per status (300 items each)
+        while page <= 3:
             results = fetch_search_results(status, page=page, limit=100)
             if not results:
                 break
@@ -216,7 +213,6 @@ def fetch_all_shortages() -> List[Dict[str, str]]:
 
             page += 1
 
-    # Remove duplicates by report_id
     unique = {}
     for s in all_shortages:
         rid = s.get('report_id', '')
@@ -245,7 +241,6 @@ def generate_search_keywords(shortage: Dict[str, str]) -> List[str]:
     for field in fields:
         if field:
             keywords.append(field.lower())
-            # Add without accents
             normalized = field.lower()
             for old, new in [('é', 'e'), ('è', 'e'), ('ê', 'e'), ('à', 'a'), ('ç', 'c')]:
                 normalized = normalized.replace(old, new)
@@ -300,7 +295,6 @@ def sync_to_firestore(db: firestore.Client, shortages: List[Dict[str, Any]]):
     if batch_count > 0:
         batch.commit()
 
-    # Mark old docs as inactive
     existing_docs = collection_ref.where('is_active', '==', True).stream()
     stale_batch = db.batch()
     stale_count = 0
