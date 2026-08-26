@@ -1,11 +1,12 @@
 """
-MyVita — Medication Shortages Sync (RAMQ Quebec + DEBUG)
-Fetches Quebec-specific medication shortages from RAMQ.
+MyVita — Medication Shortages Sync (API attempt)
+Tries RAMQ API directly + falls back to page scraping.
 """
 
 import json
 import os
 import re
+import requests
 from datetime import datetime, timezone
 from typing import List, Dict, Any
 
@@ -35,44 +36,72 @@ def init_firebase():
 
 
 # ═══════════════════════════════════════════════════════════════
-# PLAYWRIGHT FETCH WITH DEBUG
+# API ATTEMPTS
 # ═══════════════════════════════════════════════════════════════
 
-def fetch_page_with_playwright(url: str) -> str:
-    """Fetch RAMQ page using Playwright with debug output."""
-    from playwright.sync_api import sync_playwright
-
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        
-        page.goto(url, wait_until='domcontentloaded', timeout=45000)
-        page.wait_for_timeout(10000)
-        
-        body_text = page.locator('body').inner_text()
-        
-        # ★ DEBUG OUTPUT
-        print(f"   Body text length: {len(body_text)}")
-        print(f"   Contains 'Dénomination': {'Dénomination' in body_text}")
-        print(f"   Contains 'Marque': {'Marque' in body_text}")
-        print(f"   Contains 'DIN': {'DIN' in body_text}")
-        print(f"   First 3000 chars:")
-        print(body_text[:3000])
-        print(f"   --- END DEBUG ---")
-        
-        # Also check if page loaded correctly
-        html_content = page.content()
-        print(f"   HTML length: {len(html_content)}")
-        print(f"   HTML contains table: {'<table' in html_content}")
-        print(f"   HTML contains 'rupture': {'rupture' in html_content.lower()}")
-        
-        browser.close()
+def try_api_endpoints() -> str:
+    """Try different API endpoints for RAMQ data."""
+    print("   [API Attempt] Trying direct API endpoints...")
     
-    return body_text
+    endpoints = [
+        "https://www.ramq.gouv.qc.ca/api/ruptures-stock",
+        "https://www.ramq.gouv.qc.ca/api/medicaments/ruptures",
+        "https://www.ramq.gouv.qc.ca/fr/professionnels/pharmacien-pharmacienne/medicaments/ruptures-stock-signalees?format=json",
+        "https://www.ramq.gouv.qc.ca/fr/professionnels/pharmacien-pharmacienne/medicaments/ruptures-stock-signalees?type=json",
+        "https://www.ramq.gouv.qc.ca/Services/Medicaments/RupturesStock",
+    ]
+    
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/html, */*',
+        'Accept-Language': 'fr-CA,fr;q=0.9,en;q=0.8',
+        'Referer': 'https://www.ramq.gouv.qc.ca/',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Connection': 'keep-alive',
+    }
+    
+    for url in endpoints:
+        try:
+            print(f"   Trying API: {url}")
+            response = requests.get(url, headers=headers, timeout=15)
+            print(f"   Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                content = response.text
+                if 'Dénomination' in content or 'rupture' in content.lower() or 'DIN' in content:
+                    print(f"   ✅ API works! Length: {len(content)}")
+                    return content
+                elif content.startswith('{') or content.startswith('['):
+                    # JSON response
+                    print(f"   ✅ JSON response! Length: {len(content)}")
+                    return content
+        except Exception as e:
+            print(f"   ❌ Failed: {e}")
+    
+    print("   ❌ No API endpoints worked")
+    return ""
 
 
 # ═══════════════════════════════════════════════════════════════
-# STATUS MAPPING
+# PAGE SCRAPING (fallback)
+# ═══════════════════════════════════════════════════════════════
+
+def fetch_page_with_requests(url: str) -> str:
+    """Fetch page using requests (non-Playwright)."""
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'fr-CA,fr;q=0.9,en;q=0.8',
+        'Referer': 'https://www.google.com/',
+        'Connection': 'keep-alive',
+    }
+    
+    response = requests.get(url, headers=headers, timeout=20)
+    return response.text
+
+
+# ═══════════════════════════════════════════════════════════════
+# PARSER
 # ═══════════════════════════════════════════════════════════════
 
 STATUS_MAP = {
@@ -84,131 +113,61 @@ STATUS_MAP = {
 }
 
 
-# ═══════════════════════════════════════════════════════════════
-# PARSER
-# ═══════════════════════════════════════════════════════════════
-
-def parse_ramq_table(body_text: str) -> List[Dict[str, str]]:
-    """Parse the RAMQ medication shortage table."""
+def parse_ramq_content(content: str) -> List[Dict[str, str]]:
+    """Parse RAMQ content (HTML or text)."""
     shortages = []
-    lines = body_text.split('\n')
     
-    print(f"   Total lines: {len(lines)}")
+    # Try to find table data
+    lines = content.split('\n')
     
-    # Print first 60 lines
-    for i, line in enumerate(lines[:60]):
-        print(f"   Line {i}: '{line.strip()[:120]}'")
-    
-    # Find table data
-    start_idx = -1
-    for i, line in enumerate(lines):
-        if 'Dénomination' in line and 'Marque' in line:
-            start_idx = i
-            break
-    
-    if start_idx == -1:
-        print("   ❌ Could not find table headers")
-        return []
-    
-    print(f"   Table starts at line {start_idx}")
-    
-    # Parse entries after header
-    current_entry = []
-    
-    for line in lines[start_idx+1:]:
-        line_stripped = line.strip()
+    # Check if it's HTML and extract text
+    if '<table' in content or '<tr' in content:
+        # Extract table rows from HTML
+        rows = re.findall(r'<tr[^>]*>(.*?)</tr>', content, re.DOTALL)
         
-        # Stop conditions
-        if 'Page ' in line_stripped and 'de' in line_stripped:
-            break
-        if 'Évaluer la page' in line_stripped:
-            break
-        if 'Il reste' in line_stripped:
-            break
-        
-        # Skip header rows
-        if 'Dénomination' in line_stripped or 'Marque de commerce' in line_stripped:
-            continue
-        
-        if not line_stripped:
-            if current_entry:
-                shortage = parse_entry_with_debug(current_entry)
-                if shortage:
-                    shortages.append(shortage)
-                current_entry = []
-            continue
-        
-        # Skip footer/site nav lines
-        if any(skip in line_stripped for skip in ['RAMQ', 'À propos', 'Nous joindre', 'Nous suivre', 'Suivre la RAMQ', 'Accessibilité', 'Politique', '©', 'Application de']):
-            continue
-        
-        current_entry.append(line_stripped)
+        for row in rows:
+            cells = re.findall(r'<td[^>]*>(.*?)</td>', row, re.DOTALL)
+            if len(cells) >= 5:
+                cells = [re.sub(r'<[^>]+>', '', c).strip() for c in cells]
+                
+                generic_name = cells[0] if len(cells) > 0 else ''
+                brand_name = cells[1] if len(cells) > 1 else ''
+                form = cells[2] if len(cells) > 2 else ''
+                strength = cells[3] if len(cells) > 3 else ''
+                din = ''
+                status_text = ''
+                date = ''
+                
+                for cell in cells:
+                    match = re.search(r'\b(\d{8})\b', cell)
+                    if match:
+                        din = match.group(1)
+                    for kw in STATUS_MAP.keys():
+                        if kw in cell:
+                            status_text = kw
+                            break
+                    match = re.search(r'(\d{4}-\d{2}-\d{2})', cell)
+                    if match:
+                        date = match.group(1)
+                
+                if din and generic_name:
+                    shortages.append({
+                        'report_id': din,
+                        'brand_name': brand_name or generic_name,
+                        'generic_name': generic_name,
+                        'form': form,
+                        'strength': strength,
+                        'din': din,
+                        'status': STATUS_MAP.get(status_text, status_text),
+                        'is_active': STATUS_MAP.get(status_text) in ['confirmed_shortage', 'verification'],
+                        'date': date,
+                    })
+    else:
+        # Plain text parsing
+        print(f"   Content first 2000 chars:")
+        print(content[:2000])
     
-    if current_entry:
-        shortage = parse_entry_with_debug(current_entry)
-        if shortage:
-            shortages.append(shortage)
-    
-    print(f"   Parsed: {len(shortages)} entries")
     return shortages
-
-
-def parse_entry_with_debug(lines: List[str]) -> Dict[str, str]:
-    """Parse entry with debug output."""
-    if len(lines) < 3:
-        return None
-    
-    print(f"   Entry ({len(lines)} lines): {lines[:5]}")
-    
-    generic_name = lines[0].strip()
-    brand_name = lines[1].strip() if len(lines) > 1 else ''
-    form = lines[2].strip() if len(lines) > 2 else ''
-    strength = lines[3].strip() if len(lines) > 3 else ''
-    din = ''
-    status_text = ''
-    date = ''
-    
-    # Find DIN (8 digits)
-    for line in lines:
-        match = re.search(r'\b(\d{8})\b', line.strip())
-        if match:
-            din = match.group(1)
-            break
-    
-    # Find status
-    for line in lines:
-        stripped = line.strip()
-        if stripped in STATUS_MAP:
-            status_text = stripped
-            break
-        for kw in STATUS_MAP.keys():
-            if kw in stripped:
-                status_text = kw
-                break
-    
-    # Find date
-    for line in lines:
-        match = re.search(r'(\d{4}-\d{2}-\d{2})', line.strip())
-        if match:
-            date = match.group(1)
-            break
-    
-    if not din:
-        return None
-    
-    internal_status = STATUS_MAP.get(status_text, status_text.lower().replace(' ', '_'))
-    
-    return {
-        'report_id': din,
-        'brand_name': brand_name or generic_name,
-        'generic_name': generic_name,
-        'form': form,
-        'strength': strength,
-        'din': din,
-        'status': internal_status,
-        'is_active': internal_status in ['confirmed_shortage', 'verification'],
-        'date': date,
-    }
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -216,41 +175,35 @@ def parse_entry_with_debug(lines: List[str]) -> Dict[str, str]:
 # ═══════════════════════════════════════════════════════════════
 
 def fetch_all_shortages() -> List[Dict[str, str]]:
-    """Fetch all shortages from RAMQ."""
-    print("   [RAMQ Scraper] Loading pages...")
-    
+    """Fetch all shortages."""
     all_shortages = []
     seen_dins = set()
     
-    for page_num in range(1, 4):
-        url = RAMQ_URL if page_num == 1 else f"{RAMQ_URL}?page={page_num}"
+    # Try API first
+    api_content = try_api_endpoints()
+    
+    if api_content:
+        shortages = parse_ramq_content(api_content)
+        for s in shortages:
+            din = s.get('din', '')
+            if din and din not in seen_dins:
+                seen_dins.add(din)
+                all_shortages.append(s)
+        print(f"   API: {len(shortages)} entries found")
+    
+    # Try page scraping
+    if not all_shortages:
+        print("   [Page Scraping] Trying with requests...")
+        content = fetch_page_with_requests(RAMQ_URL)
         
-        try:
-            print(f"   Page {page_num}...")
-            body_text = fetch_page_with_playwright(url)
-            
-            if not body_text or len(body_text) < 200:
-                print(f"   Page {page_num}: empty, stopping")
-                break
-            
-            shortages = parse_ramq_table(body_text)
-            new_count = 0
-            
+        if content and len(content) > 500:
+            shortages = parse_ramq_content(content)
             for s in shortages:
                 din = s.get('din', '')
                 if din and din not in seen_dins:
                     seen_dins.add(din)
                     all_shortages.append(s)
-                    new_count += 1
-            
-            print(f"   Page {page_num}: {new_count} new (total: {len(all_shortages)})")
-            
-            if new_count == 0 and page_num > 1:
-                break
-                
-        except Exception as e:
-            print(f"   Page {page_num} error: {e}")
-            break
+            print(f"   Page: {len(shortages)} entries found")
     
     print(f"   ✅ TOTAL: {len(all_shortages)} unique entries")
     return all_shortages
@@ -329,7 +282,7 @@ def sync_to_firestore(db, shortages):
 
 def main():
     print("=" * 60)
-    print("MyVita — Medication Shortages Sync (RAMQ + DEBUG)")
+    print("MyVita — Medication Shortages Sync (API)")
     print(f"Started at: {datetime.now(timezone.utc).isoformat()}")
     print("=" * 60)
     
@@ -347,7 +300,7 @@ def main():
         print(f"Transformed {len(transformed)} records")
         sync_to_firestore(db, transformed)
     else:
-        print("No data to sync")
+        print("No data to sync — old data remains in Firestore")
     
     print("=" * 60)
     print(f"Completed at: {datetime.now(timezone.utc).isoformat()}")
