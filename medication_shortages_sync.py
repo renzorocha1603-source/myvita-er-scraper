@@ -1,12 +1,13 @@
 """
 MyVita — Medication Shortages Sync
 Fetches Health Product Shortages Canada data and syncs to Firestore.
-Uses Playwright (browser) to bypass 403 blocks + string parsing.
+Uses Playwright (browser) + copy-paste text extraction like ER scraper.
 Runs every 12 hours via GitHub Actions.
 """
 
 import json
 import os
+import re
 import time
 from datetime import datetime, timezone
 from typing import List, Dict, Any
@@ -18,8 +19,13 @@ from firebase_admin import credentials, firestore
 # CONFIGURATION
 # ═══════════════════════════════════════════════════════════════
 
-BASE_URL = "https://www.drugshortagescanada.ca"
+# ★ French URL (the site is bilingual)
+BASE_URL = "https://penuriesdeproduitsdesante.ca"
 SEARCH_PATH = "/search"
+
+# Also try the English URL as fallback
+BASE_URL_EN = "https://www.drugshortagescanada.ca"
+
 FIRESTORE_COLLECTION = "medication_shortages"
 FIREBASE_CREDENTIALS_JSON = os.environ.get("MYVITA_FIREBASE_SERVICE_ACCOUNT", "")
 
@@ -45,182 +51,275 @@ def init_firebase():
 
 
 # ═══════════════════════════════════════════════════════════════
-# HTML SCRAPING (using simple string operations)
+# PLAYWRIGHT COPY-PASTE FETCH
 # ═══════════════════════════════════════════════════════════════
 
-def extract_rows_from_html(html: str) -> List[Dict[str, str]]:
-    """Extract shortage data from HTML using simple string operations."""
-    rows = []
-    current_pos = 0
-
-    while True:
-        row_start = html.find('<tr data-index=', current_pos)
-        if row_start == -1:
-            break
-
-        row_end = html.find('</tr>', row_start)
-        if row_end == -1:
-            break
-
-        row_html = html[row_start:row_end]
-
-        if '/shortage/' in row_html or '/discontinuance/' in row_html:
-            shortage = parse_row(row_html)
-            if shortage:
-                rows.append(shortage)
-
-        current_pos = row_end
-
-    return rows
-
-
-def parse_row(row_html: str) -> Dict[str, str]:
-    """Parse a single HTML table row into a shortage dict."""
-    shortage = {
-        'report_id': '',
-        'brand_name': '',
-        'company_name': '',
-        'strength': '',
-        'status': '',
-    }
-
-    # Extract report ID
-    report_pos = row_html.find('/shortage/')
-    if report_pos == -1:
-        report_pos = row_html.find('/discontinuance/')
-        id_prefix = '/discontinuance/'
-    else:
-        id_prefix = '/shortage/'
-
-    if report_pos >= 0:
-        id_start = report_pos + len(id_prefix)
-        id_end = row_html.find('"', id_start)
-        if id_end > id_start:
-            shortage['report_id'] = row_html[id_start:id_end].strip()
-
-    # Extract titles
-    titles = []
-    t_pos = 0
-    while True:
-        title_start = row_html.find('title="', t_pos)
-        if title_start == -1:
-            break
-        title_content_start = title_start + len('title="')
-        title_content_end = row_html.find('"', title_content_start)
-        if title_content_end == -1:
-            break
-        title_text = row_html[title_content_start:title_content_end].strip()
-        if title_text and 'View Report' not in title_text:
-            titles.append(title_text)
-        t_pos = title_content_end
-
-    if len(titles) >= 1:
-        shortage['brand_name'] = titles[0]
-    if len(titles) >= 2:
-        shortage['company_name'] = titles[1]
-
-    # Extract status
-    td_start = row_html.find('<td>')
-    if td_start >= 0:
-        td_content_start = td_start + len('<td>')
-        td_content_end = row_html.find('</td>', td_content_start)
-        if td_content_end > td_content_start:
-            shortage['status'] = row_html[td_content_start:td_content_end].strip()
-
-    # Extract strength
-    tds = []
-    td_pos = 0
-    while True:
-        td_open = row_html.find('<td>', td_pos)
-        if td_open == -1:
-            break
-        td_close = row_html.find('</td>', td_open)
-        if td_close == -1:
-            break
-        tds.append(row_html[td_open + 4:td_close].strip())
-        td_pos = td_close
-
-    if len(tds) >= 4:
-        shortage['strength'] = tds[3]
-
-    return shortage
-
-
-# ═══════════════════════════════════════════════════════════════
-# PLAYWRIGHT FETCH (bypasses 403)
-# ═══════════════════════════════════════════════════════════════
-
-def fetch_page_with_playwright(url: str, wait_seconds: int = 5000) -> str:
-    """Fetch a page using Playwright to bypass bot detection."""
+def fetch_page_text_with_playwright(url: str) -> str:
+    """Fetch page using Playwright and return body inner_text (copy-paste method)."""
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         
-        # ★ FIXED: Use domcontentloaded instead of networkidle (much faster)
         page.goto(url, wait_until='domcontentloaded', timeout=45000)
-        page.wait_for_timeout(wait_seconds)
+        page.wait_for_timeout(8000)
         
-        html_content = page.content()
+        body_text = page.locator('body').inner_text()
         browser.close()
     
-    return html_content
+    return body_text
 
 
-def fetch_search_results(status: str, page: int = 1, limit: int = 100) -> List[Dict[str, str]]:
-    """Fetch search results for a specific status using Playwright."""
-    import urllib.parse
+# ═══════════════════════════════════════════════════════════════
+# COPY-PASTE PARSER (like ER scraper)
+# ═══════════════════════════════════════════════════════════════
 
-    params = {
-        "status": status,
-        "limit": limit,
-        "page": page,
-        "report_published": "1",
+def parse_shortages_from_text(body_text: str) -> List[Dict[str, str]]:
+    """Parse shortage data from body text using line-by-line extraction."""
+    shortages = []
+    lines = body_text.split('\n')
+    
+    current_shortage = None
+    current_lines = []
+    
+    # Status translations (French → internal)
+    status_map = {
+        'Pénurie réelle': 'active_confirmed',
+        'Actual shortage': 'active_confirmed',
+        'Pénurie prévue': 'anticipated_shortage',
+        'Anticipated shortage': 'anticipated_shortage',
+        'Pénurie évitée': 'avoided_shortage',
+        'Avoided shortage': 'avoided_shortage',
+        'Résorbée': 'resolved',
+        'Resolved': 'resolved',
+        'Discontinué': 'discontinued',
+        'Discontinued': 'discontinued',
+        'Discontinué sous peu': 'to_be_discontinued',
+        'To be discontinued': 'to_be_discontinued',
     }
-    full_url = f"{BASE_URL}{SEARCH_PATH}?{urllib.parse.urlencode(params)}"
-
-    try:
-        print(f"  Fetching {status} page {page} via Playwright...")
-        html_content = fetch_page_with_playwright(full_url)
+    
+    # Keywords that indicate a new shortage entry
+    # Each entry has: Brand Name, Company, Status, Strength, Report ID
+    # We detect entries by finding report ID (6-digit number) at end of line
+    
+    for line in lines:
+        line_stripped = line.strip()
+        if not line_stripped:
+            continue
         
-        rows = extract_rows_from_html(html_content)
-        print(f"  {status} page {page}: {len(rows)} results")
-        return rows
+        # Check if this line contains a report ID (the "Afficher" link value)
+        # Report IDs are 6-digit numbers
+        report_match = re.search(r'(\d{6})\s*$', line_stripped)
+        
+        if report_match and current_shortage is not None:
+            # This line has the report ID - it's the LAST line of the entry
+            report_id = report_match.group(1)
+            current_lines.append(line_stripped)
+            
+            # Parse the collected lines
+            full_text = '\n'.join(current_lines)
+            shortage = parse_shortage_entry(full_text, report_id)
+            if shortage:
+                shortages.append(shortage)
+            
+            # Reset for next entry
+            current_shortage = None
+            current_lines = []
+        
+        elif is_brand_name(line_stripped):
+            # New shortage entry starts with brand name (ALL CAPS usually)
+            # Save previous if exists
+            if current_shortage is not None and len(current_lines) >= 4:
+                # Try to parse without report ID
+                full_text = '\n'.join(current_lines)
+                shortage = parse_shortage_entry(full_text, '')
+                if shortage:
+                    shortages.append(shortage)
+            
+            current_shortage = True
+            current_lines = [line_stripped]
+        
+        elif current_shortage is not None:
+            current_lines.append(line_stripped)
+    
+    # Don't forget the last one
+    if current_shortage is not None and len(current_lines) >= 4:
+        full_text = '\n'.join(current_lines)
+        shortage = parse_shortage_entry(full_text, '')
+        if shortage:
+            shortages.append(shortage)
+    
+    return shortages
 
-    except Exception as e:
-        print(f"  Error fetching {status} page {page}: {e}")
-        return []
 
+def is_brand_name(text: str) -> bool:
+    """Check if a line looks like a brand name (starts with uppercase, contains no numbers for status/dates)."""
+    if len(text) < 3:
+        return False
+    if text.startswith(('Rapports', 'Liste', 'Nom de', 'Légende', 'Télécharger', 'Page', 'Bienvenue', 'Ci-dessous')):
+        return False
+    # Brand names are usually ALL CAPS or start with uppercase
+    return text[0].isupper() and not text.startswith(('Pénurie', 'Actual', 'Anticipated', 'Avoided', 'Résorbée', 'Resolved', 'Discontinué', 'Discontinued', 'Mis à', 'New', 'Nouveau'))
+
+
+def parse_shortage_entry(full_text: str, report_id: str) -> Dict[str, str]:
+    """Parse a single shortage entry from collected lines."""
+    lines = [l.strip() for l in full_text.split('\n') if l.strip()]
+    
+    if len(lines) < 3:
+        return None
+    
+    brand_name = lines[0]
+    company_name = ''
+    status = ''
+    strength = ''
+    last_update = ''
+    
+    # Find the fields in the lines
+    for i, line in enumerate(lines[1:], 1):
+        if 'Pénurie' in line or 'Shortage' in line or 'Discontinu' in line or 'Résorbée' in line or 'Resolved' in line:
+            status = line
+        elif 'MG' in line.upper() or 'MCG' in line.upper() or '%' in line or re.match(r'^\d+\.?\d*', line):
+            strength = line
+        elif 'Mis à jour' in line or 'Nouveau' in line or 'Updated' in line or 'New' in line:
+            last_update = line
+        elif re.match(r'^\d{4}-\d{2}-\d{2}', line):
+            last_update = line
+        elif len(line) > 5 and not re.match(r'^\d{4}-\d{2}-\d{2}', line):
+            company_name = line
+    
+    # Map status to internal
+    status_map = {
+        'Pénurie réelle': 'active_confirmed',
+        'Actual shortage': 'active_confirmed',
+        'Pénurie prévue': 'anticipated_shortage',
+        'Anticipated shortage': 'anticipated_shortage',
+        'Pénurie évitée': 'avoided_shortage',
+        'Avoided shortage': 'avoided_shortage',
+        'Résorbée': 'resolved',
+        'Resolved': 'resolved',
+        'Discontinué': 'discontinued',
+        'Discontinued': 'discontinued',
+        'Discontinué sous peu': 'to_be_discontinued',
+        'To be discontinued': 'to_be_discontinued',
+    }
+    
+    internal_status = status_map.get(status, status.lower().replace(' ', '_'))
+    
+    return {
+        'report_id': report_id,
+        'brand_name': brand_name,
+        'company_name': company_name,
+        'strength': strength,
+        'status': internal_status,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════
+# FETCH ALL SHORTAGES
+# ═══════════════════════════════════════════════════════════════
 
 def fetch_all_shortages() -> List[Dict[str, str]]:
-    """Fetch active shortages across all statuses."""
+    """Fetch all shortages from the website using copy-paste method."""
+    print("   [Copy-Paste Scraper] Loading pages...")
+    
+    import urllib.parse
+    
     all_shortages = []
-
-    for status in ACTIVE_STATUSES:
-        print(f"Fetching status: {status}...")
-        page = 1
-
-        while page <= 3:
-            results = fetch_search_results(status, page=page, limit=100)
-            if not results:
+    seen_report_ids = set()
+    
+    # Try French URL first, fallback to English
+    urls_to_try = [
+        f"{BASE_URL}{SEARCH_PATH}",
+        f"{BASE_URL_EN}{SEARCH_PATH}",
+    ]
+    
+    body_text = None
+    used_url = None
+    
+    for url in urls_to_try:
+        try:
+            print(f"   Trying: {url}")
+            body_text = fetch_page_text_with_playwright(url)
+            if body_text and len(body_text) > 1000:
+                used_url = url
+                print(f"   ✅ Page loaded ({len(body_text)} chars)")
                 break
-
-            all_shortages.extend(results)
-
-            if len(results) < 100:
-                break
-
-            page += 1
-
-    unique = {}
-    for s in all_shortages:
+        except Exception as e:
+            print(f"   ❌ Failed: {e}")
+    
+    if not body_text:
+        print("   ❌ Could not load any page")
+        return []
+    
+    # Parse page 1
+    shortages = parse_shortages_from_text(body_text)
+    for s in shortages:
         rid = s.get('report_id', '')
-        if rid and rid not in unique:
-            unique[rid] = s
-
-    print(f"Total unique shortages: {len(unique)}")
-    return list(unique.values())
+        if rid and rid not in seen_report_ids:
+            seen_report_ids.add(rid)
+            all_shortages.append(s)
+    
+    print(f"   Page 1: {len(shortages)} shortages")
+    
+    # Try pagination (pages 2-5)
+    base_url = used_url or f"{BASE_URL}{SEARCH_PATH}"
+    
+    for page_num in range(2, 6):
+        try:
+            page_url = f"{base_url}?page={page_num}"
+            print(f"   Loading page {page_num}...")
+            page_text = fetch_page_text_with_playwright(page_url)
+            
+            if not page_text or len(page_text) < 500:
+                break
+            
+            page_shortages = parse_shortages_from_text(page_text)
+            new_count = 0
+            
+            for s in page_shortages:
+                rid = s.get('report_id', '')
+                if rid and rid not in seen_report_ids:
+                    seen_report_ids.add(rid)
+                    all_shortages.append(s)
+                    new_count += 1
+            
+            print(f"   Page {page_num}: {new_count} new (total: {len(all_shortages)})")
+            
+            if new_count == 0:
+                break
+                
+        except Exception as e:
+            print(f"   Page {page_num} error: {e}")
+            break
+    
+    # Also try with search filters for active statuses
+    for status in ACTIVE_STATUSES:
+        try:
+            import urllib.parse
+            params = {"status": status, "report_published": "1"}
+            filter_url = f"{used_url or f'{BASE_URL}{SEARCH_PATH}'}?{urllib.parse.urlencode(params)}"
+            print(f"   Filtering: {status}...")
+            
+            filter_text = fetch_page_text_with_playwright(filter_url)
+            if filter_text and len(filter_text) > 500:
+                filter_shortages = parse_shortages_from_text(filter_text)
+                new_count = 0
+                
+                for s in filter_shortages:
+                    rid = s.get('report_id', '')
+                    if rid and rid not in seen_report_ids:
+                        seen_report_ids.add(rid)
+                        all_shortages.append(s)
+                        new_count += 1
+                
+                print(f"   {status}: {new_count} new (total: {len(all_shortages)})")
+        except Exception as e:
+            print(f"   {status} error: {e}")
+    
+    print(f"   ✅ TOTAL: {len(all_shortages)} unique shortages")
+    return all_shortages
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -236,6 +335,7 @@ def generate_search_keywords(shortage: Dict[str, str]) -> List[str]:
         shortage.get('company_name', ''),
         shortage.get('report_id', ''),
         shortage.get('strength', ''),
+        shortage.get('status', ''),
     ]
 
     for field in fields:
@@ -250,16 +350,19 @@ def generate_search_keywords(shortage: Dict[str, str]) -> List[str]:
     return list(set(k for k in keywords if k))
 
 
-def transform_shortage(raw: Dict[str, str], status_filter: str) -> Dict[str, Any]:
+def transform_shortage(raw: Dict[str, str]) -> Dict[str, Any]:
     """Transform raw scraped data into Firestore document format."""
+    status = raw.get('status', 'resolved')
+    is_active = status in ['active_confirmed', 'anticipated_shortage', 'avoided_shortage']
+    
     return {
         'report_id': raw.get('report_id', ''),
         'brand_name': raw.get('brand_name', ''),
         'company_name': raw.get('company_name', ''),
         'strength': raw.get('strength', ''),
-        'status': status_filter,
-        'is_active': True,
-        'tier_3': False,
+        'status': status,
+        'is_active': is_active,
+        'tier_3': 'N3' in raw.get('brand_name', ''),
         'search_keywords': generate_search_keywords(raw),
         'updated_at': datetime.now(timezone.utc),
     }
@@ -295,6 +398,7 @@ def sync_to_firestore(db: firestore.Client, shortages: List[Dict[str, Any]]):
     if batch_count > 0:
         batch.commit()
 
+    # Mark active shortages that are no longer active
     existing_docs = collection_ref.where('is_active', '==', True).stream()
     stale_batch = db.batch()
     stale_count = 0
@@ -312,7 +416,7 @@ def sync_to_firestore(db: firestore.Client, shortages: List[Dict[str, Any]]):
     if stale_count > 0:
         stale_batch.commit()
 
-    print(f"Synced {len(synced_ids)} active shortages to Firestore")
+    print(f"Synced {len(synced_ids)} shortages to Firestore")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -321,7 +425,7 @@ def sync_to_firestore(db: firestore.Client, shortages: List[Dict[str, Any]]):
 
 def main():
     print("=" * 60)
-    print("MyVita — Medication Shortages Sync (Playwright)")
+    print("MyVita — Medication Shortages Sync (Copy-Paste)")
     print(f"Started at: {datetime.now(timezone.utc).isoformat()}")
     print("=" * 60)
 
@@ -333,8 +437,7 @@ def main():
 
     transformed = []
     for raw in raw_shortages:
-        status = raw.get('status', 'active_confirmed')
-        transformed.append(transform_shortage(raw, status))
+        transformed.append(transform_shortage(raw))
 
     print(f"Transformed {len(transformed)} shortages")
 
