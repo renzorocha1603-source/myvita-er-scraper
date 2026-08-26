@@ -1,77 +1,77 @@
 {
-  "last_update": "2026-08-26T10:39:39.440989",
+  "last_update": "2026-08-26T11:34:32.530290",
   "source": "MSSS / Gouvernement du Québec",
   "source_url": "https://www.quebec.ca/sante/systeme-et-services-de-sante/organisation-des-services/donnees-systeme-sante-quebecois-services/situation-urgences",
   "data_freshness": "live",
   "total_hospitals": 120,
   "global_stats": {
-    "total_patients": 2987,
-    "total_waiting": 935,
-    "avg_occupancy": 48
+    "total_patients": 2951,
+    "total_waiting": 877,
+    "avg_occupancy": 45
   },
   "hospitals": [
     {
       "name": "Centre de santé de Chibougamau",
-      "full_text": "Centre de santé de Chibougamau\n51 3e Rue, Chibougamau, G8P 1N1\nNord-du-Québec\nConsulter l’horaire de l’installation Centre de santé de Chibougamau\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 34\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 5\nTaux d’occupation des civières : 67 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 21\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 11 h 40",
+      "full_text": "Centre de santé de Chibougamau\n51 3e Rue, Chibougamau, G8P 1N1\nNord-du-Québec\nConsulter l’horaire de l’installation Centre de santé de Chibougamau\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 11\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 5\nTaux d’occupation des civières : 67 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 21\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 11 h 40",
       "latitude": null,
       "longitude": null,
-      "occupancy": 16
+      "occupancy": 14
     },
     {
       "name": "Centre de santé Radisson",
-      "full_text": "Centre de santé Radisson\n199 rue Jolliet, Eeyou Istchee Baie-James, J0Y 2X0\nNord-du-Québec\nConsulter l’horaire de l’installation Centre de santé Radisson\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 48\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 1\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 08\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 00 h 00",
+      "full_text": "Centre de santé Radisson\n199 rue Jolliet, Eeyou Istchee Baie-James, J0Y 2X0\nNord-du-Québec\nConsulter l’horaire de l’installation Centre de santé Radisson\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 20\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 1\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 08\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 00 h 00",
       "latitude": null,
       "longitude": null,
-      "occupancy": 10
+      "occupancy": 8
     },
     {
       "name": "Centre de santé Isle-Dieu",
-      "full_text": "Centre de santé Isle-Dieu\n130 boulevard Matagami, Matagami, J0Y 2A0\nNord-du-Québec\nConsulter l’horaire de l’installation Centre de santé Isle-Dieu\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 48\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 1\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 40\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 00 h 00",
+      "full_text": "Centre de santé Isle-Dieu\n130 boulevard Matagami, Matagami, J0Y 2A0\nNord-du-Québec\nConsulter l’horaire de l’installation Centre de santé Isle-Dieu\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 20\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 1\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 40\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 00 h 00",
       "latitude": null,
       "longitude": null,
-      "occupancy": 10
+      "occupancy": 8
     },
     {
       "name": "Centre de santé Lebel",
-      "full_text": "Centre de santé Lebel\n950 boulevard Quévillon Nord, Lebel-sur-Quévillon, J0Y 1X0\nNord-du-Québec\nConsulter l’horaire de l’installation Centre de santé Lebel\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 48\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 28\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 01 h 48",
+      "full_text": "Centre de santé Lebel\n950 boulevard Quévillon Nord, Lebel-sur-Quévillon, J0Y 1X0\nNord-du-Québec\nConsulter l’horaire de l’installation Centre de santé Lebel\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 05\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 1\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 28\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 01 h 48",
       "latitude": null,
       "longitude": null,
-      "occupancy": 26
+      "occupancy": 7
     },
     {
       "name": "Centre de santé René-Ricard",
-      "full_text": "Centre de santé René-Ricard\n32 3e Avenue, Chapais, G0W 1H0\nNord-du-Québec\nConsulter l’horaire de l’installation Centre de santé René-Ricard\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : non disponible actuellement\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 01 h 54\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 6 h 56",
+      "full_text": "Centre de santé René-Ricard\n32 3e Avenue, Chapais, G0W 1H0\nNord-du-Québec\nConsulter l’horaire de l’installation Centre de santé René-Ricard\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 20\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 01 h 54\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 6 h 56",
       "latitude": null,
       "longitude": null,
-      "occupancy": -1
+      "occupancy": 19
     },
     {
       "name": "Centre hospitalier de l'Université de Montréal",
-      "full_text": "Centre hospitalier de l'Université de Montréal\n1000 rue Saint-Denis, Montréal, H2X 0A9\nMontréal\nConsulter l’horaire de l’installation Centre hospitalier de l'Université de Montréal\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 08 h 04\nNombre de personnes qui attendent de voir un médecin à l’urgence : 44\nNombre total de personnes à l’urgence : 119\nTaux d’occupation des civières : 133 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 9 h 22\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 17 h 47",
+      "full_text": "Centre hospitalier de l'Université de Montréal\n1000 rue Saint-Denis, Montréal, H2X 0A9\nMontréal\nConsulter l’horaire de l’installation Centre hospitalier de l'Université de Montréal\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 08 h 42\nNombre de personnes qui attendent de voir un médecin à l’urgence : 42\nNombre total de personnes à l’urgence : 120\nTaux d’occupation des civières : 133 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 9 h 22\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 17 h 47",
       "latitude": 45.51,
       "longitude": -73.57,
-      "occupancy": 106
+      "occupancy": 107
     },
     {
       "name": "Centre hospitalier de l'Université Laval",
-      "full_text": "Centre hospitalier de l'Université Laval\n2705 boulevard Laurier, Québec, G1V 4G2\nCapitale-Nationale\nConsulter l’horaire de l’installation Centre hospitalier de l'Université Laval\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 17\nNombre de personnes qui attendent de voir un médecin à l’urgence : 11\nNombre total de personnes à l’urgence : 52\nTaux d’occupation des civières : 91 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 28\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 10 h 23",
+      "full_text": "Centre hospitalier de l'Université Laval\n2705 boulevard Laurier, Québec, G1V 4G2\nCapitale-Nationale\nConsulter l’horaire de l’installation Centre hospitalier de l'Université Laval\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 35\nNombre de personnes qui attendent de voir un médecin à l’urgence : 14\nNombre total de personnes à l’urgence : 52\nTaux d’occupation des civières : 86 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 28\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 10 h 23",
       "latitude": 46.77,
       "longitude": -71.27,
-      "occupancy": 69
+      "occupancy": 72
     },
     {
       "name": "Centre hospitalier de St.Mary",
-      "full_text": "Centre hospitalier de St.Mary\n3830 avenue Lacombe, Montréal, H3T 1M5\nMontréal\nConsulter l’horaire de l’installation Centre hospitalier de St.Mary\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 13\nNombre de personnes qui attendent de voir un médecin à l’urgence : 5\nNombre total de personnes à l’urgence : 36\nTaux d’occupation des civières : 141 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 15\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 15 h 51",
+      "full_text": "Centre hospitalier de St.Mary\n3830 avenue Lacombe, Montréal, H3T 1M5\nMontréal\nConsulter l’horaire de l’installation Centre hospitalier de St.Mary\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 29\nNombre de personnes qui attendent de voir un médecin à l’urgence : 4\nNombre total de personnes à l’urgence : 36\nTaux d’occupation des civières : 141 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 15\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 15 h 51",
       "latitude": 45.5,
       "longitude": -73.62,
-      "occupancy": 60
+      "occupancy": 56
     },
     {
       "name": "Centre hospitalier régional du Grand-Portage",
-      "full_text": "Centre hospitalier régional du Grand-Portage\n75 rue Saint-Henri, Rivière-du-Loup, G5R 2A4\nBas-Saint-Laurent\nConsulter l’horaire de l’installation Centre hospitalier régional du Grand-Portage\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 26\nNombre de personnes qui attendent de voir un médecin à l’urgence : 2\nNombre total de personnes à l’urgence : 16\nTaux d’occupation des civières : 144 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 40\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 13 h 37",
+      "full_text": "Centre hospitalier régional du Grand-Portage\n75 rue Saint-Henri, Rivière-du-Loup, G5R 2A4\nBas-Saint-Laurent\nConsulter l’horaire de l’installation Centre hospitalier régional du Grand-Portage\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 01\nNombre de personnes qui attendent de voir un médecin à l’urgence : 2\nNombre total de personnes à l’urgence : 16\nTaux d’occupation des civières : 156 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 40\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 13 h 37",
       "latitude": 47.4,
       "longitude": -69.5,
-      "occupancy": 30
+      "occupancy": 28
     },
     {
       "name": "Centre multiservices de santé et de services sociaux Avellin-Dalcourt",
@@ -96,31 +96,31 @@
     },
     {
       "name": "Centre multiservices de santé et de services sociaux d'Argenteuil",
-      "full_text": "Centre multiservices de santé et de services sociaux d'Argenteuil\n145 avenue de la Providence, Lachute, J8H 4C7\nLaurentides\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux d'Argenteuil\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 35\nNombre de personnes qui attendent de voir un médecin à l’urgence : 9\nNombre total de personnes à l’urgence : 19\nTaux d’occupation des civières : 113 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 22\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 10 h 48",
+      "full_text": "Centre multiservices de santé et de services sociaux d'Argenteuil\n145 avenue de la Providence, Lachute, J8H 4C7\nLaurentides\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux d'Argenteuil\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 04\nNombre de personnes qui attendent de voir un médecin à l’urgence : 7\nNombre total de personnes à l’urgence : 17\nTaux d’occupation des civières : 113 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 22\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 10 h 48",
       "latitude": 45.55,
       "longitude": -75.69,
-      "occupancy": 46
+      "occupancy": 40
     },
     {
       "name": "Centre multiservices de santé et de services sociaux de Baie-Saint-Paul",
-      "full_text": "Centre multiservices de santé et de services sociaux de Baie-Saint-Paul\n88 rue Racine, Baie-Saint-Paul, G3Z 0K3\nCapitale-Nationale\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Baie-Saint-Paul\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 21\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 3\nTaux d’occupation des civières : 38 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 37\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 24 h 01",
+      "full_text": "Centre multiservices de santé et de services sociaux de Baie-Saint-Paul\n88 rue Racine, Baie-Saint-Paul, G3Z 0K3\nCapitale-Nationale\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Baie-Saint-Paul\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 50\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 3\nTaux d’occupation des civières : 38 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 37\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 24 h 01",
       "latitude": null,
       "longitude": null,
-      "occupancy": 16
+      "occupancy": 14
     },
     {
       "name": "Centre multiservices de santé et de services sociaux de Fermont",
-      "full_text": "Centre multiservices de santé et de services sociaux de Fermont\n1 rue Aquilon, Fermont, G0G 1J0\nCôte-Nord\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Fermont\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 34\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 7\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 43\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 00 h 00",
+      "full_text": "Centre multiservices de santé et de services sociaux de Fermont\n1 rue Aquilon, Fermont, G0G 1J0\nCôte-Nord\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Fermont\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 08\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 7\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 43\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 00 h 00",
       "latitude": 50.3,
       "longitude": -66.5,
-      "occupancy": 24
+      "occupancy": 27
     },
     {
       "name": "Centre multiservices de santé et de services sociaux de Forestville",
-      "full_text": "Centre multiservices de santé et de services sociaux de Forestville\n2 7e rue, Forestville, G0T 1E0\nCôte-Nord\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Forestville\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 57\nNombre de personnes qui attendent de voir un médecin à l’urgence : 1\nNombre total de personnes à l’urgence : 2\nTaux d’occupation des civières : 20 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 08\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 6 h 12",
+      "full_text": "Centre multiservices de santé et de services sociaux de Forestville\n2 7e rue, Forestville, G0T 1E0\nCôte-Nord\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Forestville\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 50\nNombre de personnes qui attendent de voir un médecin à l’urgence : 1\nNombre total de personnes à l’urgence : 2\nTaux d’occupation des civières : 20 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 08\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 6 h 12",
       "latitude": 48.9,
       "longitude": -69.2,
-      "occupancy": 14
+      "occupancy": 13
     },
     {
       "name": "Centre multiservices de santé et de services sociaux de Fortierville",
@@ -131,24 +131,24 @@
     },
     {
       "name": "Centre multiservices de santé et de services sociaux de Grande-Vallée",
-      "full_text": "Centre multiservices de santé et de services sociaux de Grande-Vallée\n71 rue Saint-François-Xavier Ouest, Grande-Vallée, G0E 1K0\nGaspésie-Îles-de-la-Madeleine\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Grande-Vallée\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 15\nNombre de personnes qui attendent de voir un médecin à l’urgence : 1\nNombre total de personnes à l’urgence : 1\nTaux d’occupation des civières : 50 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 01 h 45\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 4 h 56",
+      "full_text": "Centre multiservices de santé et de services sociaux de Grande-Vallée\n71 rue Saint-François-Xavier Ouest, Grande-Vallée, G0E 1K0\nGaspésie-Îles-de-la-Madeleine\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Grande-Vallée\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 32\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 1\nTaux d’occupation des civières : 50 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 01 h 45\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 4 h 56",
       "latitude": 48.9,
       "longitude": -65.5,
-      "occupancy": 13
+      "occupancy": 9
     },
     {
       "name": "Centre multiservices de santé et de services sociaux de la Basse-Côte-Nord",
-      "full_text": "Centre multiservices de santé et de services sociaux de la Basse-Côte-Nord\n1070 boulevard Docteur-Camille-Marcoux, Blanc-Sablon, G0G 1W0\nCôte-Nord\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de la Basse-Côte-Nord\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 06\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 55\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 01 h 43",
+      "full_text": "Centre multiservices de santé et de services sociaux de la Basse-Côte-Nord\n1070 boulevard Docteur-Camille-Marcoux, Blanc-Sablon, G0G 1W0\nCôte-Nord\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de la Basse-Côte-Nord\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : non disponible actuellement\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 55\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 01 h 43",
       "latitude": 50.3,
       "longitude": -66.5,
-      "occupancy": 30
+      "occupancy": -1
     },
     {
       "name": "Centre multiservices de santé et de services sociaux de la Minganie",
-      "full_text": "Centre multiservices de santé et de services sociaux de la Minganie\n1035 promenade des Anciens, Havre-Saint-Pierre, G0G 1P0\nCôte-Nord\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de la Minganie\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 40\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 2\nTaux d’occupation des civières : 100 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 01 h 40\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 7 h 12",
+      "full_text": "Centre multiservices de santé et de services sociaux de la Minganie\n1035 promenade des Anciens, Havre-Saint-Pierre, G0G 1P0\nCôte-Nord\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de la Minganie\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : non disponible actuellement\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 2\nTaux d’occupation des civières : 100 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 01 h 40\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 7 h 12",
       "latitude": 50.3,
       "longitude": -66.5,
-      "occupancy": 16
+      "occupancy": 5
     },
     {
       "name": "Centre multiservices de santé et de services sociaux de la MRC de Coaticook",
@@ -159,108 +159,108 @@
     },
     {
       "name": "Centre multiservices de santé et de services sociaux de La Sarre",
-      "full_text": "Centre multiservices de santé et de services sociaux de La Sarre\n679 2e Rue Est, La Sarre, J9Z 2X7\nAbitibi-Témiscamingue\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de La Sarre\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 05\nNombre de personnes qui attendent de voir un médecin à l’urgence : 2\nNombre total de personnes à l’urgence : 4\nTaux d’occupation des civières : 40 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 55\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 8 h 34",
+      "full_text": "Centre multiservices de santé et de services sociaux de La Sarre\n679 2e Rue Est, La Sarre, J9Z 2X7\nAbitibi-Témiscamingue\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de La Sarre\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 36\nNombre de personnes qui attendent de voir un médecin à l’urgence : 2\nNombre total de personnes à l’urgence : 5\nTaux d’occupation des civières : 40 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 55\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 8 h 34",
       "latitude": null,
       "longitude": null,
-      "occupancy": 14
+      "occupancy": 13
     },
     {
       "name": "Centre multiservices de santé et de services sociaux de Mansfield-et-Pontefact",
-      "full_text": "Centre multiservices de santé et de services sociaux de Mansfield-et-Pontefact\n160 Chemin de la Chute, Mansfield-et-Pontefract, J0X 1R0\nOutaouais\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Mansfield-et-Pontefact\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 11\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 15\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 00 h 00",
+      "full_text": "Centre multiservices de santé et de services sociaux de Mansfield-et-Pontefact\n160 Chemin de la Chute, Mansfield-et-Pontefract, J0X 1R0\nOutaouais\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Mansfield-et-Pontefact\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 58\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 15\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 00 h 00",
       "latitude": 45.6,
       "longitude": -75.0,
-      "occupancy": 31
+      "occupancy": 28
     },
     {
       "name": "Centre multiservices de santé et de services sociaux de Memphrémagog",
-      "full_text": "Centre multiservices de santé et de services sociaux de Memphrémagog\n50 rue Saint-Patrice Est, Magog, J1X 3X3\nEstrie\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Memphrémagog\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 55\nNombre de personnes qui attendent de voir un médecin à l’urgence : 2\nNombre total de personnes à l’urgence : 8\nTaux d’occupation des civières : 64 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 10\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 12 h 06",
+      "full_text": "Centre multiservices de santé et de services sociaux de Memphrémagog\n50 rue Saint-Patrice Est, Magog, J1X 3X3\nEstrie\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Memphrémagog\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 51\nNombre de personnes qui attendent de voir un médecin à l’urgence : 2\nNombre total de personnes à l’urgence : 8\nTaux d’occupation des civières : 64 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 10\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 12 h 06",
       "latitude": null,
       "longitude": null,
-      "occupancy": 22
+      "occupancy": 21
     },
     {
       "name": "Centre multiservices de santé et de services sociaux de Port-Cartier",
-      "full_text": "Centre multiservices de santé et de services sociaux de Port-Cartier\n3 rue De Shelter Bay, Port-Cartier, G5B 2W9\nCôte-Nord\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Port-Cartier\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 30\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 10\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 22 h 18",
+      "full_text": "Centre multiservices de santé et de services sociaux de Port-Cartier\n3 rue De Shelter Bay, Port-Cartier, G5B 2W9\nCôte-Nord\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Port-Cartier\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : non disponible actuellement\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 10\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 22 h 18",
       "latitude": 49.2,
       "longitude": -68.15,
-      "occupancy": 36
-    },
-    {
-      "name": "Centre multiservices de santé et de services sociaux de Rivière-Rouge",
-      "full_text": "Centre multiservices de santé et de services sociaux de Rivière-Rouge\n1525 rue de L'Annonciation Nord, Rivière-Rouge, J0T 1T0\nLaurentides\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Rivière-Rouge\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 32\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 5\nTaux d’occupation des civières : 80 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 44\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 16 h 35",
-      "latitude": 45.9,
-      "longitude": -74.1,
-      "occupancy": 20
-    },
-    {
-      "name": "Centre multiservices de santé et de services sociaux de Saint-Marc-des-Carrières",
-      "full_text": "Centre multiservices de santé et de services sociaux de Saint-Marc-des-Carrières\n1045 boulevard Bona-Dussault, Saint-Marc-des-Carrières, G0A 4B0\nCapitale-Nationale\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Saint-Marc-des-Carrières\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 37\nNombre de personnes qui attendent de voir un médecin à l’urgence : 1\nNombre total de personnes à l’urgence : 1\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 14\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 5 h 11",
-      "latitude": 47.5,
-      "longitude": -69.5,
-      "occupancy": 11
-    },
-    {
-      "name": "Centre multiservices de santé et de services sociaux de Saint-Raymond",
-      "full_text": "Centre multiservices de santé et de services sociaux de Saint-Raymond\n700 rue Saint-Cyrille, Saint-Raymond, G3L 1W1\nCapitale-Nationale\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Saint-Raymond\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 46\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 8\nTaux d’occupation des civières : 100 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 58\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 8 h 56",
-      "latitude": null,
-      "longitude": null,
-      "occupancy": 22
-    },
-    {
-      "name": "Centre multiservices de santé et de services sociaux de Sainte-Agathe",
-      "full_text": "Centre multiservices de santé et de services sociaux de Sainte-Agathe\n234 rue Saint-Vincent, Sainte-Agathe-des-Monts, J8C 2B8\nLaurentides\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Sainte-Agathe\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 07 h 32\nNombre de personnes qui attendent de voir un médecin à l’urgence : 16\nNombre total de personnes à l’urgence : 41\nTaux d’occupation des civières : 139 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 6 h 37\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 16 h 15",
-      "latitude": 45.5,
-      "longitude": -75.64,
-      "occupancy": 87
-    },
-    {
-      "name": "Centre multiservices de santé et de services sociaux de Sainte-Anne-de-Beaupré",
-      "full_text": "Centre multiservices de santé et de services sociaux de Sainte-Anne-de-Beaupré\n11000 rue des Montagnards, Beaupré, G0A 1E0\nCapitale-Nationale\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Sainte-Anne-de-Beaupré\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 12\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 16\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 7 h 43",
-      "latitude": 47.5,
-      "longitude": -69.5,
-      "occupancy": 31
-    },
-    {
-      "name": "Centre multiservices de santé et de services sociaux de Trois-Pistoles",
-      "full_text": "Centre multiservices de santé et de services sociaux de Trois-Pistoles\n550 rue Notre-Dame Est, Trois-Pistoles, G0L 4K0\nBas-Saint-Laurent\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Trois-Pistoles\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 29\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 1\nTaux d’occupation des civières : 33 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 01 h 29\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 7 h 01",
-      "latitude": 47.8,
-      "longitude": -69.3,
-      "occupancy": 9
-    },
-    {
-      "name": "Centre multiservices de santé et de services sociaux de Témiscaming-Kipawa",
-      "full_text": "Centre multiservices de santé et de services sociaux de Témiscaming-Kipawa\n180 rue Anvik, Témiscaming, J0Z 3R0\nAbitibi-Témiscamingue\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Témiscaming-Kipawa\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : non disponible actuellement\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 00 h 16\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 00 h 00",
-      "latitude": null,
-      "longitude": null,
       "occupancy": -1
     },
     {
+      "name": "Centre multiservices de santé et de services sociaux de Rivière-Rouge",
+      "full_text": "Centre multiservices de santé et de services sociaux de Rivière-Rouge\n1525 rue de L'Annonciation Nord, Rivière-Rouge, J0T 1T0\nLaurentides\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Rivière-Rouge\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 18\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 5\nTaux d’occupation des civières : 80 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 44\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 16 h 35",
+      "latitude": 45.9,
+      "longitude": -74.1,
+      "occupancy": 19
+    },
+    {
+      "name": "Centre multiservices de santé et de services sociaux de Saint-Marc-des-Carrières",
+      "full_text": "Centre multiservices de santé et de services sociaux de Saint-Marc-des-Carrières\n1045 boulevard Bona-Dussault, Saint-Marc-des-Carrières, G0A 4B0\nCapitale-Nationale\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Saint-Marc-des-Carrières\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 44\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 14\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 5 h 11",
+      "latitude": 47.5,
+      "longitude": -69.5,
+      "occupancy": 25
+    },
+    {
+      "name": "Centre multiservices de santé et de services sociaux de Saint-Raymond",
+      "full_text": "Centre multiservices de santé et de services sociaux de Saint-Raymond\n700 rue Saint-Cyrille, Saint-Raymond, G3L 1W1\nCapitale-Nationale\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Saint-Raymond\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 42\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 7\nTaux d’occupation des civières : 86 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 58\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 8 h 56",
+      "latitude": null,
+      "longitude": null,
+      "occupancy": 20
+    },
+    {
+      "name": "Centre multiservices de santé et de services sociaux de Sainte-Agathe",
+      "full_text": "Centre multiservices de santé et de services sociaux de Sainte-Agathe\n234 rue Saint-Vincent, Sainte-Agathe-des-Monts, J8C 2B8\nLaurentides\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Sainte-Agathe\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 06 h 19\nNombre de personnes qui attendent de voir un médecin à l’urgence : 13\nNombre total de personnes à l’urgence : 38\nTaux d’occupation des civières : 139 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 6 h 37\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 16 h 15",
+      "latitude": 45.5,
+      "longitude": -75.64,
+      "occupancy": 78
+    },
+    {
+      "name": "Centre multiservices de santé et de services sociaux de Sainte-Anne-de-Beaupré",
+      "full_text": "Centre multiservices de santé et de services sociaux de Sainte-Anne-de-Beaupré\n11000 rue des Montagnards, Beaupré, G0A 1E0\nCapitale-Nationale\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Sainte-Anne-de-Beaupré\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : non disponible actuellement\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 16\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 7 h 43",
+      "latitude": 47.5,
+      "longitude": -69.5,
+      "occupancy": -1
+    },
+    {
+      "name": "Centre multiservices de santé et de services sociaux de Trois-Pistoles",
+      "full_text": "Centre multiservices de santé et de services sociaux de Trois-Pistoles\n550 rue Notre-Dame Est, Trois-Pistoles, G0L 4K0\nBas-Saint-Laurent\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Trois-Pistoles\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : non disponible actuellement\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 1\nTaux d’occupation des civières : 33 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 01 h 29\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 7 h 01",
+      "latitude": 47.8,
+      "longitude": -69.3,
+      "occupancy": 2
+    },
+    {
+      "name": "Centre multiservices de santé et de services sociaux de Témiscaming-Kipawa",
+      "full_text": "Centre multiservices de santé et de services sociaux de Témiscaming-Kipawa\n180 rue Anvik, Témiscaming, J0Z 3R0\nAbitibi-Témiscamingue\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Témiscaming-Kipawa\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 40\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 00 h 16\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 00 h 00",
+      "latitude": null,
+      "longitude": null,
+      "occupancy": 24
+    },
+    {
       "name": "Centre multiservices de santé et de services sociaux de Ville-Marie",
-      "full_text": "Centre multiservices de santé et de services sociaux de Ville-Marie\n22 rue Notre-Dame Nord, Ville-Marie, J9V 1W8\nAbitibi-Témiscamingue\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Ville-Marie\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 53\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 4\nTaux d’occupation des civières : 40 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 15\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 12 h 06",
+      "full_text": "Centre multiservices de santé et de services sociaux de Ville-Marie\n22 rue Notre-Dame Nord, Ville-Marie, J9V 1W8\nAbitibi-Témiscamingue\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux de Ville-Marie\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 01\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 4\nTaux d’occupation des civières : 40 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 15\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 12 h 06",
       "latitude": 48.5,
       "longitude": -78.4,
       "occupancy": 16
     },
     {
       "name": "Centre multiservices de santé et de services sociaux des Escoumins",
-      "full_text": "Centre multiservices de santé et de services sociaux des Escoumins\n4 rue de l'Hôpital, Les Escoumins, G0T 1K0\nCôte-Nord\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux des Escoumins\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 51\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 1\nTaux d’occupation des civières : 33 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 43\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 9 h 51",
+      "full_text": "Centre multiservices de santé et de services sociaux des Escoumins\n4 rue de l'Hôpital, Les Escoumins, G0T 1K0\nCôte-Nord\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux des Escoumins\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 40\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 1\nTaux d’occupation des civières : 33 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 43\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 9 h 51",
       "latitude": 48.9,
       "longitude": -69.2,
       "occupancy": 10
     },
     {
       "name": "Centre multiservices de santé et de services sociaux des Sources",
-      "full_text": "Centre multiservices de santé et de services sociaux des Sources\n475 3e Avenue, Val-des-Sources, J1T 1X6\nEstrie\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux des Sources\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 20\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 24\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 5 h 46",
+      "full_text": "Centre multiservices de santé et de services sociaux des Sources\n475 3e Avenue, Val-des-Sources, J1T 1X6\nEstrie\nConsulter l’horaire de l’installation Centre multiservices de santé et de services sociaux des Sources\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : non disponible actuellement\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 24\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 5 h 46",
       "latitude": null,
       "longitude": null,
-      "occupancy": 33
+      "occupancy": -1
     },
     {
       "name": "Centre de santé et de services sociaux du Granit",
-      "full_text": "Centre de santé et de services sociaux du Granit\n3569 rue Laval, Lac-Mégantic, G6B 1A5\nEstrie\nConsulter l’horaire de l’installation Centre de santé et de services sociaux du Granit\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 14\nNombre de personnes qui attendent de voir un médecin à l’urgence : 2\nNombre total de personnes à l’urgence : 7\nTaux d’occupation des civières : 80 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 18\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 15 h 21",
+      "full_text": "Centre de santé et de services sociaux du Granit\n3569 rue Laval, Lac-Mégantic, G6B 1A5\nEstrie\nConsulter l’horaire de l’installation Centre de santé et de services sociaux du Granit\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 46\nNombre de personnes qui attendent de voir un médecin à l’urgence : 2\nNombre total de personnes à l’urgence : 7\nTaux d’occupation des civières : 80 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 18\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 15 h 21",
       "latitude": null,
       "longitude": null,
-      "occupancy": 22
+      "occupancy": 20
     },
     {
       "name": "Centre multiservices de santé et de services sociaux du Haut-Saint-Maurice",
@@ -278,31 +278,31 @@
     },
     {
       "name": "CHU Sainte-Justine",
-      "full_text": "CHU Sainte-Justine\n3175 chemin de la Côte-Sainte-Catherine, Montréal, H3T 1C5\nMontréal\nConsulter l’horaire de l’installation CHU Sainte-Justine\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 03\nNombre de personnes qui attendent de voir un médecin à l’urgence : 11\nNombre total de personnes à l’urgence : 21\nTaux d’occupation des civières : 50 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 33\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 6 h 10",
+      "full_text": "CHU Sainte-Justine\n3175 chemin de la Côte-Sainte-Catherine, Montréal, H3T 1C5\nMontréal\nConsulter l’horaire de l’installation CHU Sainte-Justine\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 22\nNombre de personnes qui attendent de voir un médecin à l’urgence : 8\nNombre total de personnes à l’urgence : 21\nTaux d’occupation des civières : 56 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 33\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 6 h 10",
       "latitude": 45.5,
       "longitude": -73.62,
-      "occupancy": 44
+      "occupancy": 43
     },
     {
       "name": "CHUS - Hôpital Fleurimont",
-      "full_text": "CHUS - Hôpital Fleurimont\n3001 12e Avenue Nord, Sherbrooke, J1H 5N4\nEstrie\nConsulter l’horaire de l’installation CHUS - Hôpital Fleurimont\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 09 h 35\nNombre de personnes qui attendent de voir un médecin à l’urgence : 28\nNombre total de personnes à l’urgence : 48\nTaux d’occupation des civières : 44 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 7 h 48\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 10 h 51",
+      "full_text": "CHUS - Hôpital Fleurimont\n3001 12e Avenue Nord, Sherbrooke, J1H 5N4\nEstrie\nConsulter l’horaire de l’installation CHUS - Hôpital Fleurimont\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 07 h 06\nNombre de personnes qui attendent de voir un médecin à l’urgence : 27\nNombre total de personnes à l’urgence : 49\nTaux d’occupation des civières : 50 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 7 h 48\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 10 h 51",
       "latitude": 45.4,
       "longitude": -71.89,
-      "occupancy": 102
+      "occupancy": 92
     },
     {
       "name": "CHUS - Hôtel-Dieu de Sherbrooke",
-      "full_text": "CHUS - Hôtel-Dieu de Sherbrooke\n580 rue Bowen Sud, Sherbrooke, J1G 2E8\nEstrie\nConsulter l’horaire de l’installation CHUS - Hôtel-Dieu de Sherbrooke\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 06 h 51\nNombre de personnes qui attendent de voir un médecin à l’urgence : 21\nNombre total de personnes à l’urgence : 62\nTaux d’occupation des civières : 102 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 8 h 42\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 16 h 07",
+      "full_text": "CHUS - Hôtel-Dieu de Sherbrooke\n580 rue Bowen Sud, Sherbrooke, J1G 2E8\nEstrie\nConsulter l’horaire de l’installation CHUS - Hôtel-Dieu de Sherbrooke\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 06 h 40\nNombre de personnes qui attendent de voir un médecin à l’urgence : 24\nNombre total de personnes à l’urgence : 66\nTaux d’occupation des civières : 105 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 8 h 42\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 16 h 07",
       "latitude": 45.4,
       "longitude": -71.89,
-      "occupancy": 88
+      "occupancy": 89
     },
     {
       "name": "CLSC de Pohénégamook",
-      "full_text": "CLSC de Pohénégamook\n1922 rue Saint-Vallier, Pohénégamook, G0L 1J0\nBas-Saint-Laurent\nConsulter l’horaire de l’installation CLSC de Pohénégamook\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 39\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 1\nTaux d’occupation des civières : 33 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 13\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 10 h 49",
+      "full_text": "CLSC de Pohénégamook\n1922 rue Saint-Vallier, Pohénégamook, G0L 1J0\nBas-Saint-Laurent\nConsulter l’horaire de l’installation CLSC de Pohénégamook\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 29\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 1\nTaux d’occupation des civières : 33 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 13\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 10 h 49",
       "latitude": 47.8,
       "longitude": -69.3,
-      "occupancy": 10
+      "occupancy": 9
     },
     {
       "name": "CLSC et centre d'hébergement de la Petite-Nation",
@@ -313,262 +313,262 @@
     },
     {
       "name": "CLSC et centre de services ambulatoires de Murdochville",
-      "full_text": "CLSC et centre de services ambulatoires de Murdochville\n600 avenue William-May, Murdochville, G0E 1W0\nGaspésie-Îles-de-la-Madeleine\nConsulter l’horaire de l’installation CLSC et centre de services ambulatoires de Murdochville\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 18\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 01 h 49\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 00 h 00",
+      "full_text": "CLSC et centre de services ambulatoires de Murdochville\n600 avenue William-May, Murdochville, G0E 1W0\nGaspésie-Îles-de-la-Madeleine\nConsulter l’horaire de l’installation CLSC et centre de services ambulatoires de Murdochville\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 45\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 01 h 49\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 00 h 00",
       "latitude": 48.9,
       "longitude": -65.5,
-      "occupancy": 33
+      "occupancy": 25
     },
     {
       "name": "CLSC et centre de services ambulatoires de Paspébiac",
-      "full_text": "CLSC et centre de services ambulatoires de Paspébiac\n273 boulevard Gérard-D.-Levesque, Paspébiac, G0C 2K0\nGaspésie-Îles-de-la-Madeleine\nConsulter l’horaire de l’installation CLSC et centre de services ambulatoires de Paspébiac\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 37\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 2\nTaux d’occupation des civières : 50 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 29\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 4 h 23",
+      "full_text": "CLSC et centre de services ambulatoires de Paspébiac\n273 boulevard Gérard-D.-Levesque, Paspébiac, G0C 2K0\nGaspésie-Îles-de-la-Madeleine\nConsulter l’horaire de l’installation CLSC et centre de services ambulatoires de Paspébiac\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 40\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 2\nTaux d’occupation des civières : 50 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 29\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 4 h 23",
       "latitude": 48.8,
       "longitude": -64.6,
       "occupancy": 11
     },
     {
       "name": "CLSC et hôpital Le Royer",
-      "full_text": "CLSC et hôpital Le Royer\n635 boulevard Jolliet, Baie-Comeau, G5C 1P1\nCôte-Nord\nConsulter l’horaire de l’installation CLSC et hôpital Le Royer\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 15\nNombre de personnes qui attendent de voir un médecin à l’urgence : 7\nNombre total de personnes à l’urgence : 17\nTaux d’occupation des civières : 110 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 50\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 10 h 55",
+      "full_text": "CLSC et hôpital Le Royer\n635 boulevard Jolliet, Baie-Comeau, G5C 1P1\nCôte-Nord\nConsulter l’horaire de l’installation CLSC et hôpital Le Royer\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 43\nNombre de personnes qui attendent de voir un médecin à l’urgence : 1\nNombre total de personnes à l’urgence : 14\nTaux d’occupation des civières : 110 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 50\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 10 h 55",
       "latitude": 49.1,
       "longitude": -68.1,
-      "occupancy": 41
+      "occupancy": 28
     },
     {
       "name": "Hôpital Anna-Laberge",
-      "full_text": "Hôpital Anna-Laberge\n200 boulevard Brisebois, Châteauguay, J6K 4W8\nMontérégie\nConsulter l’horaire de l’installation Hôpital Anna-Laberge\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 09 h 33\nNombre de personnes qui attendent de voir un médecin à l’urgence : 18\nNombre total de personnes à l’urgence : 71\nTaux d’occupation des civières : 178 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 6 h 49\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 38 h 49",
+      "full_text": "Hôpital Anna-Laberge\n200 boulevard Brisebois, Châteauguay, J6K 4W8\nMontérégie\nConsulter l’horaire de l’installation Hôpital Anna-Laberge\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 09 h 32\nNombre de personnes qui attendent de voir un médecin à l’urgence : 18\nNombre total de personnes à l’urgence : 70\nTaux d’occupation des civières : 175 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 6 h 49\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 38 h 49",
       "latitude": 45.73,
       "longitude": -73.45,
       "occupancy": 95
     },
     {
       "name": "Hôpital Barrie Memorial / Barrie Memorial Hospital",
-      "full_text": "Hôpital Barrie Memorial / Barrie Memorial Hospital\n28 rue Gale, Ormstown, J0S 1K0\nMontérégie\nConsulter l’horaire de l’installation Hôpital Barrie Memorial / Barrie Memorial Hospital\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 05 h 34\nNombre de personnes qui attendent de voir un médecin à l’urgence : 20\nNombre total de personnes à l’urgence : 25\nTaux d’occupation des civières : 140 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 03\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 18 h 10",
+      "full_text": "Hôpital Barrie Memorial / Barrie Memorial Hospital\n28 rue Gale, Ormstown, J0S 1K0\nMontérégie\nConsulter l’horaire de l’installation Hôpital Barrie Memorial / Barrie Memorial Hospital\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 05 h 42\nNombre de personnes qui attendent de voir un médecin à l’urgence : 21\nNombre total de personnes à l’urgence : 26\nTaux d’occupation des civières : 140 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 03\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 18 h 10",
       "latitude": null,
       "longitude": null,
-      "occupancy": 64
+      "occupancy": 66
     },
     {
       "name": "Hôpital Brome-Missisquoi-Perkins",
-      "full_text": "Hôpital Brome-Missisquoi-Perkins\n950 rue Principale, Cowansville, J2K 1K3\nEstrie\nConsulter l’horaire de l’installation Hôpital Brome-Missisquoi-Perkins\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 05 h 38\nNombre de personnes qui attendent de voir un médecin à l’urgence : 12\nNombre total de personnes à l’urgence : 37\nTaux d’occupation des civières : 169 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 6 h 45\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 22 h 42",
+      "full_text": "Hôpital Brome-Missisquoi-Perkins\n950 rue Principale, Cowansville, J2K 1K3\nEstrie\nConsulter l’horaire de l’installation Hôpital Brome-Missisquoi-Perkins\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 56\nNombre de personnes qui attendent de voir un médecin à l’urgence : 9\nNombre total de personnes à l’urgence : 36\nTaux d’occupation des civières : 169 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 6 h 45\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 22 h 42",
       "latitude": null,
       "longitude": null,
-      "occupancy": 74
+      "occupancy": 68
     },
     {
       "name": "Hôpital Charles-Le Moyne",
-      "full_text": "Hôpital Charles-Le Moyne\n3120 boulevard Taschereau, Longueuil, J4V 2H1\nMontérégie\nConsulter l’horaire de l’installation Hôpital Charles-Le Moyne\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 09 h 43\nNombre de personnes qui attendent de voir un médecin à l’urgence : 35\nNombre total de personnes à l’urgence : 86\nTaux d’occupation des civières : 112 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 8 h 43\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 20 h 27",
+      "full_text": "Hôpital Charles-Le Moyne\n3120 boulevard Taschereau, Longueuil, J4V 2H1\nMontérégie\nConsulter l’horaire de l’installation Hôpital Charles-Le Moyne\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 07 h 34\nNombre de personnes qui attendent de voir un médecin à l’urgence : 31\nNombre total de personnes à l’urgence : 81\nTaux d’occupation des civières : 109 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 8 h 43\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 20 h 27",
       "latitude": 45.53,
       "longitude": -73.52,
-      "occupancy": 107
+      "occupancy": 96
     },
     {
       "name": "Hôpital d'Alma",
-      "full_text": "Hôpital d'Alma\n300 boulevard Champlain Sud, Alma, G8B 5W3\nSaguenay-Lac-Saint-Jean\nConsulter l’horaire de l’installation Hôpital d'Alma\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 00\nNombre de personnes qui attendent de voir un médecin à l’urgence : 9\nNombre total de personnes à l’urgence : 24\nTaux d’occupation des civières : 71 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 16\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 5 h 28",
+      "full_text": "Hôpital d'Alma\n300 boulevard Champlain Sud, Alma, G8B 5W3\nSaguenay-Lac-Saint-Jean\nConsulter l’horaire de l’installation Hôpital d'Alma\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 11\nNombre de personnes qui attendent de voir un médecin à l’urgence : 11\nNombre total de personnes à l’urgence : 25\nTaux d’occupation des civières : 71 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 16\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 5 h 28",
       "latitude": null,
       "longitude": null,
-      "occupancy": 50
+      "occupancy": 53
     },
     {
       "name": "Hôpital d'Amos",
-      "full_text": "Hôpital d'Amos\n622 4e Rue Ouest, Amos, J9T 2S2\nAbitibi-Témiscamingue\nConsulter l’horaire de l’installation Hôpital d'Amos\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 41\nNombre de personnes qui attendent de voir un médecin à l’urgence : 3\nNombre total de personnes à l’urgence : 9\nTaux d’occupation des civières : 71 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 25\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 8 h 49",
+      "full_text": "Hôpital d'Amos\n622 4e Rue Ouest, Amos, J9T 2S2\nAbitibi-Témiscamingue\nConsulter l’horaire de l’installation Hôpital d'Amos\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 41\nNombre de personnes qui attendent de voir un médecin à l’urgence : 3\nNombre total de personnes à l’urgence : 8\nTaux d’occupation des civières : 71 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 25\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 8 h 49",
       "latitude": 48.2,
       "longitude": -78.1,
-      "occupancy": 19
+      "occupancy": 18
     },
     {
       "name": "Hôpital d'Amqui",
-      "full_text": "Hôpital d'Amqui\n135 avenue Gaëtan-Archambault, Amqui, G5J 2K5\nBas-Saint-Laurent\nConsulter l’horaire de l’installation Hôpital d'Amqui\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 27\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 0\nTaux d’occupation des civières : 0 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 31\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 7 h 45",
+      "full_text": "Hôpital d'Amqui\n135 avenue Gaëtan-Archambault, Amqui, G5J 2K5\nBas-Saint-Laurent\nConsulter l’horaire de l’installation Hôpital d'Amqui\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 24\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 1\nTaux d’occupation des civières : 17 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 31\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 7 h 45",
       "latitude": null,
       "longitude": null,
-      "occupancy": 21
+      "occupancy": 8
     },
     {
       "name": "Hôpital de Chandler",
-      "full_text": "Hôpital de Chandler\n451 rue Monseigneur-Ross Est, Chandler, G0C 1K0\nGaspésie-Îles-de-la-Madeleine\nConsulter l’horaire de l’installation Hôpital de Chandler\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 52\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 2\nTaux d’occupation des civières : 13 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 08\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 13 h 28",
+      "full_text": "Hôpital de Chandler\n451 rue Monseigneur-Ross Est, Chandler, G0C 1K0\nGaspésie-Îles-de-la-Madeleine\nConsulter l’horaire de l’installation Hôpital de Chandler\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : non disponible actuellement\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 2\nTaux d’occupation des civières : 13 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 08\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 13 h 28",
       "latitude": 48.8,
       "longitude": -64.6,
-      "occupancy": 12
+      "occupancy": 5
     },
     {
       "name": "Hôpital de Chicoutimi",
-      "full_text": "Hôpital de Chicoutimi\n305 rue Saint-Vallier, Saguenay, G7H 5H6\nSaguenay-Lac-Saint-Jean\nConsulter l’horaire de l’installation Hôpital de Chicoutimi\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 05 h 16\nNombre de personnes qui attendent de voir un médecin à l’urgence : 14\nNombre total de personnes à l’urgence : 44\nTaux d’occupation des civières : 76 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 33\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 10 h 42",
+      "full_text": "Hôpital de Chicoutimi\n305 rue Saint-Vallier, Saguenay, G7H 5H6\nSaguenay-Lac-Saint-Jean\nConsulter l’horaire de l’installation Hôpital de Chicoutimi\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 04\nNombre de personnes qui attendent de voir un médecin à l’urgence : 13\nNombre total de personnes à l’urgence : 41\nTaux d’occupation des civières : 76 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 33\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 10 h 42",
       "latitude": 48.43,
       "longitude": -71.07,
-      "occupancy": 78
+      "occupancy": 73
     },
     {
       "name": "Hôpital de Dolbeau-Mistassini",
-      "full_text": "Hôpital de Dolbeau-Mistassini\n2000 boulevard Sacré-Coeur, Dolbeau-Mistassini, G8L 2R5\nSaguenay-Lac-Saint-Jean\nConsulter l’horaire de l’installation Hôpital de Dolbeau-Mistassini\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 00 h 53\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 9\nTaux d’occupation des civières : 70 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 20\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 8 h 52",
+      "full_text": "Hôpital de Dolbeau-Mistassini\n2000 boulevard Sacré-Coeur, Dolbeau-Mistassini, G8L 2R5\nSaguenay-Lac-Saint-Jean\nConsulter l’horaire de l’installation Hôpital de Dolbeau-Mistassini\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 11\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 8\nTaux d’occupation des civières : 70 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 20\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 8 h 52",
       "latitude": null,
       "longitude": null,
       "occupancy": 19
     },
     {
       "name": "Hôpital de Gaspé",
-      "full_text": "Hôpital de Gaspé\n215 boulevard de York Ouest, Gaspé, G4X 2W2\nGaspésie-Îles-de-la-Madeleine\nConsulter l’horaire de l’installation Hôpital de Gaspé\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 29\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 7\nTaux d’occupation des civières : 100 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 09\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 23 h 07",
+      "full_text": "Hôpital de Gaspé\n215 boulevard de York Ouest, Gaspé, G4X 2W2\nGaspésie-Îles-de-la-Madeleine\nConsulter l’horaire de l’installation Hôpital de Gaspé\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 28\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 6\nTaux d’occupation des civières : 100 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 09\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 23 h 07",
       "latitude": 48.8,
       "longitude": -64.5,
-      "occupancy": 19
+      "occupancy": 17
     },
     {
       "name": "Hôpital de Gatineau",
-      "full_text": "Hôpital de Gatineau\n909 boulevard La Vérendrye Ouest, Gatineau, J8P 7H2\nOutaouais\nConsulter l’horaire de l’installation Hôpital de Gatineau\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 12 h 55\nNombre de personnes qui attendent de voir un médecin à l’urgence : 37\nNombre total de personnes à l’urgence : 63\nTaux d’occupation des civières : 143 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 8 h 51\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 26 h 57",
+      "full_text": "Hôpital de Gatineau\n909 boulevard La Vérendrye Ouest, Gatineau, J8P 7H2\nOutaouais\nConsulter l’horaire de l’installation Hôpital de Gatineau\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 11 h 55\nNombre de personnes qui attendent de voir un médecin à l’urgence : 33\nNombre total de personnes à l’urgence : 61\nTaux d’occupation des civières : 143 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 8 h 51\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 26 h 57",
       "latitude": 45.48,
       "longitude": -75.65,
-      "occupancy": 111
+      "occupancy": 108
     },
     {
       "name": "Hôpital de Granby",
-      "full_text": "Hôpital de Granby\n205 boulevard Leclerc Ouest, Granby, J2G 1T7\nEstrie\nConsulter l’horaire de l’installation Hôpital de Granby\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 07 h 16\nNombre de personnes qui attendent de voir un médecin à l’urgence : 20\nNombre total de personnes à l’urgence : 49\nTaux d’occupation des civières : 135 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 58\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 24 h 41",
+      "full_text": "Hôpital de Granby\n205 boulevard Leclerc Ouest, Granby, J2G 1T7\nEstrie\nConsulter l’horaire de l’installation Hôpital de Granby\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 07 h 47\nNombre de personnes qui attendent de voir un médecin à l’urgence : 20\nNombre total de personnes à l’urgence : 49\nTaux d’occupation des civières : 135 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 58\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 24 h 41",
       "latitude": null,
       "longitude": null,
-      "occupancy": 88
+      "occupancy": 90
     },
     {
       "name": "Hôpital de Hull",
-      "full_text": "Hôpital de Hull\n116 boulevard Lionel-Émond, Gatineau, J8Y 1W7\nOutaouais\nConsulter l’horaire de l’installation Hôpital de Hull\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 07 h 59\nNombre de personnes qui attendent de voir un médecin à l’urgence : 21\nNombre total de personnes à l’urgence : 54\nTaux d’occupation des civières : 128 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 8 h 54\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 17 h 00",
+      "full_text": "Hôpital de Hull\n116 boulevard Lionel-Émond, Gatineau, J8Y 1W7\nOutaouais\nConsulter l’horaire de l’installation Hôpital de Hull\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 07 h 20\nNombre de personnes qui attendent de voir un médecin à l’urgence : 18\nNombre total de personnes à l’urgence : 53\nTaux d’occupation des civières : 132 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 8 h 54\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 17 h 00",
       "latitude": 45.44,
       "longitude": -75.73,
-      "occupancy": 92
+      "occupancy": 87
     },
     {
       "name": "Hôpital de l'Archipel",
-      "full_text": "Hôpital de l'Archipel\n430 chemin Principal, Les Îles-de-la-Madeleine, G4T 1R9\nGaspésie-Îles-de-la-Madeleine\nConsulter l’horaire de l’installation Hôpital de l'Archipel\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 58\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 4\nTaux d’occupation des civières : 50 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 28\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 9 h 42",
+      "full_text": "Hôpital de l'Archipel\n430 chemin Principal, Les Îles-de-la-Madeleine, G4T 1R9\nGaspésie-Îles-de-la-Madeleine\nConsulter l’horaire de l’installation Hôpital de l'Archipel\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 35\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 4\nTaux d’occupation des civières : 50 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 28\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 9 h 42",
       "latitude": null,
       "longitude": null,
-      "occupancy": 16
+      "occupancy": 14
     },
     {
       "name": "Hôpital de l'Enfant-Jésus",
-      "full_text": "Hôpital de l'Enfant-Jésus\n1401 18e Rue, Québec, G1J 1Z4\nCapitale-Nationale\nConsulter l’horaire de l’installation Hôpital de l'Enfant-Jésus\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 52\nNombre de personnes qui attendent de voir un médecin à l’urgence : 14\nNombre total de personnes à l’urgence : 67\nTaux d’occupation des civières : 108 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 23\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 21 h 30",
+      "full_text": "Hôpital de l'Enfant-Jésus\n1401 18e Rue, Québec, G1J 1Z4\nCapitale-Nationale\nConsulter l’horaire de l’installation Hôpital de l'Enfant-Jésus\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 08\nNombre de personnes qui attendent de voir un médecin à l’urgence : 16\nNombre total de personnes à l’urgence : 70\nTaux d’occupation des civières : 108 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 23\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 21 h 30",
       "latitude": 46.83,
       "longitude": -71.23,
-      "occupancy": 73
+      "occupancy": 75
     },
     {
       "name": "Hôpital de La Baie",
-      "full_text": "Hôpital de La Baie\n1000 rue du Docteur-Desgagné, Saguenay, G7B 2Y6\nSaguenay-Lac-Saint-Jean\nConsulter l’horaire de l’installation Hôpital de La Baie\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 04\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 6\nTaux d’occupation des civières : 71 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 05\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 6 h 03",
+      "full_text": "Hôpital de La Baie\n1000 rue du Docteur-Desgagné, Saguenay, G7B 2Y6\nSaguenay-Lac-Saint-Jean\nConsulter l’horaire de l’installation Hôpital de La Baie\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : non disponible actuellement\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 6\nTaux d’occupation des civières : 71 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 05\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 6 h 03",
       "latitude": 48.43,
       "longitude": -71.07,
-      "occupancy": 20
+      "occupancy": 15
     },
     {
       "name": "Hôpital de la Cité-de-la-Santé",
-      "full_text": "Hôpital de la Cité-de-la-Santé\n1755 boulevard René-Laennec, Laval, H7M 3L9\nLaval\nConsulter l’horaire de l’installation Hôpital de la Cité-de-la-Santé\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 08 h 38\nNombre de personnes qui attendent de voir un médecin à l’urgence : 38\nNombre total de personnes à l’urgence : 124\nTaux d’occupation des civières : 178 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 6 h 16\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 22 h 19",
+      "full_text": "Hôpital de la Cité-de-la-Santé\n1755 boulevard René-Laennec, Laval, H7M 3L9\nLaval\nConsulter l’horaire de l’installation Hôpital de la Cité-de-la-Santé\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 07 h 59\nNombre de personnes qui attendent de voir un médecin à l’urgence : 35\nNombre total de personnes à l’urgence : 122\nTaux d’occupation des civières : 182 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 6 h 16\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 22 h 19",
       "latitude": 45.66,
       "longitude": -73.7,
-      "occupancy": 105
+      "occupancy": 100
     },
     {
       "name": "Hôpital de Lachine",
-      "full_text": "Hôpital de Lachine\n650 16e Avenue, Montréal, H8S 3N5\nMontréal\nConsulter l’horaire de l’installation Hôpital de Lachine\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 56\nNombre de personnes qui attendent de voir un médecin à l’urgence : 3\nNombre total de personnes à l’urgence : 25\nTaux d’occupation des civières : 164 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 39\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 52 h 45",
+      "full_text": "Hôpital de Lachine\n650 16e Avenue, Montréal, H8S 3N5\nMontréal\nConsulter l’horaire de l’installation Hôpital de Lachine\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 25\nNombre de personnes qui attendent de voir un médecin à l’urgence : 1\nNombre total de personnes à l’urgence : 23\nTaux d’occupation des civières : 150 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 39\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 52 h 45",
       "latitude": 45.43,
       "longitude": -73.62,
-      "occupancy": 44
+      "occupancy": 38
     },
     {
       "name": "Hôpital de Lanaudière et Centre d'hébergement Parphilia-Ferland",
-      "full_text": "Hôpital de Lanaudière et Centre d'hébergement Parphilia-Ferland\n1000 boulevard Sainte-Anne, Saint-Charles-Borromée, J6E 6J2\nLanaudière\nConsulter l’horaire de l’installation Hôpital de Lanaudière et Centre d'hébergement Parphilia-Ferland\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 05 h 11\nNombre de personnes qui attendent de voir un médecin à l’urgence : 22\nNombre total de personnes à l’urgence : 65\nTaux d’occupation des civières : 86 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 6 h 26\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 16 h 31",
+      "full_text": "Hôpital de Lanaudière et Centre d'hébergement Parphilia-Ferland\n1000 boulevard Sainte-Anne, Saint-Charles-Borromée, J6E 6J2\nLanaudière\nConsulter l’horaire de l’installation Hôpital de Lanaudière et Centre d'hébergement Parphilia-Ferland\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 23\nNombre de personnes qui attendent de voir un médecin à l’urgence : 17\nNombre total de personnes à l’urgence : 64\nTaux d’occupation des civières : 90 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 6 h 26\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 16 h 31",
       "latitude": 45.73,
       "longitude": -73.4,
-      "occupancy": 82
+      "occupancy": 76
     },
     {
       "name": "Hôpital de LaSalle",
-      "full_text": "Hôpital de LaSalle\n8585 terrasse Champlain, Montréal, H8P 1C1\nMontréal\nConsulter l’horaire de l’installation Hôpital de LaSalle\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 05 h 42\nNombre de personnes qui attendent de voir un médecin à l’urgence : 14\nNombre total de personnes à l’urgence : 39\nTaux d’occupation des civières : 140 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 46\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 56 h 28",
+      "full_text": "Hôpital de LaSalle\n8585 terrasse Champlain, Montréal, H8P 1C1\nMontréal\nConsulter l’horaire de l’installation Hôpital de LaSalle\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 49\nNombre de personnes qui attendent de voir un médecin à l’urgence : 11\nNombre total de personnes à l’urgence : 39\nTaux d’occupation des civières : 147 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 46\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 56 h 28",
       "latitude": 45.43,
       "longitude": -73.6,
-      "occupancy": 78
+      "occupancy": 73
     },
     {
       "name": "Hôpital de Maniwaki",
-      "full_text": "Hôpital de Maniwaki\n309 boulevard Desjardins, Maniwaki, J9E 2E7\nOutaouais\nConsulter l’horaire de l’installation Hôpital de Maniwaki\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 46\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 6\nTaux d’occupation des civières : 100 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 02\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 15 h 42",
+      "full_text": "Hôpital de Maniwaki\n309 boulevard Desjardins, Maniwaki, J9E 2E7\nOutaouais\nConsulter l’horaire de l’installation Hôpital de Maniwaki\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 24\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 6\nTaux d’occupation des civières : 100 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 02\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 15 h 42",
+      "latitude": null,
+      "longitude": null,
+      "occupancy": 21
+    },
+    {
+      "name": "Hôpital de Matane",
+      "full_text": "Hôpital de Matane\n333 rue Thibault, Matane, G4W 2W5\nBas-Saint-Laurent\nConsulter l’horaire de l’installation Hôpital de Matane\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 45\nNombre de personnes qui attendent de voir un médecin à l’urgence : 1\nNombre total de personnes à l’urgence : 10\nTaux d’occupation des civières : 114 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 14\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 15 h 39",
+      "latitude": null,
+      "longitude": null,
+      "occupancy": 19
+    },
+    {
+      "name": "Hôpital de Mont-Laurier",
+      "full_text": "Hôpital de Mont-Laurier\n2561 chemin de la Lièvre Sud, Mont-Laurier, J9L 3G3\nLaurentides\nConsulter l’horaire de l’installation Hôpital de Mont-Laurier\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 46\nNombre de personnes qui attendent de voir un médecin à l’urgence : 1\nNombre total de personnes à l’urgence : 10\nTaux d’occupation des civières : 125 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 7 h 20\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 22 h 08",
       "latitude": null,
       "longitude": null,
       "occupancy": 23
     },
     {
-      "name": "Hôpital de Matane",
-      "full_text": "Hôpital de Matane\n333 rue Thibault, Matane, G4W 2W5\nBas-Saint-Laurent\nConsulter l’horaire de l’installation Hôpital de Matane\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 30\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 9\nTaux d’occupation des civières : 114 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 14\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 15 h 39",
-      "latitude": null,
-      "longitude": null,
-      "occupancy": 22
-    },
-    {
-      "name": "Hôpital de Mont-Laurier",
-      "full_text": "Hôpital de Mont-Laurier\n2561 chemin de la Lièvre Sud, Mont-Laurier, J9L 3G3\nLaurentides\nConsulter l’horaire de l’installation Hôpital de Mont-Laurier\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 51\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 10\nTaux d’occupation des civières : 113 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 7 h 20\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 22 h 08",
-      "latitude": null,
-      "longitude": null,
-      "occupancy": 30
-    },
-    {
       "name": "Hôpital de Montmagny",
-      "full_text": "Hôpital de Montmagny\n350 boulevard Taché Ouest, Montmagny, G5V 3R8\nChaudière-Appalaches\nConsulter l’horaire de l’installation Hôpital de Montmagny\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 44\nNombre de personnes qui attendent de voir un médecin à l’urgence : 1\nNombre total de personnes à l’urgence : 14\nTaux d’occupation des civières : 100 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 40\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 14 h 09",
+      "full_text": "Hôpital de Montmagny\n350 boulevard Taché Ouest, Montmagny, G5V 3R8\nChaudière-Appalaches\nConsulter l’horaire de l’installation Hôpital de Montmagny\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 02\nNombre de personnes qui attendent de voir un médecin à l’urgence : 1\nNombre total de personnes à l’urgence : 13\nTaux d’occupation des civières : 100 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 40\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 14 h 09",
       "latitude": 47.3,
       "longitude": -69.1,
       "occupancy": 24
     },
     {
       "name": "Hôpital Notre-Dame-du-Lac",
-      "full_text": "Hôpital Notre-Dame-du-Lac\n58 rue de l'Église, Témiscouata-sur-le-Lac, G0L 1X0\nBas-Saint-Laurent\nConsulter l’horaire de l’installation Hôpital Notre-Dame-du-Lac\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 27\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 6\nTaux d’occupation des civières : 40 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 01 h 44\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 3 h 57",
+      "full_text": "Hôpital Notre-Dame-du-Lac\n58 rue de l'Église, Témiscouata-sur-le-Lac, G0L 1X0\nBas-Saint-Laurent\nConsulter l’horaire de l’installation Hôpital Notre-Dame-du-Lac\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 23\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 6\nTaux d’occupation des civières : 40 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 01 h 44\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 3 h 57",
       "latitude": 47.8,
       "longitude": -69.3,
       "occupancy": 17
     },
     {
       "name": "Hôpital de Rouyn-Noranda",
-      "full_text": "Hôpital de Rouyn-Noranda\n4 9e Rue, Rouyn-Noranda, J9X 2B2\nAbitibi-Témiscamingue\nConsulter l’horaire de l’installation Hôpital de Rouyn-Noranda\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 46\nNombre de personnes qui attendent de voir un médecin à l’urgence : 6\nNombre total de personnes à l’urgence : 11\nTaux d’occupation des civières : 50 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 8 h 37\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 11 h 24",
+      "full_text": "Hôpital de Rouyn-Noranda\n4 9e Rue, Rouyn-Noranda, J9X 2B2\nAbitibi-Témiscamingue\nConsulter l’horaire de l’installation Hôpital de Rouyn-Noranda\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 49\nNombre de personnes qui attendent de voir un médecin à l’urgence : 4\nNombre total de personnes à l’urgence : 10\nTaux d’occupation des civières : 63 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 8 h 37\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 11 h 24",
       "latitude": 48.8,
       "longitude": -79.2,
-      "occupancy": 31
+      "occupancy": 25
     },
     {
       "name": "Hôpital de Saint-Eustache",
-      "full_text": "Hôpital de Saint-Eustache\n520 boulevard Arthur-Sauvé, Saint-Eustache, J7R 5B1\nLaurentides\nConsulter l’horaire de l’installation Hôpital de Saint-Eustache\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 09 h 58\nNombre de personnes qui attendent de voir un médecin à l’urgence : 25\nNombre total de personnes à l’urgence : 76\nTaux d’occupation des civières : 134 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 6 h 12\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 21 h 16",
+      "full_text": "Hôpital de Saint-Eustache\n520 boulevard Arthur-Sauvé, Saint-Eustache, J7R 5B1\nLaurentides\nConsulter l’horaire de l’installation Hôpital de Saint-Eustache\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 07 h 30\nNombre de personnes qui attendent de voir un médecin à l’urgence : 23\nNombre total de personnes à l’urgence : 75\nTaux d’occupation des civières : 129 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 6 h 12\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 21 h 16",
       "latitude": 45.84,
       "longitude": -73.74,
-      "occupancy": 101
+      "occupancy": 91
     },
     {
       "name": "Hôpital de Saint-Georges",
-      "full_text": "Hôpital de Saint-Georges\n1515 17e rue, Saint-Georges, G5Y 4T8\nChaudière-Appalaches\nConsulter l’horaire de l’installation Hôpital de Saint-Georges\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 49\nNombre de personnes qui attendent de voir un médecin à l’urgence : 8\nNombre total de personnes à l’urgence : 29\nTaux d’occupation des civières : 86 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 15\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 17 h 51",
+      "full_text": "Hôpital de Saint-Georges\n1515 17e rue, Saint-Georges, G5Y 4T8\nChaudière-Appalaches\nConsulter l’horaire de l’installation Hôpital de Saint-Georges\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 07\nNombre de personnes qui attendent de voir un médecin à l’urgence : 7\nNombre total de personnes à l’urgence : 27\nTaux d’occupation des civières : 86 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 15\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 17 h 51",
       "latitude": null,
       "longitude": null,
-      "occupancy": 55
+      "occupancy": 49
     },
     {
       "name": "Hôpital de Saint-Jérôme",
-      "full_text": "Hôpital de Saint-Jérôme\n290 rue Montigny, Saint-Jérôme, J7Z 5T3\nLaurentides\nConsulter l’horaire de l’installation Hôpital de Saint-Jérôme\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 07 h 18\nNombre de personnes qui attendent de voir un médecin à l’urgence : 26\nNombre total de personnes à l’urgence : 95\nTaux d’occupation des civières : 140 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 7 h 18\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 25 h 07",
+      "full_text": "Hôpital de Saint-Jérôme\n290 rue Montigny, Saint-Jérôme, J7Z 5T3\nLaurentides\nConsulter l’horaire de l’installation Hôpital de Saint-Jérôme\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 08 h 07\nNombre de personnes qui attendent de voir un médecin à l’urgence : 28\nNombre total de personnes à l’urgence : 98\nTaux d’occupation des civières : 140 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 7 h 18\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 25 h 07",
       "latitude": null,
       "longitude": null,
-      "occupancy": 92
+      "occupancy": 96
     },
     {
       "name": "Hôpital de Thetford",
-      "full_text": "Hôpital de Thetford\n1717 rue Notre-Dame Est, Thetford Mines, G6G 2V4\nChaudière-Appalaches\nConsulter l’horaire de l’installation Hôpital de Thetford\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 57\nNombre de personnes qui attendent de voir un médecin à l’urgence : 8\nNombre total de personnes à l’urgence : 26\nTaux d’occupation des civières : 87 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 09\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 21 h 55",
+      "full_text": "Hôpital de Thetford\n1717 rue Notre-Dame Est, Thetford Mines, G6G 2V4\nChaudière-Appalaches\nConsulter l’horaire de l’installation Hôpital de Thetford\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 14\nNombre de personnes qui attendent de voir un médecin à l’urgence : 4\nNombre total de personnes à l’urgence : 26\nTaux d’occupation des civières : 87 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 09\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 21 h 55",
       "latitude": 46.1,
       "longitude": -71.0,
-      "occupancy": 48
+      "occupancy": 43
     },
     {
       "name": "Hôpital et centre de réadaptation en dépendance de Val-d'Or",
-      "full_text": "Hôpital et centre de réadaptation en dépendance de Val-d'Or\n725 6e Rue, Val-d'Or, J9P 3Y1\nAbitibi-Témiscamingue\nConsulter l’horaire de l’installation Hôpital et centre de réadaptation en dépendance de Val-d'Or\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 06 h 40\nNombre de personnes qui attendent de voir un médecin à l’urgence : 19\nNombre total de personnes à l’urgence : 28\nTaux d’occupation des civières : 45 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 6 h 15\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 11 h 00",
+      "full_text": "Hôpital et centre de réadaptation en dépendance de Val-d'Or\n725 6e Rue, Val-d'Or, J9P 3Y1\nAbitibi-Témiscamingue\nConsulter l’horaire de l’installation Hôpital et centre de réadaptation en dépendance de Val-d'Or\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 06 h 40\nNombre de personnes qui attendent de voir un médecin à l’urgence : 18\nNombre total de personnes à l’urgence : 28\nTaux d’occupation des civières : 45 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 6 h 15\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 11 h 00",
       "latitude": 48.1,
       "longitude": -77.8,
-      "occupancy": 71
+      "occupancy": 70
     },
     {
       "name": "Hôpital de Verdun",
-      "full_text": "Hôpital de Verdun\n4000 boulevard LaSalle, Montréal, H4G 2A3\nMontréal\nConsulter l’horaire de l’installation Hôpital de Verdun\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 05 h 47\nNombre de personnes qui attendent de voir un médecin à l’urgence : 14\nNombre total de personnes à l’urgence : 45\nTaux d’occupation des civières : 115 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 06\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 19 h 13",
+      "full_text": "Hôpital de Verdun\n4000 boulevard LaSalle, Montréal, H4G 2A3\nMontréal\nConsulter l’horaire de l’installation Hôpital de Verdun\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 27\nNombre de personnes qui attendent de voir un médecin à l’urgence : 16\nNombre total de personnes à l’urgence : 46\nTaux d’occupation des civières : 119 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 06\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 19 h 13",
       "latitude": 45.47,
       "longitude": -73.63,
-      "occupancy": 79
+      "occupancy": 76
     },
     {
       "name": "Hôpital Douglas",
-      "full_text": "Hôpital Douglas\n6875 boulevard Lasalle, Montréal, H4H 1R3\nMontréal\nConsulter l’horaire de l’installation Hôpital Douglas\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 47\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 4\nTaux d’occupation des civières : 50 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 24\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 15 h 56",
+      "full_text": "Hôpital Douglas\n6875 boulevard Lasalle, Montréal, H4H 1R3\nMontréal\nConsulter l’horaire de l’installation Hôpital Douglas\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 33\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 4\nTaux d’occupation des civières : 50 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 24\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 15 h 56",
       "latitude": 45.46,
       "longitude": -73.65,
-      "occupancy": 20
+      "occupancy": 19
     },
     {
       "name": "Hôpital du Centre-de-la-Mauricie",
@@ -579,10 +579,10 @@
     },
     {
       "name": "Hôpital du Haut-Richelieu",
-      "full_text": "Hôpital du Haut-Richelieu\n920 boulevard du Séminaire Nord, Saint-Jean-sur-Richelieu, J3A 1B7\nMontérégie\nConsulter l’horaire de l’installation Hôpital du Haut-Richelieu\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 08 h 59\nNombre de personnes qui attendent de voir un médecin à l’urgence : 36\nNombre total de personnes à l’urgence : 81\nTaux d’occupation des civières : 122 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 25\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 23 h 19",
+      "full_text": "Hôpital du Haut-Richelieu\n920 boulevard du Séminaire Nord, Saint-Jean-sur-Richelieu, J3A 1B7\nMontérégie\nConsulter l’horaire de l’installation Hôpital du Haut-Richelieu\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 07 h 50\nNombre de personnes qui attendent de voir un médecin à l’urgence : 33\nNombre total de personnes à l’urgence : 76\nTaux d’occupation des civières : 119 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 25\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 23 h 19",
       "latitude": 45.48,
       "longitude": -73.29,
-      "occupancy": 105
+      "occupancy": 99
     },
     {
       "name": "Hôpital du Sacré-Cœur de Montréal",
@@ -593,17 +593,17 @@
     },
     {
       "name": "Hôpital du Saint-Sacrement",
-      "full_text": "Hôpital du Saint-Sacrement\n1050 chemin Sainte-Foy, Québec, G1S 4L8\nCapitale-Nationale\nConsulter l’horaire de l’installation Hôpital du Saint-Sacrement\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 46\nNombre de personnes qui attendent de voir un médecin à l’urgence : 1\nNombre total de personnes à l’urgence : 23\nTaux d’occupation des civières : 91 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 46\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 17 h 14",
+      "full_text": "Hôpital du Saint-Sacrement\n1050 chemin Sainte-Foy, Québec, G1S 4L8\nCapitale-Nationale\nConsulter l’horaire de l’installation Hôpital du Saint-Sacrement\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 13\nNombre de personnes qui attendent de voir un médecin à l’urgence : 4\nNombre total de personnes à l’urgence : 24\nTaux d’occupation des civières : 91 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 46\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 17 h 14",
       "latitude": 46.78,
       "longitude": -71.23,
-      "occupancy": 39
+      "occupancy": 44
     },
     {
       "name": "Hôpital du Suroît",
-      "full_text": "Hôpital du Suroît\n150 rue Saint-Thomas, Salaberry-de-Valleyfield, J6T 6C1\nMontérégie\nConsulter l’horaire de l’installation Hôpital du Suroît\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 57\nNombre de personnes qui attendent de voir un médecin à l’urgence : 9\nNombre total de personnes à l’urgence : 63\nTaux d’occupation des civières : 147 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 51\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 33 h 34",
+      "full_text": "Hôpital du Suroît\n150 rue Saint-Thomas, Salaberry-de-Valleyfield, J6T 6C1\nMontérégie\nConsulter l’horaire de l’installation Hôpital du Suroît\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 49\nNombre de personnes qui attendent de voir un médecin à l’urgence : 8\nNombre total de personnes à l’urgence : 62\nTaux d’occupation des civières : 150 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 51\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 33 h 34",
       "latitude": 45.68,
       "longitude": -73.37,
-      "occupancy": 73
+      "occupancy": 69
     },
     {
       "name": "Hôpital en santé mentale Albert-Prévost",
@@ -614,66 +614,66 @@
     },
     {
       "name": "Hôpital et centre d'hébergement de Roberval",
-      "full_text": "Hôpital et centre d'hébergement de Roberval\n450 rue Brassard, Roberval, G8H 1B9\nSaguenay-Lac-Saint-Jean\nConsulter l’horaire de l’installation Hôpital et centre d'hébergement de Roberval\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 05\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 15\nTaux d’occupation des civières : 100 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 23\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 12 h 25",
+      "full_text": "Hôpital et centre d'hébergement de Roberval\n450 rue Brassard, Roberval, G8H 1B9\nSaguenay-Lac-Saint-Jean\nConsulter l’horaire de l’installation Hôpital et centre d'hébergement de Roberval\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 22\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 14\nTaux d’occupation des civières : 100 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 23\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 12 h 25",
       "latitude": null,
       "longitude": null,
-      "occupancy": 35
+      "occupancy": 30
     },
     {
       "name": "Hôpital et centre de réadaptation de Jonquière",
-      "full_text": "Hôpital et centre de réadaptation de Jonquière\n2230 rue de l'Hôpital, Saguenay, G7X 7X2\nSaguenay-Lac-Saint-Jean\nConsulter l’horaire de l’installation Hôpital et centre de réadaptation de Jonquière\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 25\nNombre de personnes qui attendent de voir un médecin à l’urgence : 1\nNombre total de personnes à l’urgence : 9\nTaux d’occupation des civières : 31 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 52\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 8 h 18",
+      "full_text": "Hôpital et centre de réadaptation de Jonquière\n2230 rue de l'Hôpital, Saguenay, G7X 7X2\nSaguenay-Lac-Saint-Jean\nConsulter l’horaire de l’installation Hôpital et centre de réadaptation de Jonquière\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 42\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 6\nTaux d’occupation des civières : 31 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 52\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 8 h 18",
       "latitude": 48.43,
       "longitude": -71.07,
-      "occupancy": 21
+      "occupancy": 18
     },
     {
       "name": "Hôpital et CHSLD de Papineau",
-      "full_text": "Hôpital et CHSLD de Papineau\n155 rue Maclaren Est, Gatineau, J8L 0C2\nOutaouais\nConsulter l’horaire de l’installation Hôpital et CHSLD de Papineau\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 46\nNombre de personnes qui attendent de voir un médecin à l’urgence : 8\nNombre total de personnes à l’urgence : 21\nTaux d’occupation des civières : 125 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 7 h 10\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 26 h 15",
+      "full_text": "Hôpital et CHSLD de Papineau\n155 rue Maclaren Est, Gatineau, J8L 0C2\nOutaouais\nConsulter l’horaire de l’installation Hôpital et CHSLD de Papineau\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 53\nNombre de personnes qui attendent de voir un médecin à l’urgence : 9\nNombre total de personnes à l’urgence : 22\nTaux d’occupation des civières : 125 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 7 h 10\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 26 h 15",
       "latitude": 45.58,
       "longitude": -75.72,
-      "occupancy": 48
+      "occupancy": 51
     },
     {
       "name": "Hôpital et CHSLD du Pontiac",
-      "full_text": "Hôpital et CHSLD du Pontiac\n200 rue Argue, Shawville, J0X 2Y0\nOutaouais\nConsulter l’horaire de l’installation Hôpital et CHSLD du Pontiac\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 35\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 6\nTaux d’occupation des civières : 75 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 48\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 9 h 03",
+      "full_text": "Hôpital et CHSLD du Pontiac\n200 rue Argue, Shawville, J0X 2Y0\nOutaouais\nConsulter l’horaire de l’installation Hôpital et CHSLD du Pontiac\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 17\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 6\nTaux d’occupation des civières : 75 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 48\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 9 h 03",
       "latitude": 45.6,
       "longitude": -75.0,
-      "occupancy": 22
+      "occupancy": 21
     },
     {
       "name": "Hôpital et CHSLD Mémorial de Wakefield / Wakefield Memorial Hospital",
-      "full_text": "Hôpital et CHSLD Mémorial de Wakefield / Wakefield Memorial Hospital\n101 chemin Burnside, La Pêche, J0X 3G0\nOutaouais\nConsulter l’horaire de l’installation Hôpital et CHSLD Mémorial de Wakefield / Wakefield Memorial Hospital\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 05\nNombre de personnes qui attendent de voir un médecin à l’urgence : 3\nNombre total de personnes à l’urgence : 7\nTaux d’occupation des civières : 50 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 16\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 3 h 15",
+      "full_text": "Hôpital et CHSLD Mémorial de Wakefield / Wakefield Memorial Hospital\n101 chemin Burnside, La Pêche, J0X 3G0\nOutaouais\nConsulter l’horaire de l’installation Hôpital et CHSLD Mémorial de Wakefield / Wakefield Memorial Hospital\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 03\nNombre de personnes qui attendent de voir un médecin à l’urgence : 3\nNombre total de personnes à l’urgence : 7\nTaux d’occupation des civières : 50 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 16\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 3 h 15",
       "latitude": 45.6,
       "longitude": -75.0,
       "occupancy": 22
     },
     {
       "name": "Hôpital et CLSC de la Malbaie",
-      "full_text": "Hôpital et CLSC de la Malbaie\n303 rue Saint-Étienne, La Malbaie, G5A 1T1\nCapitale-Nationale\nConsulter l’horaire de l’installation Hôpital et CLSC de la Malbaie\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 45\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 8\nTaux d’occupation des civières : 89 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 26\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 9 h 16",
+      "full_text": "Hôpital et CLSC de la Malbaie\n303 rue Saint-Étienne, La Malbaie, G5A 1T1\nCapitale-Nationale\nConsulter l’horaire de l’installation Hôpital et CLSC de la Malbaie\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 41\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 9\nTaux d’occupation des civières : 100 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 2 h 26\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 9 h 16",
       "latitude": null,
       "longitude": null,
-      "occupancy": 22
+      "occupancy": 23
     },
     {
       "name": "Hôpital et CLSC de Sainte-Anne-des-Monts",
-      "full_text": "Hôpital et CLSC de Sainte-Anne-des-Monts\n50 rue du Belvédère, Sainte-Anne-des-Monts, G4V 1X4\nGaspésie-Îles-de-la-Madeleine\nConsulter l’horaire de l’installation Hôpital et CLSC de Sainte-Anne-des-Monts\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 03\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 6\nTaux d’occupation des civières : 100 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 00\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 11 h 36",
+      "full_text": "Hôpital et CLSC de Sainte-Anne-des-Monts\n50 rue du Belvédère, Sainte-Anne-des-Monts, G4V 1X4\nGaspésie-Îles-de-la-Madeleine\nConsulter l’horaire de l’installation Hôpital et CLSC de Sainte-Anne-des-Monts\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 55\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 5\nTaux d’occupation des civières : 83 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 00\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 11 h 36",
       "latitude": 48.8,
       "longitude": -64.6,
-      "occupancy": 20
+      "occupancy": 17
     },
     {
       "name": "Hôpital et CLSC de Sept-Îles",
-      "full_text": "Hôpital et CLSC de Sept-Îles\n45 rue du Père-Divet, Sept-Îles, G4R 3N7\nCôte-Nord\nConsulter l’horaire de l’installation Hôpital et CLSC de Sept-Îles\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 06 h 16\nNombre de personnes qui attendent de voir un médecin à l’urgence : 14\nNombre total de personnes à l’urgence : 35\nTaux d’occupation des civières : 220 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 13 h 57\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 17 h 32",
+      "full_text": "Hôpital et CLSC de Sept-Îles\n45 rue du Père-Divet, Sept-Îles, G4R 3N7\nCôte-Nord\nConsulter l’horaire de l’installation Hôpital et CLSC de Sept-Îles\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 06 h 53\nNombre de personnes qui attendent de voir un médecin à l’urgence : 12\nNombre total de personnes à l’urgence : 33\nTaux d’occupation des civières : 220 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 13 h 57\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 17 h 32",
       "latitude": 50.2,
       "longitude": -66.4,
-      "occupancy": 75
+      "occupancy": 73
     },
     {
       "name": "Hôpital et groupe de médecine de famille universitaire de Maria",
-      "full_text": "Hôpital et groupe de médecine de famille universitaire de Maria\n419 boulevard Perron, Maria, G0C 1Y0\nGaspésie-Îles-de-la-Madeleine\nConsulter l’horaire de l’installation Hôpital et groupe de médecine de famille universitaire de Maria\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 37\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 6\nTaux d’occupation des civières : 40 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 6 h 10\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 7 h 10",
+      "full_text": "Hôpital et groupe de médecine de famille universitaire de Maria\n419 boulevard Perron, Maria, G0C 1Y0\nGaspésie-Îles-de-la-Madeleine\nConsulter l’horaire de l’installation Hôpital et groupe de médecine de famille universitaire de Maria\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 33\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 5\nTaux d’occupation des civières : 40 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 6 h 10\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 7 h 10",
       "latitude": 48.8,
       "longitude": -64.6,
-      "occupancy": 18
+      "occupancy": 16
     },
     {
       "name": "Hôpital Fleury",
@@ -684,31 +684,31 @@
     },
     {
       "name": "Hôpital général de Montréal",
-      "full_text": "Hôpital général de Montréal\n1650 avenue Cedar, Montréal, H3G 1A4\nMontréal\nConsulter l’horaire de l’installation Hôpital général de Montréal\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 51\nNombre de personnes qui attendent de voir un médecin à l’urgence : 11\nNombre total de personnes à l’urgence : 64\nTaux d’occupation des civières : 168 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 27\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 22 h 59",
+      "full_text": "Hôpital général de Montréal\n1650 avenue Cedar, Montréal, H3G 1A4\nMontréal\nConsulter l’horaire de l’installation Hôpital général de Montréal\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 53\nNombre de personnes qui attendent de voir un médecin à l’urgence : 8\nNombre total de personnes à l’urgence : 62\nTaux d’occupation des civières : 171 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 27\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 22 h 59",
       "latitude": 45.5,
       "longitude": -73.58,
-      "occupancy": 74
+      "occupancy": 69
     },
     {
       "name": "Hôpital général du Lakeshore",
-      "full_text": "Hôpital général du Lakeshore\n160 avenue Stillview, Pointe-Claire, H9R 2Y2\nMontréal\nConsulter l’horaire de l’installation Hôpital général du Lakeshore\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 05 h 06\nNombre de personnes qui attendent de voir un médecin à l’urgence : 14\nNombre total de personnes à l’urgence : 73\nTaux d’occupation des civières : 187 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 8 h 12\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 36 h 15",
+      "full_text": "Hôpital général du Lakeshore\n160 avenue Stillview, Pointe-Claire, H9R 2Y2\nMontréal\nConsulter l’horaire de l’installation Hôpital général du Lakeshore\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 05 h 59\nNombre de personnes qui attendent de voir un médecin à l’urgence : 14\nNombre total de personnes à l’urgence : 75\nTaux d’occupation des civières : 187 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 8 h 12\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 36 h 15",
       "latitude": 45.41,
       "longitude": -73.8,
-      "occupancy": 77
+      "occupancy": 80
     },
     {
       "name": "Hôpital général juif",
-      "full_text": "Hôpital général juif\n3755 chemin de la Côte-Sainte-Catherine, Montréal, H3T 1E2\nMontréal\nConsulter l’horaire de l’installation Hôpital général juif\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 36\nNombre de personnes qui attendent de voir un médecin à l’urgence : 30\nNombre total de personnes à l’urgence : 122\nTaux d’occupation des civières : 183 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 18\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 20 h 39",
+      "full_text": "Hôpital général juif\n3755 chemin de la Côte-Sainte-Catherine, Montréal, H3T 1E2\nMontréal\nConsulter l’horaire de l’installation Hôpital général juif\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 28\nNombre de personnes qui attendent de voir un médecin à l’urgence : 24\nNombre total de personnes à l’urgence : 114\nTaux d’occupation des civières : 174 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 18\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 20 h 39",
       "latitude": 45.5,
       "longitude": -73.62,
-      "occupancy": 85
+      "occupancy": 81
     },
     {
       "name": "Hôpital Honoré-Mercier",
-      "full_text": "Hôpital Honoré-Mercier\n2750 boulevard Laframboise, Saint-Hyacinthe, J2S 4Y8\nMontérégie\nConsulter l’horaire de l’installation Hôpital Honoré-Mercier\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 08 h 40\nNombre de personnes qui attendent de voir un médecin à l’urgence : 27\nNombre total de personnes à l’urgence : 55\nTaux d’occupation des civières : 100 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 05\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 10 h 27",
+      "full_text": "Hôpital Honoré-Mercier\n2750 boulevard Laframboise, Saint-Hyacinthe, J2S 4Y8\nMontérégie\nConsulter l’horaire de l’installation Hôpital Honoré-Mercier\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 06 h 39\nNombre de personnes qui attendent de voir un médecin à l’urgence : 25\nNombre total de personnes à l’urgence : 53\nTaux d’occupation des civières : 104 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 05\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 10 h 27",
       "latitude": null,
       "longitude": null,
-      "occupancy": 98
+      "occupancy": 89
     },
     {
       "name": "Hôpital Jean-Talon",
@@ -782,10 +782,10 @@
     },
     {
       "name": "Hôpital Santa Cabrini",
-      "full_text": "Hôpital Santa Cabrini\n5655 rue Saint-Zotique Est, Montréal, H1T 1P7\nMontréal\nConsulter l’horaire de l’installation Hôpital Santa Cabrini\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 24\nNombre de personnes qui attendent de voir un médecin à l’urgence : 8\nNombre total de personnes à l’urgence : 37\nTaux d’occupation des civières : 79 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 44\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 17 h 16\nHôtel-Dieu d'Arthabaska",
+      "full_text": "Hôpital Santa Cabrini\n5655 rue Saint-Zotique Est, Montréal, H1T 1P7\nMontréal\nConsulter l’horaire de l’installation Hôpital Santa Cabrini\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 58\nNombre de personnes qui attendent de voir un médecin à l’urgence : 7\nNombre total de personnes à l’urgence : 35\nTaux d’occupation des civières : 76 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 44\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 17 h 16\nHôtel-Dieu d'Arthabaska",
       "latitude": 45.57,
       "longitude": -73.57,
-      "occupancy": 67
+      "occupancy": 62
     },
     {
       "name": "Hôtel-Dieu d'Arthabaska",
@@ -796,31 +796,31 @@
     },
     {
       "name": "Hôtel-Dieu de Lévis",
-      "full_text": "Hôtel-Dieu de Lévis\n143 rue Wolfe, Lévis, G6V 3Z1\nChaudière-Appalaches\nConsulter l’horaire de l’installation Hôtel-Dieu de Lévis\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 43\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 62\nTaux d’occupation des civières : 142 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 24\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 18 h 04\nHôtel-Dieu de Sorel",
+      "full_text": "Hôtel-Dieu de Lévis\n143 rue Wolfe, Lévis, G6V 3Z1\nChaudière-Appalaches\nConsulter l’horaire de l’installation Hôtel-Dieu de Lévis\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 57\nNombre de personnes qui attendent de voir un médecin à l’urgence : 2\nNombre total de personnes à l’urgence : 64\nTaux d’occupation des civières : 137 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 24\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 18 h 04\nHôtel-Dieu de Sorel",
       "latitude": null,
       "longitude": null,
-      "occupancy": 75
+      "occupancy": 58
     },
     {
       "name": "Hôtel-Dieu de Sorel",
-      "full_text": "Hôtel-Dieu de Sorel\n400 avenue de l'Hôtel-Dieu, Sorel-Tracy, J3P 1N5\nMontérégie\nConsulter l’horaire de l’installation Hôtel-Dieu de Sorel\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 08 h 06\nNombre de personnes qui attendent de voir un médecin à l’urgence : 24\nNombre total de personnes à l’urgence : 47\nTaux d’occupation des civières : 135 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 55\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 21 h 11",
+      "full_text": "Hôtel-Dieu de Sorel\n400 avenue de l'Hôtel-Dieu, Sorel-Tracy, J3P 1N5\nMontérégie\nConsulter l’horaire de l’installation Hôtel-Dieu de Sorel\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 06 h 32\nNombre de personnes qui attendent de voir un médecin à l’urgence : 19\nNombre total de personnes à l’urgence : 45\nTaux d’occupation des civières : 129 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 55\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 21 h 11",
       "latitude": 45.48,
       "longitude": -73.29,
-      "occupancy": 94
+      "occupancy": 85
     },
     {
       "name": "Institut de cardiologie de Montréal",
-      "full_text": "Institut de cardiologie de Montréal\n5000 rue Bélanger, Montréal, H1T 1C8\nMontréal\nConsulter l’horaire de l’installation Institut de cardiologie de Montréal\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 03 h 10\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 14\nTaux d’occupation des civières : 50 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 09\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 18 h 42",
+      "full_text": "Institut de cardiologie de Montréal\n5000 rue Bélanger, Montréal, H1T 1C8\nMontréal\nConsulter l’horaire de l’installation Institut de cardiologie de Montréal\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 51\nNombre de personnes qui attendent de voir un médecin à l’urgence : 1\nNombre total de personnes à l’urgence : 16\nTaux d’occupation des civières : 55 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 09\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 18 h 42",
       "latitude": 45.57,
       "longitude": -73.57,
-      "occupancy": 38
+      "occupancy": 31
     },
     {
       "name": "Institut universitaire de cardiologie et de pneumologie de Québec",
-      "full_text": "Institut universitaire de cardiologie et de pneumologie de Québec\n2725 chemin Sainte-Foy, Québec, G1V 4G5\nCapitale-Nationale\nConsulter l’horaire de l’installation Institut universitaire de cardiologie et de pneumologie de Québec\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 54\nNombre de personnes qui attendent de voir un médecin à l’urgence : 1\nNombre total de personnes à l’urgence : 18\nTaux d’occupation des civières : 75 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 27\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 12 h 14",
+      "full_text": "Institut universitaire de cardiologie et de pneumologie de Québec\n2725 chemin Sainte-Foy, Québec, G1V 4G5\nCapitale-Nationale\nConsulter l’horaire de l’installation Institut universitaire de cardiologie et de pneumologie de Québec\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 20\nNombre de personnes qui attendent de voir un médecin à l’urgence : 3\nNombre total de personnes à l’urgence : 19\nTaux d’occupation des civières : 75 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 4 h 27\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 12 h 14",
       "latitude": 46.77,
       "longitude": -71.27,
-      "occupancy": 33
+      "occupancy": 34
     },
     {
       "name": "Hôpital de soins psychiatriques de l'Est-de-Montréal",
@@ -831,17 +831,17 @@
     },
     {
       "name": "L'Hôpital de Montréal pour enfants",
-      "full_text": "L'Hôpital de Montréal pour enfants\n1001 boulevard Décarie, Montréal, H4A 3J1\nMontréal\nConsulter l’horaire de l’installation L'Hôpital de Montréal pour enfants\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 47\nNombre de personnes qui attendent de voir un médecin à l’urgence : 3\nNombre total de personnes à l’urgence : 22\nTaux d’occupation des civières : 117 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 46\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 8 h 34\nL'Hôtel-Dieu de Québec",
+      "full_text": "L'Hôpital de Montréal pour enfants\n1001 boulevard Décarie, Montréal, H4A 3J1\nMontréal\nConsulter l’horaire de l’installation L'Hôpital de Montréal pour enfants\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 12\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 23\nTaux d’occupation des civières : 117 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 46\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 8 h 34\nL'Hôtel-Dieu de Québec",
       "latitude": 45.47,
       "longitude": -73.62,
-      "occupancy": 36
+      "occupancy": 44
     },
     {
       "name": "L'Hôtel-Dieu de Québec",
-      "full_text": "L'Hôtel-Dieu de Québec\n11 Côte du Palais, Québec, G1R 2J6\nCapitale-Nationale\nConsulter l’horaire de l’installation L'Hôtel-Dieu de Québec\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 47\nNombre de personnes qui attendent de voir un médecin à l’urgence : 0\nNombre total de personnes à l’urgence : 14\nTaux d’occupation des civières : 93 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 08\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 14 h 45",
+      "full_text": "L'Hôtel-Dieu de Québec\n11 Côte du Palais, Québec, G1R 2J6\nCapitale-Nationale\nConsulter l’horaire de l’installation L'Hôtel-Dieu de Québec\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 02 h 14\nNombre de personnes qui attendent de voir un médecin à l’urgence : 1\nNombre total de personnes à l’urgence : 14\nTaux d’occupation des civières : 93 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 08\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 14 h 45",
       "latitude": 46.8,
       "longitude": -71.22,
-      "occupancy": 32
+      "occupancy": 26
     },
     {
       "name": "Pavillon Sainte-Marie",
