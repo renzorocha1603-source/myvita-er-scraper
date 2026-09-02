@@ -2,7 +2,7 @@ name: Medication Shortages Sync
 
 on:
   schedule:
-    - cron: '0 */12 * * *'
+    - cron: '0 6 * * *'  # Daily at 6:00 AM UTC (2:00 AM EST)
   workflow_dispatch:
 
 jobs:
