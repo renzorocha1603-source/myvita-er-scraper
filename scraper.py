@@ -157,10 +157,10 @@ def get_coordinates_from_postal(postal_code):
     return None
 
 # ============================================================
-# IN-HOUSE OCCUPANCY (calibrated less aggressively)
+# IN-HOUSE OCCUPANCY (middle point calibration)
 # ============================================================
 def calculate_hospital_occupancy(full_text):
-    """Calculate in-house occupancy with realistic caps."""
+    """Calculate in-house occupancy with middle point values."""
     total_patients = 0
     people_waiting = 0
     wait_time_minutes = 0
@@ -190,14 +190,14 @@ def calculate_hospital_occupancy(full_text):
         weight_sum += 2
     
     if people_waiting > 0:
-        # ★ 40 people waiting = 100% (less aggressive)
-        waiting_score = min((people_waiting / 40.0) * 100, 150.0)
+        # ★ MIDDLE POINT: 30 people waiting = 100%
+        waiting_score = min((people_waiting / 30.0) * 100, 150.0)
         score += waiting_score
         weight_sum += 1
     
     if wait_time_minutes > 0:
-        # ★ 7 hours wait = 100% (less aggressive)
-        wait_score = min((wait_time_minutes / 420.0) * 100, 150.0)
+        # ★ MIDDLE POINT: 6 hours wait = 100%
+        wait_score = min((wait_time_minutes / 360.0) * 100, 150.0)
         score += wait_score
         weight_sum += 1
     
