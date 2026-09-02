@@ -95,13 +95,11 @@ def wait_for_cloudflare(page, timeout=30):
     
     while time.time() - start_time < timeout:
         try:
-            # Check if we're past the Cloudflare page
             title = page.title()
             if 'Just a moment' not in title and 'Cloudflare' not in title:
                 print("   ✅ Cloudflare passed!")
                 return True
             
-            # Check for challenge iframe
             if page.locator('iframe[title*="challenge"]').count() > 0:
                 print("   🔄 Cloudflare challenge detected, waiting...")
             
@@ -121,15 +119,17 @@ def fetch_drug_shortages_canada() -> List[Dict[str, Any]]:
     """Fetch drug shortages from Drug Shortages Canada using Playwright."""
     print("   [Drug Shortages Canada] Starting browser...")
     all_shortages = []
+    seen_ids = set()
     
     with sync_playwright() as p:
         browser, context = create_browser_context(p)
         page = context.new_page()
         
         try:
-            # Go to the search page
+            # Go to the search page with active shortages filter
             print("   Navigating to search page...")
-            page.goto(f"{DRUG_SHORTAGES_URL}search", wait_until='networkidle', timeout=60000)
+            page.goto(f"{DRUG_SHORTAGES_URL}search?filter_status=active_confirmed", 
+                     wait_until='networkidle', timeout=60000)
             
             # Wait for Cloudflare if present
             if 'Just a moment' in page.title() or 'Cloudflare' in page.title():
@@ -138,75 +138,78 @@ def fetch_drug_shortages_canada() -> List[Dict[str, Any]]:
                     return []
             
             # Wait for page to load
-            page.wait_for_timeout(3000)
+            page.wait_for_timeout(5000)
             
-            # Try to find and click the search/filter options
-            # Look for status filter
+            # Try to click "Active Confirmed" filter if it exists
             try:
-                # Try to select "Active Confirmed" status
-                status_selectors = [
-                    'select[name="status"]',
-                    '#status',
-                    '[data-testid="status-filter"]',
-                    'select[class*="filter"]',
+                # Look for filter buttons or dropdowns
+                active_filter_selectors = [
+                    'button:has-text("Active")',
+                    'a:has-text("Active")',
+                    'select option[value="active_confirmed"]',
+                    '[data-filter="active_confirmed"]',
+                    'label:has-text("Active")',
                 ]
                 
-                for selector in status_selectors:
+                for selector in active_filter_selectors:
                     if page.locator(selector).count() > 0:
-                        page.select_option(selector, 'active_confirmed')
-                        print("   ✅ Selected 'Active Confirmed' filter")
+                        page.locator(selector).first.click()
+                        print("   ✅ Clicked Active filter")
+                        page.wait_for_timeout(3000)
                         break
             except Exception as e:
-                print(f"   ⚠️ Could not set status filter: {e}")
+                print(f"   ⚠️ Could not click filter: {e}")
             
-            # Try to find search results
-            page.wait_for_timeout(3000)
+            # Try pagination - get multiple pages
+            max_pages = 5  # Get up to 5 pages (100 results per page = 500 results)
             
-            # Look for results in the page
-            # Try different selectors for shortage items
-            result_selectors = [
-                '.shortage-item',
-                '[data-shortage-id]',
-                '.search-result',
-                'table tbody tr',
-                '.card',
-                '.list-item',
-            ]
-            
-            results_found = False
-            for selector in result_selectors:
-                if page.locator(selector).count() > 0:
-                    count = page.locator(selector).count()
-                    print(f"   Found {count} results with selector: {selector}")
-                    results_found = True
-                    
-                    # Extract data from each result
-                    for i in range(min(count, 100)):  # Limit to 100 for testing
-                        try:
-                            item = page.locator(selector).nth(i)
-                            
-                            # Try to extract text content
-                            text = item.inner_text()
-                            
-                            # Parse the text content
-                            shortage = parse_shortage_text(text, i)
-                            if shortage:
-                                all_shortages.append(shortage)
-                        except Exception as e:
-                            print(f"   ⚠️ Error extracting result {i}: {e}")
-                    
-                    break
-            
-            if not results_found:
-                print("   ⚠️ No results found on page")
-                # Print page content for debugging
-                content = page.content()
-                print(f"   Page content length: {len(content)}")
-                print(f"   Page title: {page.title()}")
+            for page_num in range(max_pages):
+                print(f"   Processing page {page_num + 1}...")
                 
-                # Try to find any table or list
-                text_content = page.inner_text('body')
-                print(f"   Body text first 500 chars: {text_content[:500]}")
+                # Wait for results to load
+                page.wait_for_timeout(3000)
+                
+                # Extract table rows
+                rows = page.locator('table tbody tr')
+                row_count = rows.count()
+                print(f"   Found {row_count} rows on page {page_num + 1}")
+                
+                if row_count == 0:
+                    break
+                
+                for i in range(row_count):
+                    try:
+                        row = rows.nth(i)
+                        cells = row.locator('td')
+                        cell_count = cells.count()
+                        
+                        if cell_count >= 5:
+                            cell_texts = []
+                            for j in range(cell_count):
+                                cell_texts.append(cells.nth(j).inner_text().strip())
+                            
+                            # Parse the cells
+                            shortage = parse_dsc_row(cell_texts)
+                            
+                            if shortage and shortage['report_id'] not in seen_ids:
+                                seen_ids.add(shortage['report_id'])
+                                all_shortages.append(shortage)
+                    
+                    except Exception as e:
+                        print(f"   ⚠️ Error extracting row {i}: {e}")
+                
+                # Check if there's a "Next" button
+                try:
+                    next_button = page.locator('button:has-text("Next")')
+                    if next_button.count() > 0 and next_button.is_enabled():
+                        next_button.click()
+                        page.wait_for_timeout(3000)
+                    else:
+                        print("   No more pages")
+                        break
+                except Exception:
+                    print("   No pagination found")
+                    break
             
         except Exception as e:
             print(f"   ❌ Error: {e}")
@@ -217,45 +220,69 @@ def fetch_drug_shortages_canada() -> List[Dict[str, Any]]:
     return all_shortages
 
 
-def parse_shortage_text(text: str, index: int) -> Optional[Dict[str, Any]]:
-    """Parse shortage text from the page."""
-    lines = [l.strip() for l in text.split('\n') if l.strip()]
-    
-    if not lines:
+def parse_dsc_row(cells: List[str]) -> Optional[Dict[str, Any]]:
+    """Parse a Drug Shortages Canada table row."""
+    if len(cells) < 5:
         return None
     
-    # Try to extract meaningful data
-    shortage = {
-        'report_id': f"dsc_{index}",
-        'brand_name': lines[0] if len(lines) > 0 else '',
-        'companyName': '',
-        'status': 'unknown',
+    # Typical DSC table structure:
+    # [0] = Brand name + status
+    # [1] = Company name
+    # [2] = Strength
+    # [3] = Date
+    # [4] = Report ID / DIN
+    
+    raw_brand = cells[0] if len(cells) > 0 else ''
+    company = cells[1] if len(cells) > 1 else ''
+    strength = cells[2] if len(cells) > 2 else ''
+    date = cells[3] if len(cells) > 3 else ''
+    report_id = cells[4] if len(cells) > 4 else ''
+    
+    # Extract status from brand name
+    status = 'unknown'
+    brand_name = raw_brand
+    
+    status_patterns = [
+        (r'^(Resolved|Résolu)', 'resolved'),
+        (r'^(Active Confirmed|Pénurie active confirmée)', 'active_confirmed'),
+        (r'^(Anticipated|Anticipée)', 'anticipated_shortage'),
+        (r'^(Avoided|Évitée)', 'avoided_shortage'),
+        (r'^(Discontinued|Discontinué)', 'discontinued'),
+    ]
+    
+    for pattern, status_value in status_patterns:
+        match = re.search(pattern, raw_brand, re.IGNORECASE)
+        if match:
+            status = status_value
+            # Remove status from brand name
+            brand_name = re.sub(pattern, '', raw_brand, flags=re.IGNORECASE).strip()
+            break
+    
+    # Extract DIN - look for 6-8 digit numbers in the report ID or brand
+    din = ''
+    din_match = re.search(r'(\d{6,8})', report_id)
+    if din_match:
+        din = din_match.group(1)
+    else:
+        din_match = re.search(r'(\d{6,8})', raw_brand)
+        if din_match:
+            din = din_match.group(1)
+    
+    # Clean brand name - remove trailing numbers and special chars
+    brand_name = re.sub(r'\s*\d{6,8}\s*$', '', brand_name).strip()
+    brand_name = re.sub(r'\s+', ' ', brand_name).strip()
+    
+    return {
+        'report_id': f"dsc_{report_id}" if report_id else f"dsc_{din}",
+        'brand_name': brand_name,
+        'companyName': company,
+        'strength': strength,
+        'din': din,
+        'status': status,
+        'is_active': status in ['active_confirmed', 'anticipated_shortage'],
+        'updated_date': date,
         'source': 'DrugShortagesCanada',
     }
-    
-    # Look for status keywords
-    full_text = text.lower()
-    if 'active' in full_text or 'actif' in full_text:
-        shortage['status'] = 'active_confirmed'
-    elif 'anticipated' in full_text or 'anticip' in full_text:
-        shortage['status'] = 'anticipated_shortage'
-    elif 'resolved' in full_text or 'résolu' in full_text:
-        shortage['status'] = 'resolved'
-    elif 'discontinued' in full_text or 'discontinu' in full_text:
-        shortage['status'] = 'discontinued'
-    
-    # Look for DIN (8-digit number)
-    din_match = re.search(r'\b(\d{8})\b', text)
-    if din_match:
-        shortage['din'] = din_match.group(1)
-        shortage['report_id'] = f"dsc_{din_match.group(1)}"
-    
-    # Look for dates
-    date_match = re.search(r'(\d{4}-\d{2}-\d{2})', text)
-    if date_match:
-        shortage['updated_date'] = date_match.group(1)
-    
-    return shortage
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -266,6 +293,7 @@ def fetch_ramq_with_browser() -> List[Dict[str, Any]]:
     """Fetch RAMQ shortages using Playwright."""
     print("   [RAMQ] Starting browser...")
     all_shortages = []
+    seen_ids = set()
     
     with sync_playwright() as p:
         browser, context = create_browser_context(p)
@@ -315,32 +343,12 @@ def fetch_ramq_with_browser() -> List[Dict[str, Any]]:
                                 for j in range(cell_count):
                                     cell_texts.append(cells.nth(j).inner_text().strip())
                                 
-                                shortage = {
-                                    'report_id': f"ramq_{i}",
-                                    'generic_name': cell_texts[0] if len(cell_texts) > 0 else '',
-                                    'brand_name': cell_texts[1] if len(cell_texts) > 1 else '',
-                                    'form': cell_texts[2] if len(cell_texts) > 2 else '',
-                                    'strength': cell_texts[3] if len(cell_texts) > 3 else '',
-                                    'source': 'RAMQ',
-                                    'status': 'unknown',
-                                }
+                                shortage = parse_ramq_row(cell_texts, i)
                                 
-                                # Look for DIN in text
-                                full_text = ' '.join(cell_texts)
-                                din_match = re.search(r'\b(\d{8})\b', full_text)
-                                if din_match:
-                                    shortage['din'] = din_match.group(1)
-                                    shortage['report_id'] = f"ramq_{din_match.group(1)}"
-                                
-                                # Look for status
-                                if 'rupture' in full_text.lower():
-                                    shortage['status'] = 'confirmed_shortage'
-                                    shortage['is_active'] = True
-                                elif 'disponible' in full_text.lower():
-                                    shortage['status'] = 'available'
-                                    shortage['is_active'] = False
-                                
-                                all_shortages.append(shortage)
+                                if shortage and shortage['report_id'] not in seen_ids:
+                                    seen_ids.add(shortage['report_id'])
+                                    all_shortages.append(shortage)
+                        
                         except Exception as e:
                             print(f"   ⚠️ Error extracting row {i}: {e}")
                     
@@ -360,6 +368,67 @@ def fetch_ramq_with_browser() -> List[Dict[str, Any]]:
     return all_shortages
 
 
+def parse_ramq_row(cells: List[str], index: int) -> Optional[Dict[str, Any]]:
+    """Parse a RAMQ table row."""
+    if len(cells) < 3:
+        return None
+    
+    # RAMQ table structure:
+    # [0] = Generic name / Brand name
+    # [1] = Form/Strength
+    # [2] = Status
+    # [3] = DIN (might be in text)
+    
+    full_text = ' '.join(cells)
+    
+    # Extract brand name and generic name
+    # Format: "Brand Name (generic name)"
+    brand_name = cells[0] if len(cells) > 0 else ''
+    generic_name = ''
+    
+    # Try to split brand and generic
+    match = re.match(r'^(.*?)\s*\((.*?)\)', brand_name)
+    if match:
+        brand_name = match.group(1).strip()
+        generic_name = match.group(2).strip()
+    
+    # Extract DIN - look for 8-digit number
+    din = ''
+    din_match = re.search(r'\b(\d{8})\b', full_text)
+    if din_match:
+        din = din_match.group(1)
+    
+    # Determine status
+    status = 'unknown'
+    is_active = False
+    
+    status_keywords = {
+        'rupture': ('confirmed_shortage', True),
+        'disponible': ('available', False),
+        'vérification': ('verification', True),
+        'retiré': ('withdrawn', False),
+        'cessé': ('discontinued', False),
+    }
+    
+    full_text_lower = full_text.lower()
+    for keyword, (status_value, active) in status_keywords.items():
+        if keyword in full_text_lower:
+            status = status_value
+            is_active = active
+            break
+    
+    return {
+        'report_id': f"ramq_{din}" if din else f"ramq_{index}",
+        'brand_name': brand_name,
+        'generic_name': generic_name,
+        'form': cells[1] if len(cells) > 1 else '',
+        'din': din,
+        'status': status,
+        'is_active': is_active,
+        'source': 'RAMQ',
+    }
+
+
 # ═══════════════════════════════════════════════════════════════
 # TRANSFORM + SYNC
 # ═══════════════════════════════════════════════════════════════
@@ -373,6 +442,7 @@ def generate_search_keywords(shortage: Dict[str, Any]) -> List[str]:
         shortage.get('din', ''),
         shortage.get('strength', ''),
         shortage.get('form', ''),
+        shortage.get('companyName', ''),
     ]
     
     for field in fields:
@@ -398,8 +468,9 @@ def transform_shortage(raw: Dict[str, Any]) -> Dict[str, Any]:
         'strength': raw.get('strength', ''),
         'din': raw.get('din', ''),
         'status': raw.get('status', 'unknown'),
-        'is_active': raw.get('is_active', raw.get('status') in ['active_confirmed', 'confirmed_shortage', 'anticipated_shortage']),
+        'is_active': raw.get('is_active', False),
         'source': raw.get('source', ''),
+        'updated_date': raw.get('updated_date', ''),
         'search_keywords': generate_search_keywords(raw),
         'updated_at': datetime.now(timezone.utc),
     }
@@ -462,9 +533,11 @@ def main():
             
             print(f"\n   Sample DSC data:")
             for shortage in transformed[:5]:
-                print(f"     - {shortage['brand_name']}")
+                print(f"     - Brand: {shortage['brand_name']}")
+                print(f"       Company: {shortage['companyName']}")
                 print(f"       Status: {shortage['status']}")
                 print(f"       DIN: {shortage.get('din', 'N/A')}")
+                print()
             
             synced_ids = sync_to_firestore(db, transformed)
             all_synced_ids.update(synced_ids)
@@ -488,9 +561,11 @@ def main():
             
             print(f"\n   Sample RAMQ data:")
             for shortage in transformed[:5]:
-                print(f"     - {shortage['brand_name']} ({shortage['generic_name']})")
+                print(f"     - Brand: {shortage['brand_name']}")
+                print(f"       Generic: {shortage['generic_name']}")
                 print(f"       Status: {shortage['status']}")
                 print(f"       DIN: {shortage.get('din', 'N/A')}")
+                print()
             
             synced_ids = sync_to_firestore(db, transformed)
             all_synced_ids.update(synced_ids)
@@ -513,6 +588,12 @@ def main():
         ramq_count = sum(1 for s in all_shortages if s.get('source') == 'RAMQ')
         print(f"  - Drug Shortages Canada: {dsc_count}")
         print(f"  - RAMQ: {ramq_count}")
+        
+        print(f"\nBy status:")
+        active_count = sum(1 for s in all_shortages if s.get('is_active', False))
+        inactive_count = sum(1 for s in all_shortages if not s.get('is_active', False))
+        print(f"  - Active: {active_count}")
+        print(f"  - Inactive/Other: {inactive_count}")
     else:
         print("\n⚠️ No data fetched — old Firestore data remains unchanged")
     
