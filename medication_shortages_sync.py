@@ -126,9 +126,9 @@ def fetch_drug_shortages_canada() -> List[Dict[str, Any]]:
         page = context.new_page()
         
         try:
-            # Go to the search page with active shortages filter
+            # Go to the search page
             print("   Navigating to search page...")
-            page.goto(f"{DRUG_SHORTAGES_URL}search?filter_status=active_confirmed", 
+            page.goto(f"{DRUG_SHORTAGES_URL}search", 
                      wait_until='networkidle', timeout=60000)
             
             # Wait for Cloudflare if present
@@ -140,76 +140,92 @@ def fetch_drug_shortages_canada() -> List[Dict[str, Any]]:
             # Wait for page to load
             page.wait_for_timeout(5000)
             
-            # Try to click "Active Confirmed" filter if it exists
+            # Try to click "Active Confirmed" filter or select it
             try:
-                # Look for filter buttons or dropdowns
-                active_filter_selectors = [
-                    'button:has-text("Active")',
+                # Look for status filter dropdown
+                status_dropdowns = [
+                    'select[name="status"]',
+                    'select[id*="status"]',
+                    'select[class*="filter"]',
+                ]
+                
+                for selector in status_dropdowns:
+                    if page.locator(selector).count() > 0:
+                        try:
+                            page.select_option(selector, 'active_confirmed')
+                            print("   ✅ Selected 'Active Confirmed' filter")
+                            page.wait_for_timeout(3000)
+                            break
+                        except Exception:
+                            pass
+                
+                # Try clicking filter buttons
+                active_button_selectors = [
+                    'button:has-text("Active Confirmed")',
+                    'button:has-text("Pénurie active")',
                     'a:has-text("Active")',
-                    'select option[value="active_confirmed"]',
-                    '[data-filter="active_confirmed"]',
                     'label:has-text("Active")',
                 ]
                 
-                for selector in active_filter_selectors:
+                for selector in active_button_selectors:
                     if page.locator(selector).count() > 0:
                         page.locator(selector).first.click()
                         print("   ✅ Clicked Active filter")
                         page.wait_for_timeout(3000)
                         break
             except Exception as e:
-                print(f"   ⚠️ Could not click filter: {e}")
+                print(f"   ⚠️ Could not set filter: {e}")
             
-            # Try pagination - get multiple pages
-            max_pages = 5  # Get up to 5 pages (100 results per page = 500 results)
+            # Extract table data
+            print("   Extracting table data...")
+            page.wait_for_timeout(3000)
             
-            for page_num in range(max_pages):
-                print(f"   Processing page {page_num + 1}...")
-                
-                # Wait for results to load
-                page.wait_for_timeout(3000)
-                
-                # Extract table rows
-                rows = page.locator('table tbody tr')
-                row_count = rows.count()
-                print(f"   Found {row_count} rows on page {page_num + 1}")
-                
-                if row_count == 0:
-                    break
-                
-                for i in range(row_count):
-                    try:
-                        row = rows.nth(i)
-                        cells = row.locator('td')
-                        cell_count = cells.count()
-                        
-                        if cell_count >= 5:
-                            cell_texts = []
-                            for j in range(cell_count):
-                                cell_texts.append(cells.nth(j).inner_text().strip())
-                            
-                            # Parse the cells
-                            shortage = parse_dsc_row(cell_texts)
-                            
-                            if shortage and shortage['report_id'] not in seen_ids:
-                                seen_ids.add(shortage['report_id'])
-                                all_shortages.append(shortage)
-                    
-                    except Exception as e:
-                        print(f"   ⚠️ Error extracting row {i}: {e}")
-                
-                # Check if there's a "Next" button
+            # Get table headers to understand structure
+            try:
+                headers = page.locator('table thead th')
+                if headers.count() > 0:
+                    print("   Table headers:")
+                    for i in range(headers.count()):
+                        print(f"     [{i}] {headers.nth(i).inner_text().strip()}")
+            except Exception:
+                pass
+            
+            # Get all rows
+            rows = page.locator('table tbody tr')
+            row_count = rows.count()
+            print(f"   Found {row_count} rows")
+            
+            for i in range(row_count):
                 try:
-                    next_button = page.locator('button:has-text("Next")')
-                    if next_button.count() > 0 and next_button.is_enabled():
-                        next_button.click()
-                        page.wait_for_timeout(3000)
-                    else:
-                        print("   No more pages")
-                        break
-                except Exception:
-                    print("   No pagination found")
-                    break
+                    row = rows.nth(i)
+                    
+                    # Get full row text for debugging
+                    row_text = row.inner_text()
+                    
+                    # Extract all cells
+                    cells = row.locator('td')
+                    cell_count = cells.count()
+                    
+                    cell_texts = []
+                    for j in range(cell_count):
+                        cell_texts.append(cells.nth(j).inner_text().strip())
+                    
+                    # Print first row for debugging
+                    if i == 0:
+                        print(f"\n   Row 0 cells ({cell_count} cells):")
+                        for j, cell in enumerate(cell_texts):
+                            print(f"     [{j}] {cell[:100]}")
+                        print(f"   Full row text: {row_text[:300]}\n")
+                    
+                    # Parse the row
+                    shortage = parse_dsc_row(cell_texts, row_text)
+                    
+                    if shortage and shortage['report_id'] not in seen_ids:
+                        seen_ids.add(shortage['report_id'])
+                        all_shortages.append(shortage)
+                
+                except Exception as e:
+                    print(f"   ⚠️ Error extracting row {i}: {e}")
             
         except Exception as e:
             print(f"   ❌ Error: {e}")
@@ -220,62 +236,107 @@ def fetch_drug_shortages_canada() -> List[Dict[str, Any]]:
     return all_shortages
 
 
-def parse_dsc_row(cells: List[str]) -> Optional[Dict[str, Any]]:
+def parse_dsc_row(cells: List[str], full_text: str = '') -> Optional[Dict[str, Any]]:
     """Parse a Drug Shortages Canada table row."""
-    if len(cells) < 5:
-        return None
     
-    # Typical DSC table structure:
+    # The DSC table structure (based on typical layout):
     # [0] = Brand name + status
     # [1] = Company name
-    # [2] = Strength
+    # [2] = Strength/Dosage
     # [3] = Date
-    # [4] = Report ID / DIN
+    # [4] = Report ID
     
-    raw_brand = cells[0] if len(cells) > 0 else ''
-    company = cells[1] if len(cells) > 1 else ''
-    strength = cells[2] if len(cells) > 2 else ''
-    date = cells[3] if len(cells) > 3 else ''
-    report_id = cells[4] if len(cells) > 4 else ''
+    if not cells and not full_text:
+        return None
+    
+    # Use full text if cells are empty
+    if not cells:
+        cells = [line.strip() for line in full_text.split('\n') if line.strip()]
+    
+    if len(cells) < 2:
+        return None
+    
+    # Initialize fields
+    brand_name = ''
+    company_name = ''
+    strength = ''
+    status = 'unknown'
+    din = ''
+    report_id = ''
+    date = ''
+    
+    # Try to parse based on cell count
+    if len(cells) >= 5:
+        # Standard 5-column layout
+        raw_brand = cells[0]
+        company_name = cells[1]
+        strength = cells[2]
+        date = cells[3]
+        report_id = cells[4]
+    elif len(cells) >= 3:
+        # 3-column layout
+        raw_brand = cells[0]
+        company_name = cells[1]
+        # Check if cells[2] looks like strength or date
+        if re.search(r'\d{4}-\d{2}-\d{2}', cells[2]):
+            date = cells[2]
+        else:
+            strength = cells[2]
+    else:
+        raw_brand = cells[0]
+        company_name = cells[1] if len(cells) > 1 else ''
     
     # Extract status from brand name
-    status = 'unknown'
     brand_name = raw_brand
     
+    # Status patterns (English and French)
     status_patterns = [
-        (r'^(Resolved|Résolu)', 'resolved'),
-        (r'^(Active Confirmed|Pénurie active confirmée)', 'active_confirmed'),
-        (r'^(Anticipated|Anticipée)', 'anticipated_shortage'),
-        (r'^(Avoided|Évitée)', 'avoided_shortage'),
+        (r'^(Active Confirmed|Pénurie active confirmée|Pénurie réelle)', 'active_confirmed'),
+        (r'^(Anticipated Shortage|Pénurie anticipée)', 'anticipated_shortage'),
+        (r'^(Avoided Shortage|Pénurie évitée)', 'avoided_shortage'),
+        (r'^(Resolved|Résolue?|Résolu)', 'resolved'),
         (r'^(Discontinued|Discontinué)', 'discontinued'),
+        (r'^(Actual Shortage|Pénurie réelle)', 'active_confirmed'),
     ]
     
     for pattern, status_value in status_patterns:
-        match = re.search(pattern, raw_brand, re.IGNORECASE)
+        match = re.search(pattern, brand_name, re.IGNORECASE)
         if match:
             status = status_value
             # Remove status from brand name
-            brand_name = re.sub(pattern, '', raw_brand, flags=re.IGNORECASE).strip()
+            brand_name = re.sub(pattern, '', brand_name, flags=re.IGNORECASE).strip()
             break
     
-    # Extract DIN - look for 6-8 digit numbers in the report ID or brand
-    din = ''
-    din_match = re.search(r'(\d{6,8})', report_id)
+    # If no status found in brand name, check full text
+    if status == 'unknown' and full_text:
+        for pattern, status_value in status_patterns:
+            if re.search(pattern, full_text, re.IGNORECASE):
+                status = status_value
+                break
+    
+    # Extract DIN - look for 6-8 digit numbers
+    din_match = re.search(r'\b(\d{6,8})\b', full_text) if full_text else None
     if din_match:
         din = din_match.group(1)
-    else:
-        din_match = re.search(r'(\d{6,8})', raw_brand)
+    
+    # If no DIN found, check report_id field
+    if not din and report_id:
+        din_match = re.search(r'(\d{6,8})', report_id)
         if din_match:
             din = din_match.group(1)
     
-    # Clean brand name - remove trailing numbers and special chars
-    brand_name = re.sub(r'\s*\d{6,8}\s*$', '', brand_name).strip()
+    # Clean brand name
     brand_name = re.sub(r'\s+', ' ', brand_name).strip()
+    brand_name = re.sub(r'^\s*[\d\s]+\s*', '', brand_name)  # Remove leading numbers
+    
+    # Generate report_id
+    if not report_id:
+        report_id = din if din else f"dsc_{abs(hash(brand_name + company_name)) % 100000}"
     
     return {
-        'report_id': f"dsc_{report_id}" if report_id else f"dsc_{din}",
+        'report_id': f"dsc_{report_id}",
         'brand_name': brand_name,
-        'companyName': company,
+        'companyName': company_name,
         'strength': strength,
         'din': din,
         'status': status,
@@ -324,6 +385,16 @@ def fetch_ramq_with_browser() -> List[Dict[str, Any]]:
                 if page.locator(selector).count() > 0:
                     print(f"   Found table with selector: {selector}")
                     
+                    # Get table headers for debugging
+                    try:
+                        headers = page.locator(f'{selector} thead th')
+                        if headers.count() > 0:
+                            print("   Table headers:")
+                            for i in range(headers.count()):
+                                print(f"     [{i}] {headers.nth(i).inner_text().strip()}")
+                    except Exception:
+                        pass
+                    
                     # Get all rows
                     rows = page.locator(f'{selector} tbody tr')
                     if rows.count() == 0:
@@ -335,19 +406,26 @@ def fetch_ramq_with_browser() -> List[Dict[str, Any]]:
                     for i in range(min(row_count, 200)):
                         try:
                             row = rows.nth(i)
+                            row_text = row.inner_text()
                             cells = row.locator('td')
                             cell_count = cells.count()
                             
-                            if cell_count >= 3:
-                                cell_texts = []
-                                for j in range(cell_count):
-                                    cell_texts.append(cells.nth(j).inner_text().strip())
-                                
-                                shortage = parse_ramq_row(cell_texts, i)
-                                
-                                if shortage and shortage['report_id'] not in seen_ids:
-                                    seen_ids.add(shortage['report_id'])
-                                    all_shortages.append(shortage)
+                            cell_texts = []
+                            for j in range(cell_count):
+                                cell_texts.append(cells.nth(j).inner_text().strip())
+                            
+                            # Print first row for debugging
+                            if i == 0:
+                                print(f"\n   Row 0 cells ({cell_count} cells):")
+                                for j, cell in enumerate(cell_texts):
+                                    print(f"     [{j}] {cell[:100]}")
+                                print(f"   Full row text: {row_text[:300]}\n")
+                            
+                            shortage = parse_ramq_row(cell_texts, row_text, i)
+                            
+                            if shortage and shortage['report_id'] not in seen_ids:
+                                seen_ids.add(shortage['report_id'])
+                                all_shortages.append(shortage)
                         
                         except Exception as e:
                             print(f"   ⚠️ Error extracting row {i}: {e}")
@@ -368,63 +446,101 @@ def fetch_ramq_with_browser() -> List[Dict[str, Any]]:
     return all_shortages
 
 
-def parse_ramq_row(cells: List[str], index: int) -> Optional[Dict[str, Any]]:
+def parse_ramq_row(cells: List[str], full_text: str = '', index: int = 0) -> Optional[Dict[str, Any]]:
     """Parse a RAMQ table row."""
-    if len(cells) < 3:
+    
+    if not cells and not full_text:
         return None
     
-    # RAMQ table structure:
-    # [0] = Generic name / Brand name
+    if not cells:
+        cells = [line.strip() for line in full_text.split('\n') if line.strip()]
+    
+    if len(cells) < 2:
+        return None
+    
+    # Initialize fields
+    brand_name = ''
+    generic_name = ''
+    form = ''
+    strength = ''
+    din = ''
+    status = 'unknown'
+    
+    # RAMQ table structure (typical):
+    # [0] = Brand Name (generic name)
     # [1] = Form/Strength
     # [2] = Status
-    # [3] = DIN (might be in text)
+    # [3] = DIN
     
-    full_text = ' '.join(cells)
+    raw_name = cells[0] if len(cells) > 0 else ''
     
-    # Extract brand name and generic name
-    # Format: "Brand Name (generic name)"
-    brand_name = cells[0] if len(cells) > 0 else ''
-    generic_name = ''
-    
-    # Try to split brand and generic
-    match = re.match(r'^(.*?)\s*\((.*?)\)', brand_name)
+    # Parse brand and generic name
+    # Format: "Brand Name (generic name)" or "generic name (Brand Name)"
+    match = re.match(r'^(.*?)\s*\((.*?)\)\s*$', raw_name)
     if match:
-        brand_name = match.group(1).strip()
-        generic_name = match.group(2).strip()
+        first = match.group(1).strip()
+        second = match.group(2).strip()
+        
+        # Check if first part looks like a brand name (has uppercase)
+        if re.search(r'[A-Z]', first) and not first.isupper():
+            brand_name = first
+            generic_name = second
+        else:
+            generic_name = first
+            brand_name = second
+    else:
+        brand_name = raw_name
     
-    # Extract DIN - look for 8-digit number
-    din = ''
-    din_match = re.search(r'\b(\d{8})\b', full_text)
-    if din_match:
-        din = din_match.group(1)
+    # Extract form and strength from cells
+    if len(cells) > 1:
+        form_strength = cells[1]
+        # Split form and strength if possible
+        if ',' in form_strength:
+            parts = form_strength.split(',')
+            form = parts[0].strip() if parts else ''
+            strength = parts[1].strip() if len(parts) > 1 else ''
+        else:
+            form = form_strength
     
-    # Determine status
-    status = 'unknown'
-    is_active = False
-    
-    status_keywords = {
-        'rupture': ('confirmed_shortage', True),
-        'disponible': ('available', False),
-        'vérification': ('verification', True),
-        'retiré': ('withdrawn', False),
-        'cessé': ('discontinued', False),
-    }
-    
-    full_text_lower = full_text.lower()
-    for keyword, (status_value, active) in status_keywords.items():
-        if keyword in full_text_lower:
-            status = status_value
-            is_active = active
+    # Extract DIN from full text or cells
+    for cell in cells:
+        din_match = re.search(r'\b(\d{8})\b', cell)
+        if din_match:
+            din = din_match.group(1)
             break
     
+    # Determine status from full text
+    full_text_lower = full_text.lower() if full_text else ' '.join(cells).lower()
+    
+    status_keywords = [
+        (r'rupture confirmée|rupture réelle|en rupture', 'confirmed_shortage', True),
+        (r'rupture anticipée|rupture prévue', 'anticipated_shortage', True),
+        (r'disponible', 'available', False),
+        (r'sera disponible', 'available_soon', False),
+        (r'en cours de vérification|vérification', 'verification', True),
+        (r'retiré|cessé|discontinué', 'discontinued', False),
+    ]
+    
+    for pattern, status_value, is_active in status_keywords:
+        if re.search(pattern, full_text_lower):
+            status = status_value
+            break
+    
+    # Generate report_id
+    if din:
+        report_id = f"ramq_{din}"
+    else:
+        report_id = f"ramq_{index}_{abs(hash(brand_name + generic_name)) % 10000}"
+    
     return {
-        'report_id': f"ramq_{din}" if din else f"ramq_{index}",
+        'report_id': report_id,
         'brand_name': brand_name,
         'generic_name': generic_name,
-        'form': cells[1] if len(cells) > 1 else '',
+        'form': form,
+        'strength': strength,
         'din': din,
         'status': status,
-        'is_active': is_active,
+        'is_active': status in ['confirmed_shortage', 'anticipated_shortage', 'verification'],
         'source': 'RAMQ',
     }
 
@@ -464,6 +580,7 @@ def transform_shortage(raw: Dict[str, Any]) -> Dict[str, Any]:
         'brand_name': raw.get('brand_name', ''),
         'generic_name': raw.get('generic_name', ''),
         'companyName': raw.get('companyName', ''),
+        'company_name': raw.get('companyName', ''),  # For backward compatibility
         'form': raw.get('form', ''),
         'strength': raw.get('strength', ''),
         'din': raw.get('din', ''),
