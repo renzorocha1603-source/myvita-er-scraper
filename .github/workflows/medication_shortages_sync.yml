@@ -21,12 +21,15 @@ jobs:
       - name: Install dependencies
         run: |
           pip install firebase-admin
+          pip install requests
           pip install playwright
           python -m playwright install chromium
       
       - name: Run medication shortages sync
         env:
           MYVITA_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MYVITA_FIREBASE_SERVICE_ACCOUNT }}
+          DRUG_SHORTAGES_EMAIL: ${{ secrets.DRUG_SHORTAGES_EMAIL }}
+          DRUG_SHORTAGES_PASSWORD: ${{ secrets.DRUG_SHORTAGES_PASSWORD }}
         run: |
           python medication_shortages_sync.py
       
