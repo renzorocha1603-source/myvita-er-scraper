@@ -157,54 +157,86 @@ def get_coordinates_from_postal(postal_code):
     return None
 
 # ============================================================
-# IN-HOUSE OCCUPANCY (middle point calibration)
+# UPDATED OCCUPANCY CALCULATION (Wait Time Primary)
 # ============================================================
 def calculate_hospital_occupancy(full_text):
-    """Calculate in-house occupancy with middle point values."""
+    """Calculate occupancy with wait time as primary factor.
+    
+    Wait Time Ranges:
+    - 0-2h: Faible (10-40%)
+    - 2-4h: Modéré (40-70%)
+    - 5-7h: Élevé (70-90%)
+    - 8-11h: Critique (90-125%)
+    - 12h+: Débordement (125%+)
+    """
     total_patients = 0
     people_waiting = 0
     wait_time_minutes = 0
     
+    # Extract total patients
     match = re.search(r'total de personnes[^:]*:\s*(\d+)', full_text, re.IGNORECASE)
     if match:
         total_patients = int(match.group(1))
     
+    # Extract people waiting
     match = re.search(r'personnes qui attendent[^:]*:\s*(\d+)', full_text, re.IGNORECASE)
     if match:
         people_waiting = int(match.group(1))
     
+    # Extract wait time (handles both "Xh YY" and "X h YY min" formats)
     match = re.search(r'Temps d[^:]*:\s*(\d{1,2})\s*h\s*(\d{1,2})', full_text, re.IGNORECASE)
     if match:
         wait_time_minutes = int(match.group(1)) * 60 + int(match.group(2))
+    else:
+        # Try alternative format "X h YY"
+        match = re.search(r'(\d{1,2})\s*h\s*(\d{1,2})', full_text, re.IGNORECASE)
+        if match:
+            wait_time_minutes = int(match.group(1)) * 60 + int(match.group(2))
     
+    # If no data at all, return -1
     if total_patients == 0 and people_waiting == 0 and wait_time_minutes == 0:
         return -1
     
-    score = 0
-    weight_sum = 0
+    # Convert wait time to hours
+    wait_time_hours = wait_time_minutes / 60.0
     
-    if total_patients > 0:
-        # 20 patients = 100%, cap at 200%
-        patient_score = min((total_patients / 20.0) * 100, 200.0)
-        score += patient_score
-        weight_sum += 2
+    # Calculate wait time score (PRIMARY)
+    if wait_time_hours <= 0:
+        wait_time_score = 10.0
+    elif wait_time_hours <= 2.0:
+        # 0-2h: 10% to 40%
+        wait_time_score = 10.0 + (wait_time_hours / 2.0) * 30.0
+    elif wait_time_hours <= 4.0:
+        # 2-4h: 40% to 70%
+        wait_time_score = 40.0 + ((wait_time_hours - 2.0) / 2.0) * 30.0
+    elif wait_time_hours <= 5.0:
+        # 4-5h: 70% to 76%
+        wait_time_score = 70.0 + (wait_time_hours - 4.0) * 6.0
+    elif wait_time_hours <= 7.0:
+        # 5-7h: 76% to 90%
+        wait_time_score = 76.0 + ((wait_time_hours - 5.0) / 2.0) * 14.0
+    elif wait_time_hours <= 8.0:
+        # 7-8h: 90% to 100%
+        wait_time_score = 90.0 + (wait_time_hours - 7.0) * 10.0
+    elif wait_time_hours <= 11.0:
+        # 8-11h: 100% to 125%
+        wait_time_score = 100.0 + ((wait_time_hours - 8.0) / 3.0) * 25.0
+    else:
+        # 11h+: 125%+
+        wait_time_score = 125.0 + (wait_time_hours - 11.0) * 10.0
     
-    if people_waiting > 0:
-        # ★ MIDDLE POINT: 30 people waiting = 100%
-        waiting_score = min((people_waiting / 30.0) * 100, 150.0)
-        score += waiting_score
-        weight_sum += 1
+    # Secondary boosts (max +10%)
+    patient_boost = min((total_patients / 20.0) * 10.0, 10.0)
+    waiting_boost = min((people_waiting / 10.0) * 10.0, 10.0)
     
-    if wait_time_minutes > 0:
-        # ★ MIDDLE POINT: 6 hours wait = 100%
-        wait_score = min((wait_time_minutes / 360.0) * 100, 150.0)
-        score += wait_score
-        weight_sum += 1
+    # Take the larger boost
+    boost = max(patient_boost, waiting_boost)
     
-    if weight_sum > 0:
-        return max(1, min(200, round(score / weight_sum)))
+    # Final occupancy
+    occupancy = wait_time_score + boost
     
-    return -1
+    # Cap at 200%
+    return max(1, min(200, round(occupancy)))
 
 # ============================================================
 # DATA SOURCES
