@@ -1,21 +1,21 @@
 {
-  "last_update": "2026-09-04T02:06:42.847616",
+  "last_update": "2026-09-04T03:41:19.152401",
   "source": "MSSS / Gouvernement du Québec",
   "source_url": "https://www.quebec.ca/sante/systeme-et-services-de-sante/organisation-des-services/donnees-systeme-sante-quebecois-services/situation-urgences",
   "data_freshness": "live",
   "total_hospitals": 120,
   "global_stats": {
-    "total_patients": 3996,
-    "total_waiting": 1629,
+    "total_patients": 3994,
+    "total_waiting": 1624,
     "avg_occupancy": 84
   },
   "hospitals": [
     {
       "name": "Centre de santé de Chibougamau",
-      "full_text": "Centre de santé de Chibougamau\n51 3e Rue, Chibougamau, G8P 1N1\nNord-du-Québec\nConsulter l’horaire de l’installation Centre de santé de Chibougamau\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 46\nNombre de personnes qui attendent de voir un médecin à l’urgence : 3\nNombre total de personnes à l’urgence : 10\nTaux d’occupation des civières : 83 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 37\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 7 h 50",
+      "full_text": "Centre de santé de Chibougamau\n51 3e Rue, Chibougamau, G8P 1N1\nNord-du-Québec\nConsulter l’horaire de l’installation Centre de santé de Chibougamau\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 01 h 12\nNombre de personnes qui attendent de voir un médecin à l’urgence : 1\nNombre total de personnes à l’urgence : 7\nTaux d’occupation des civières : 83 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 37\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 7 h 50",
       "latitude": null,
       "longitude": null,
-      "occupancy": 42
+      "occupancy": 32
     },
     {
       "name": "Centre de santé Radisson",
@@ -47,31 +47,31 @@
     },
     {
       "name": "Centre hospitalier de l'Université de Montréal",
-      "full_text": "Centre hospitalier de l'Université de Montréal\n1000 rue Saint-Denis, Montréal, H2X 0A9\nMontréal\nConsulter l’horaire de l’installation Centre hospitalier de l'Université de Montréal\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 14 h 23\nNombre de personnes qui attendent de voir un médecin à l’urgence : 39\nNombre total de personnes à l’urgence : 122\nTaux d’occupation des civières : 133 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 8 h 45\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 17 h 39",
+      "full_text": "Centre hospitalier de l'Université de Montréal\n1000 rue Saint-Denis, Montréal, H2X 0A9\nMontréal\nConsulter l’horaire de l’installation Centre hospitalier de l'Université de Montréal\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 13 h 32\nNombre de personnes qui attendent de voir un médecin à l’urgence : 41\nNombre total de personnes à l’urgence : 118\nTaux d’occupation des civières : 131 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 8 h 45\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 17 h 39",
       "latitude": 45.51,
       "longitude": -73.57,
-      "occupancy": 169
+      "occupancy": 160
     },
     {
       "name": "Centre hospitalier de l'Université Laval",
-      "full_text": "Centre hospitalier de l'Université Laval\n2705 boulevard Laurier, Québec, G1V 4G2\nCapitale-Nationale\nConsulter l’horaire de l’installation Centre hospitalier de l'Université Laval\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 05 h 28\nNombre de personnes qui attendent de voir un médecin à l’urgence : 20\nNombre total de personnes à l’urgence : 75\nTaux d’occupation des civières : 98 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 27\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 13 h 35",
+      "full_text": "Centre hospitalier de l'Université Laval\n2705 boulevard Laurier, Québec, G1V 4G2\nCapitale-Nationale\nConsulter l’horaire de l’installation Centre hospitalier de l'Université Laval\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 05 h 35\nNombre de personnes qui attendent de voir un médecin à l’urgence : 18\nNombre total de personnes à l’urgence : 78\nTaux d’occupation des civières : 102 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 5 h 27\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 13 h 35",
       "latitude": 46.77,
       "longitude": -71.27,
-      "occupancy": 89
+      "occupancy": 90
     },
     {
       "name": "Centre hospitalier de St.Mary",
-      "full_text": "Centre hospitalier de St.Mary\n3830 avenue Lacombe, Montréal, H3T 1M5\nMontréal\nConsulter l’horaire de l’installation Centre hospitalier de St.Mary\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 10 h 19\nNombre de personnes qui attendent de voir un médecin à l’urgence : 18\nNombre total de personnes à l’urgence : 51\nTaux d’occupation des civières : 105 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 7 h 42\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 18 h 59",
+      "full_text": "Centre hospitalier de St.Mary\n3830 avenue Lacombe, Montréal, H3T 1M5\nMontréal\nConsulter l’horaire de l’installation Centre hospitalier de St.Mary\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 08 h 31\nNombre de personnes qui attendent de voir un médecin à l’urgence : 19\nNombre total de personnes à l’urgence : 54\nTaux d’occupation des civières : 127 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 7 h 42\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 18 h 59",
       "latitude": 45.5,
       "longitude": -73.62,
-      "occupancy": 129
+      "occupancy": 114
     },
     {
       "name": "Centre hospitalier régional du Grand-Portage",
-      "full_text": "Centre hospitalier régional du Grand-Portage\n75 rue Saint-Henri, Rivière-du-Loup, G5R 2A4\nBas-Saint-Laurent\nConsulter l’horaire de l’installation Centre hospitalier régional du Grand-Portage\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 28\nNombre de personnes qui attendent de voir un médecin à l’urgence : 15\nNombre total de personnes à l’urgence : 27\nTaux d’occupation des civières : 100 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 07\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 10 h 16",
+      "full_text": "Centre hospitalier régional du Grand-Portage\n75 rue Saint-Henri, Rivière-du-Loup, G5R 2A4\nBas-Saint-Laurent\nConsulter l’horaire de l’installation Centre hospitalier régional du Grand-Portage\nTemps d'attente estimé pour un cas non prioritaire avant de voir un médecin : 04 h 01\nNombre de personnes qui attendent de voir un médecin à l’urgence : 11\nNombre total de personnes à l’urgence : 26\nTaux d’occupation des civières : 89 %\nDurée moyenne de séjour des personnes dans la salle d’attente (de la veille) : 3 h 07\nDurée moyenne de séjour des personnes en attente sur une civière (de la veille) : 10 h 16",
       "latitude": 47.4,
       "longitude": -69.5,
-      "occupancy": 83
+      "occupancy": 80
     },
     {
       "name": "Centre multiservices de santé et de services sociaux Avellin-Dalcourt",
